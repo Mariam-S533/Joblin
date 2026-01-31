@@ -1,8 +1,161 @@
-import React from 'react'
+"use client"
+import InputField from '@/components/InputField/InputField'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { Separator } from '@/components/ui/separator'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { LoaderCircle } from 'lucide-react'
+import Image from 'next/image'
+import Link from 'next/link'
+import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import * as z from 'zod'
+
+
+interface Inputs{
+  fname: string,
+  lname: string,
+  email:string,
+  password: string,
+  repassword: string,
+}
 
 function Register() {
+
+      const [loading, setLoading] = useState(false)
+
+      const schema = z.object({
+        fname: z.string().nonempty("first name is required *").min(2, 'First name must be at least 2 characters long'),
+        lname: z.string().nonempty("last name is required *").min(2, 'Last name must be at least 2 characters long'),
+        email: z.string().nonempty("email is required *").email('Invalid email address'),
+        password: z.string().nonempty("password is required *").min(8, 'Password must be at least 8 characters long'),
+        repassword: z.string().nonempty("password is required *").min(8, 'Password must be at least 8 characters long'),
+      }).refine((data) => data.password === data.repassword, {
+        message: "Password doesn't match",path: ["repassword"]})
+      
+      const {register, handleSubmit, formState:{errors}} = useForm<Inputs>({
+        resolver: zodResolver(schema)
+      })
+
+      async function onSubmit(data: Inputs){
+        console.log(data);
+      }
+
+
+
   return (
-    <div>Register</div>
+    <>
+    <div className='min-h-screen flex items-center justify-center bg-[#FBFBFB] p-4'>
+      <Card className='w-full max-w-md shadow-lg bg-card '>
+        <CardHeader>
+          <div className='flex justify-center py-3'>
+            <Image src="/darklogo.svg" width={120} height={60} alt='Joplin'/>
+          </div>
+          <div className=' space-y-2 text-center'>
+            <CardTitle className=' text-2xl font-bold text-foreground'>
+              Create an account
+            </CardTitle>
+            <CardDescription className='text-gray-400 text-sm flex justify-center w-3/4 mx-auto'>
+              Please enter your personal details to set up your account and
+              personalize your experience.
+            </CardDescription>
+          </div>
+        </CardHeader>
+
+        <CardContent className=' space-y-2'>
+          <form onSubmit={handleSubmit(onSubmit)} className='flex flex-col gap-5 mt-3'>
+            <div className=''>
+              <InputField
+              {...register("fname")}
+              id="firstname"
+              label="Firs Name"
+              type="text"
+              placeholder="Enter your First Name"
+            />
+            {errors.fname && <p className='text-sm text-red-600 mt-1'>{errors.fname.message}</p>}
+            </div>
+
+            <div className=' '>
+              <InputField
+              {...register("lname")}
+              id="Lastname"
+              label="Last Name"
+              type="text"
+              placeholder="Enter your Last Name"
+            />
+            {errors.lname && <p className='text-sm text-red-600 mt-1'>{errors.lname.message}</p>}
+            </div>
+
+            <div className=''>
+              <InputField
+              {...register("email")}
+              id="email"
+              label="Email"
+              type="email"
+              placeholder="enter your Email "
+            />
+            {errors.email && <p className='text-sm text-red-600 mt-1'>{errors.email.message}</p>}
+            </div>
+
+            <div className=''>
+              <InputField
+              {...register("password")}
+              id="password"
+              label="Password"
+              type="password"
+              placeholder="Enter your Password"
+            />
+            {errors.password && <p className='text-sm text-red-600 mt-1'>{errors.password.message}</p>}
+            </div>
+
+            <div className=''>
+              <InputField
+              {...register("repassword")}
+              id="confirmpassword"
+              label="Confirm Password"
+              type="password"
+              placeholder="Confirm your Password"
+            />
+            {errors.repassword && <p className='text-sm text-red-600 mt-1'>{errors.repassword.message}</p>}
+            </div>
+
+            <Button type='submit' className='h-10 rounded-sm mt-1 w-full bg-[#02905E] text-white text-[17px] font-medium hover:bg-[#04a165] cursor-pointer '>
+            {loading? <LoaderCircle className='animate-spin mx-auto text-white' size={18}/> : 'Sign up'}
+            </Button>
+
+          </form>
+
+
+            <div className="relative flex items-center gap-2 my-4">
+            <Separator className="flex-1" />
+            <span className="text-xs text-gray-400 font-medium px-2">
+              OR
+            </span>
+            <Separator className="flex-1" />
+            </div>
+
+            <Button type='button' className='w-full h-11 rounded-sm border border-[#04a165] transparent bg-white text-[#04a165] font-medium text-[16px] hover:bg-gray-50 flex items-center justify-center gap-2 overflow-hidden cursor-pointer'>
+              <Image src="/google-icon.svg" width={20} height={20} alt='googel logo'/>
+              <span>Sign up with Google</span>
+            </Button>
+
+        </CardContent>
+
+          <CardFooter className="flex justify-center pb-2">
+          <p className="text-sm text-muted-foreground">
+            Do you already have an account?
+            <Link
+              href="/login"
+              className="font-medium text-[#02905E] hover:text-[#04a165] underline cursor-pointer"
+            >
+              Login
+            </Link>
+          </p>
+        </CardFooter>
+
+      </Card>
+    </div>
+    </>
   )
 }
 
