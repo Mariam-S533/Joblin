@@ -15,8 +15,8 @@ function InputField({label, id, placeholder, ...props}: InputFieldProps) {
         id={id} 
         placeholder={placeholder} 
         className='h-11 rounded-sm border 
-                border-gray-400 focus-visible:ring-0 
-                focus-visible:border-gray-700 w-full placeholder:text-gray-400 '
+                border-[#A5A5A5] focus-visible:ring-0 
+                focus-visible:border-gray-700 w-full placeholder:text-[#A5A5A5]'
         {...props}
         />
 

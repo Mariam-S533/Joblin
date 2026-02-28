@@ -78,7 +78,7 @@ function Register() {
             <div className=' '>
               <InputField
               {...register("lname")}
-              id="Lastname"
+              id="lastname"
               label="Last Name"
               type="text"
               placeholder="Enter your Last Name"
