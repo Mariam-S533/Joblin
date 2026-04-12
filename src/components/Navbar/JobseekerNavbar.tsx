@@ -30,11 +30,10 @@ function JobseekerNavbar() {
 
   return (
 
-    <div className="fixed top-0 left-0 w-full z-30 bg-white pt-6">
-
+    <div className="fixed top-0 left-0 w-full z-30 bg-white pt-6 ">
       <div className="lg:container w-[90%]  mx-auto">
 
-        <NavigationMenu className="w-full bg-white max-w-full! flex justify-between items-center rounded-sm px-3 md:px-6 py-4 shadow-sm">
+        <NavigationMenu className="w-full bg-white max-w-full! flex justify-between items-center rounded-sm px-3 md:px-6 py-4 shadow-sm border-1 border-gray-300">
 
           {/* logo image */}
           <NavigationMenuList>
@@ -58,11 +57,9 @@ function JobseekerNavbar() {
             {navItems.map((item) => (
               <NavigationMenuItem
                 key={item.href}
-                className={`pb-1 border-b-2 transition
-                ${pathname === item.href
-                    ? "border-green-600 text-green-600"
-                    : "border-transparent hover:border-gray-300"}
-                `}
+                className={`transition
+                ${pathname === item.href && "text-green-600"}
+                    `}
               >
                 <Link href={item.href}>{item.label}</Link>
               </NavigationMenuItem>
@@ -85,7 +82,7 @@ function JobseekerNavbar() {
               <div className="relative" >
                  <Bell size={22} className="cursor-pointer text-[#222222]" />
               </div>
-              <Badge className="absolute -top-3 -right-2 h-5 min-w-5 rounded-full px-1">
+              <Badge className="absolute -top-3 -right-2 h-5 min-w-5 rounded-full px-1 bg-[#DC0000] text-white">
                 12
               </Badge>
 
@@ -102,11 +99,11 @@ function JobseekerNavbar() {
 
               <div className='hidden md:flex items-center'>
                 <span className="h-8 ">
-                  <Separator orientation="vertical" className="bg-gray-500" />
+                  <Separator orientation="vertical" className="bg-[#A5A5A5]" />
                 </span>
               </div>
 
-            {!session.data && (
+            {session.data && (
               <div>
                 <DropdownMenu>
 
@@ -192,7 +189,7 @@ function JobseekerNavbar() {
             )}
 
 
-              {session.data &&(
+              {!session.data &&(
             <div className='flex text-lg gap-2 justify-center items-center '>
            
               <div className=" bg-[#02905E] text-white px-3 py-1 rounded-sm cursor-pointer">
