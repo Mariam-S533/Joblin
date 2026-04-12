@@ -1,0 +1,267 @@
+"use client"
+
+import Link from "next/link"
+import Image from "next/image"
+import { usePathname } from "next/navigation"
+import { useState } from "react"
+
+import { NavigationMenu, NavigationMenuItem, NavigationMenuList } from "@/components/ui/navigation-menu"
+import { Badge } from "@/components/ui/badge"
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
+
+import { Search, Bell, Menu, LogOut, LogIn, ChevronDown, User, Briefcase, BookOpen, Settings } from "lucide-react"
+
+import { useSession, signOut } from "next-auth/react"
+import { Separator } from "../ui/separator"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "../ui/dropdown-menu"
+
+function JobseekerNavbar() {
+
+  const pathname = usePathname()
+  const session = useSession()
+  const [open, setOpen] = useState(false)
+
+  const navItems = [
+    { href: "/", label: "Home" },
+    { href: "/find-job", label: "Find Job" },
+    { href: "/companies", label: "Company" },
+    { href: "/courses", label: "Courses" },
+  ]
+
+  return (
+
+    <div className="fixed top-0 left-0 w-full z-30 bg-white pt-6">
+
+      <div className="lg:container w-[90%]  mx-auto">
+
+        <NavigationMenu className="w-full bg-white max-w-full! flex justify-between items-center rounded-sm px-3 md:px-6 py-4 shadow-sm">
+
+          {/* logo image */}
+          <NavigationMenuList>
+            <NavigationMenuItem>
+              <Link href="/">
+                <Image
+                  src="/darklogo.svg"
+                  alt="logo"
+                  width={120}
+                  height={50}
+                  sizes='25vw'
+                />
+              </Link>
+            </NavigationMenuItem>
+          </NavigationMenuList>
+
+
+          {/*  nav linkes */}
+          <NavigationMenuList className="hidden lg:flex gap-10 text-[16px] font-medium">
+
+            {navItems.map((item) => (
+              <NavigationMenuItem
+                key={item.href}
+                className={`pb-1 border-b-2 transition
+                ${pathname === item.href
+                    ? "border-green-600 text-green-600"
+                    : "border-transparent hover:border-gray-300"}
+                `}
+              >
+                <Link href={item.href}>{item.label}</Link>
+              </NavigationMenuItem>
+            ))}
+
+          </NavigationMenuList>
+
+
+          
+          <NavigationMenuList className="flex items-center  gap-3 md:gap-6 lg:gap-6">
+
+            {/*  search icon */}
+            <NavigationMenuItem>
+              <Search size={22} className="cursor-pointer text-[#222222] " />
+            </NavigationMenuItem>
+
+
+             {/*  bell icon */}
+            <NavigationMenuItem className="hidden md:block">
+              <div className="relative" >
+                 <Bell size={22} className="cursor-pointer text-[#222222]" />
+              </div>
+              <Badge className="absolute -top-3 -right-2 h-5 min-w-5 rounded-full px-1">
+                12
+              </Badge>
+
+            </NavigationMenuItem>
+
+
+            {/* employer and user dropdownmenu  */}
+            <NavigationMenuItem className=" items-center gap-4 flex">
+              <div className="hidden md:block">
+                <Link href="/company/home" className="text-[#515151] hover:text-black">
+                  Employer
+                </Link>
+              </div>
+
+              <div className='hidden md:flex items-center'>
+                <span className="h-8 ">
+                  <Separator orientation="vertical" className="bg-gray-500" />
+                </span>
+              </div>
+
+            {!session.data && (
+              <div>
+                <DropdownMenu>
+
+                  <DropdownMenuTrigger asChild>
+                    <button type="button" className="flex items-center gap-2 cursor-pointer focus:outline-none group">
+                      <div className="">
+                        <Image
+                          src="/unknowon.webp"
+                          alt="user"
+                          width={40}
+                          height={30}
+                          className="rounded-full object-cover ring-2 ring-green-100 group-hover:ring-green-400 transition"
+                        />
+                      </div>
+                      <span className="hidden md:block text-[14px] font-semibold text-gray-800 max-w-30 truncate">
+                        { "User"}
+                      </span>
+                      <ChevronDown size={20} className="text-gray-700" />
+                    </button>
+                  </DropdownMenuTrigger>
+
+                  {/* ── Dropdown Content ── */}
+                  <DropdownMenuContent className="w-56" align="end">
+                    <DropdownMenuLabel>
+                      <p className="text-[13px] font-semibold text-gray-800 truncate">
+                        {"User"}
+                      </p>
+                      <p className="text-[11px] text-gray-400 font-normal truncate">
+                        {"mariam232@gmail.com"}
+                      </p>
+                    </DropdownMenuLabel>
+
+                    <DropdownMenuSeparator />
+
+                    {/* Profile links */}
+                    <DropdownMenuGroup>
+                      <DropdownMenuItem asChild>
+                        <Link href="/job-seeker/profile" className="flex items-center gap-2 cursor-pointer">
+                          <User size={15} /> My Profile
+                        </Link>
+                      </DropdownMenuItem>
+
+                      <DropdownMenuItem asChild>
+                        <Link href="/job-seeker/applications" className="flex items-center gap-2 cursor-pointer">
+                          <Briefcase size={15} /> My Applications
+                        </Link>
+                      </DropdownMenuItem>
+
+                      <DropdownMenuItem asChild>
+                        <Link href="/job-seeker/courses" className="flex items-center gap-2 cursor-pointer">
+                          <BookOpen size={15} /> My Courses
+                        </Link>
+                      </DropdownMenuItem>
+
+                      <DropdownMenuItem asChild>
+                        <Link href="/job-seeker/settings" className="flex items-center gap-2 cursor-pointer">
+                          <Settings size={15} /> Settings
+                        </Link>
+                      </DropdownMenuItem>
+                    
+                      <DropdownMenuItem asChild className="hidden sm:block lg:hidden">
+                          <div className="hidden md:block">
+                            <Link href="/company/home" className="text-gray-600 hover:text-black">
+                            Employer
+                            </Link>
+                          </div>
+                      </DropdownMenuItem>
+
+                    </DropdownMenuGroup>
+
+                    <DropdownMenuSeparator />
+
+                    <DropdownMenuItem
+                      onClick={() => signOut({ callbackUrl: "/login/job-seeker" })}
+                      className="flex items-center gap-2 text-red-500 focus:text-red-500 focus:bg-red-50 cursor-pointer"
+                    >
+                      <LogOut size={15} /> Logout
+                    </DropdownMenuItem>
+
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            )}
+
+
+              {session.data &&(
+            <div className='flex text-lg gap-2 justify-center items-center '>
+           
+              <div className=" bg-[#02905E] text-white px-3 py-1 rounded-sm cursor-pointer">
+                < Link href="/register/job-seeker" className='flex gap-0.5 justify-center items-center'> <LogIn size={18}/> <span className=" text-[16px]">Sign Up</span></Link>
+              </div>
+            </div>
+            )}
+            </NavigationMenuItem>
+
+
+            {/* sheet */}
+            <NavigationMenuItem className="lg:hidden text-lg">
+
+              <Sheet open={open} onOpenChange={setOpen}>
+
+                <SheetTrigger>
+                  <div className=" bg-gray-400 rounded-full p-2">
+                    <Menu  size={20} className="text-[#222222]"/>
+                  </div>
+                </SheetTrigger>
+
+                <SheetContent side="left" className="w-64">
+
+                  <SheetTitle className="p-4">
+                    <Image
+                      src="/darklogo.svg"
+                      alt="logo"
+                      width={120}
+                      height={50}
+                    />
+                  </SheetTitle>
+
+                  <div className="flex flex-col gap-5">
+
+                    {navItems.map((item) => (
+
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setOpen(false)}
+                        className={`border-b p-3 cursor-pointer
+                        ${(item.href === "/" && pathname === "/") || 
+                            (item.href !== "/" && pathname.startsWith(item.href))
+                            ? "text-green-600 font-semibold"
+                            : ""}
+                        `}
+                      >
+                        {item.label}
+                      </Link>
+
+                    ))}
+
+                  </div>
+
+                </SheetContent>
+              </Sheet>
+
+
+            </NavigationMenuItem>
+
+
+          </NavigationMenuList>
+
+        </NavigationMenu>
+
+      </div>
+
+    </div>
+  )
+}
+
+export default JobseekerNavbar
