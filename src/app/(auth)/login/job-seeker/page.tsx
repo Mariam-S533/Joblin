@@ -44,15 +44,23 @@ function JobseekerLogin() {
             const res = await signIn('credentials', {
               email: data.email,
               password: data.password,
+              loginType: "Seeker",  //prevent company login from job seeker login page
               redirect: false,
             })
             setLoading(false)
             if(res?.ok){
-              router.push('/job-seeker/home')
+              router.push('/')
               // window.location.href = "/"
             }else{
               console.log(res?.error);
-              setErrorMsg("Invalid email or password")
+              setErrorMsg(res?.error || "Invalid email or password" )
+//               if (res?.error) {
+//                 if (res.error === "CredentialsSignin") {
+//                   setErrorMsg("Invalid email or password")
+//                 } else {
+//                   setErrorMsg(res.error)
+//                 }
+// }
               setLoading(false)
             }
           }
@@ -133,7 +141,7 @@ function JobseekerLogin() {
             <Separator className="flex-1" />
             </div>
 
-            <Button onClick={() => signIn('google', { callbackUrl: '/job-seeker/home' })} type='button' className='w-full h-11 rounded-sm border border-[#04a165] transparent bg-white text-[#04a165] font-medium text-[16px] hover:bg-gray-50 flex items-center justify-center gap-2 overflow-hidden cursor-pointer'>
+            <Button onClick={() => signIn('google', { callbackUrl: '/' })} type='button' className='w-full h-11 rounded-sm border border-[#04a165] transparent bg-white text-[#04a165] font-medium text-[16px] hover:bg-gray-50 flex items-center justify-center gap-2 overflow-hidden cursor-pointer'>
               <Image src="/google-icon.svg" width={20} height={20} alt='googel logo'/>
               <span>Continue with Google</span>
             </Button>

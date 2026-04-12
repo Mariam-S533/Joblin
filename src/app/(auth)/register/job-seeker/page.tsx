@@ -164,7 +164,7 @@ function JobseekerRegister() {
             <Separator className="flex-1" />
             </div>
 
-            <Button onClick={() => signIn("google", { callbackUrl: "/company/home?role=Company" })} type='button' className='w-full h-11 rounded-sm border border-[#04a165] transparent bg-white text-[#04a165] font-medium text-[16px] hover:bg-gray-50 flex items-center justify-center gap-2 overflow-hidden cursor-pointer'>
+            <Button onClick={() => { document.cookie = "auth_action=register_seeker; path=/; max-age=300; SameSite=Lax"; signIn("google", { callbackUrl: "/" })}} type='button' className='w-full h-11 rounded-sm border border-[#04a165] transparent bg-white text-[#04a165] font-medium text-[16px] hover:bg-gray-50 flex items-center justify-center gap-2 overflow-hidden cursor-pointer'>
               <Image src="/google-icon.svg" width={20} height={20} alt='googel logo'/>
               <span>Sign up with Google</span>
             </Button>

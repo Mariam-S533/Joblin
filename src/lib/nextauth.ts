@@ -1,7 +1,7 @@
-// import { AuthOptions } from "next-auth"
 import GoogleProvider from "next-auth/providers/google"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { AuthOptions } from "next-auth"
+import { cookies } from "next/headers"
 
 
 
@@ -19,11 +19,13 @@ export const options: AuthOptions = {
 
     credentials: {
       email: { label: "Email", type: "email" },
-      password: { label: "Password", type: "password" }
+      password: { label: "Password", type: "password" },
+      loginType: { label: "loginType", type: "text" }
     }, 
     async authorize(credentials) {
 
-      const res = await fetch("https://pnm6zhh3-7127.uks1.devtunnels.ms/api/Authentication/login", {
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL
+      const res = await fetch(`${baseUrl}/api/Authentication/login`, {
         method: 'POST',
         body: JSON.stringify({
             email: credentials?.email,
@@ -35,6 +37,15 @@ export const options: AuthOptions = {
       console.log('finallres auth',user);
 
       if (res.ok && user) {
+
+        if (credentials?.loginType === "Seeker" && user.roles[0] === "Company") {
+            throw new Error("You are an Employer. Please use the Company login page.");
+        }
+
+        if (credentials?.loginType === "Company" && user.roles[0] === "Seeker") {
+              throw new Error("You are a Job Seeker. Please use the Job Seeker login page.")
+            }
+
         return {
                 id: user.id,
                 displayName: user.displayName,
@@ -62,7 +73,7 @@ export const options: AuthOptions = {
 
         async jwt({ token, user, account }) {
 
-          if(user && account?.provider === 'credentials'){
+            if(user && account?.provider === 'credentials'){
             token.id = user.id ;
             token.displayName = user.displayName;
             token.email = user.email;
@@ -70,25 +81,53 @@ export const options: AuthOptions = {
             token.accessToken = user.token
           }
 
-          if(user && account?.provider === 'google'){
+            
+            if(user && account?.provider === "google"){
+              const cookieStore = await cookies()
+              const authAction = cookieStore.get("auth_action")?.value
+              const baseUrl = process.env.NEXT_PUBLIC_BASE_URL
 
-            const res = await fetch("https://pnm6zhh3-7127.uks1.devtunnels.ms/api/Authentication/google-login", {
-              method: 'POST',
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({idToken: account.id_token})
+              let backendEndpoint = `${baseUrl}/api/Authentication/google-login`
 
-          })
+              if(authAction === "register_company"){
+                backendEndpoint = `${baseUrl}/api/Authentication/google-register-company`
+              }
+              else if(authAction === "register_seeker"){
+                backendEndpoint = `${baseUrl}/api/Authentication/google-register-seeker`
+              }
 
-          const data = await res.json()
-          console.log('final res google', data);
-          token.id = data.id ;
-          token.displayName = data.displayName;
-          token.email = data.email;
-          token.role  = data.roles[0] as "Seeker" | "Company";
-          token.accessToken = data.token
-          }
+              try {
+                const res = await fetch(backendEndpoint, {
+                  method: 'POST',
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({idToken: account.id_token})  // sure which name it is 
+                })
 
-            return token
+                const data = await res.json()
+
+                if (res.ok) {
+                  token.id = data.id
+                  token.displayName = data.displayName
+                  token.email = data.email
+                  token.role = data.roles[0]
+                  token.accessToken = data.token
+                } else {
+                  console.error("Backend error during Google auth:", data)
+                }
+
+                if (authAction) {
+                  (await cookieStore).delete("auth_action")
+                }
+                
+              } catch (error) {
+                console.error("Fetch to custom backend failed of google:", error)
+              }
+
+            }
+
+
+          return token
+
         },
 
         async session({ session, token }) {
@@ -105,6 +144,6 @@ export const options: AuthOptions = {
     },
 
 
-    secret: process.env.BETTER_AUTH_SECRET,
+    secret: process.env.AUTH_SECRET,
 
 }
