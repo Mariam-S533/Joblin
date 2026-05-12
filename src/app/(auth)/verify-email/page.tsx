@@ -6,19 +6,20 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { LoaderCircle } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Controller, useForm, useWatch } from 'react-hook-form'
 import * as z from 'zod'
+import { useVerifyEmail } from '@/hooks/auth'
+import { getErrorMessage } from '@/lib/apiClient/error'
 
-
-    interface codeType{
-            verifyCode: string
-        }
+interface codeType{
+  verifyCode: string
+}
 
 function VerifyEmail() {
 
-        
-        const [loading, setLoading] = useState(false)
+        const router = useRouter()
+        const verifyMutation = useVerifyEmail()
   
         const schema = z.object({
           verifyCode: z.string().nonempty("verification code is required *"),
@@ -34,13 +35,11 @@ function VerifyEmail() {
         const verifyCode = useWatch({control, name: 'verifyCode'})
         const isCodeComplete = ( verifyCode || "").length === 4
 
-
-  
         async function onSubmit(codeObj: codeType){
-          console.log(codeObj);
+          verifyMutation.mutate(codeObj, {
+            onSuccess: () => router.push('/login/company')
+          })
         }
-
-
 
   return <>
     <div className='min-h-screen flex items-center justify-center bg-[#FBFBFB] p-4'>
@@ -51,7 +50,7 @@ function VerifyEmail() {
               <Image src="/darklogo.svg" width={120} height={60} alt='Joplin'/>
               </div>
             <p className='text-[#757575] text-[14px] font-medium flex justify-center w-3/4 mx-auto'>
-              Are You Employer? <Link href="/register" className=' text-[#02905E] pl-1'>Click Here</Link>
+              Are You Employer? <Link href="/register/company" className=' text-[#02905E] pl-1'>Click Here</Link>
             </p>
           </div>
           <div className=' space-y-2 text-center'>
@@ -91,11 +90,15 @@ function VerifyEmail() {
                     <span className="text-emerald-600">4:59</span>
                   </p>
 
-            <Button disabled={!isCodeComplete} type='submit' className='h-10 rounded-sm mt-1 w-3/4 bg-[#02905E] text-white text-[17px] font-medium hover:bg-[#04a165] cursor-pointer'>
-            {loading? <LoaderCircle className='animate-spin mx-auto text-white' size={18}/> : 'Verify'}
+            <Button disabled={!isCodeComplete || verifyMutation.isPending} type='submit' className='h-10 rounded-sm mt-1 w-3/4 bg-[#02905E] text-white text-[17px] font-medium hover:bg-[#04a165] cursor-pointer'>
+            {verifyMutation.isPending? <LoaderCircle className='animate-spin mx-auto text-white' size={18}/> : 'Verify'}
             </Button>
 
           </form>
+
+          {verifyMutation.isError && (
+            <p className='text-red-700 text-center text-sm mt-3'>{getErrorMessage(verifyMutation.error, "Verification failed.")}</p>
+          )}
 
         </CardContent>
 

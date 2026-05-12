@@ -7,19 +7,19 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { LoaderCircle } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useRouter } from 'next/navigation';
 import * as z from 'zod'
 import { signIn } from 'next-auth/react'
+import { useRegisterCompany } from '@/hooks/auth'
+import { getErrorMessage } from '@/lib/apiClient/error'
 
 
 
 function CompanyRegister() {
 
-      const [loading, setLoading] = useState(false)
-      const [errorMsg, setErrorMsg] = useState("")
       const router = useRouter()
+      const registerMutation = useRegisterCompany()
 
         interface Inputs{
         companyName: string,
@@ -45,32 +45,9 @@ function CompanyRegister() {
       })
 
       async function onSubmit(data: Inputs){
-        try{
-          console.log(data)
-          setLoading(true)
-          const response = await fetch("https://pnm6zhh3-7127.uks1.devtunnels.ms/api/Authentication/register-company", {
-            method: "POST",
-            headers: {"Content-Type": "application/json"
-                      ,"X-Tunnel-Skip-AntiPhishing-Page": "true"
-                      },
-            body: JSON.stringify(data)
-          })
-          const resData = await response.json()
-          setLoading(false)
-          if(response.ok){
-            router.push('/login/company')
-          }
-          else{
-            console.log(resData);
-            setErrorMsg(resData.message || "Registration failed. Please try again.")
-            setLoading(false)
-          }
-        }
-        catch(error){
-           console.error("Register error:", error)
-          setErrorMsg("An error occurred. Please try again.")
-          setLoading(false)
-        }
+        registerMutation.mutate(data, {
+          onSuccess: () => router.push('/login/company'),
+        });
       }
 
 
@@ -162,8 +139,8 @@ function CompanyRegister() {
             {errors.confirmPassword && <p className='text-sm text-red-600 mt-1'>{errors.confirmPassword.message}</p>}
             </div>
 
-            <Button type='submit' className='h-10 rounded-sm mt-1 w-full bg-[#02905E] text-white text-[17px] font-medium hover:bg-[#04a165] cursor-pointer '>
-            {loading? <LoaderCircle className='animate-spin mx-auto text-white' size={18}/> : 'Sign up'}
+            <Button type='submit' disabled={registerMutation.isPending} className='h-10 rounded-sm mt-1 w-full bg-[#02905E] text-white text-[17px] font-medium hover:bg-[#04a165] cursor-pointer '>
+            {registerMutation.isPending? <LoaderCircle className='animate-spin mx-auto text-white' size={18}/> : 'Sign up'}
             </Button>
 
           </form>
@@ -184,7 +161,7 @@ function CompanyRegister() {
 
         </CardContent>
 
-          <CardFooter className="flex justify-center pb-2">
+          <CardFooter className="flex flex-col justify-center pb-2 gap-2">
           <p className="text-sm text-muted-foreground">
             Do you already have an account?
             <Link
@@ -194,7 +171,7 @@ function CompanyRegister() {
               Login
             </Link>
           </p>
-           {errorMsg && <p className='text-red-700 text-center'>{errorMsg}</p>}
+           {registerMutation.isError && <p className='text-red-700 text-center text-sm'>{getErrorMessage(registerMutation.error, "Registration failed. Please try again.")}</p>}
         </CardFooter>
 
       </Card>

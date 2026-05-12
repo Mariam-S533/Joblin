@@ -9,17 +9,19 @@ import { NavigationMenu, NavigationMenuItem, NavigationMenuList } from "@/compon
 import { Badge } from "@/components/ui/badge"
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 
-import { Search, Bell, Menu, LogOut, LogIn, ChevronDown, User, Briefcase, BookOpen, Settings } from "lucide-react"
+import { Search, Bell, Menu, LogOut, LogIn, ChevronDown, User, Briefcase, BookOpen, Settings, UserCircle } from "lucide-react"
 
-import { useSession, signOut } from "next-auth/react"
+import { useSession } from "next-auth/react"
 import { Separator } from "../ui/separator"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "../ui/dropdown-menu"
+import { useLogout } from "@/hooks/useLogout"
 
 function JobseekerNavbar() {
 
   const pathname = usePathname()
   const session = useSession()
   const [open, setOpen] = useState(false)
+  const logout = useLogout()
 
   const navItems = [
     { href: "/", label: "Home" },
@@ -110,13 +112,7 @@ function JobseekerNavbar() {
                   <DropdownMenuTrigger asChild>
                     <button type="button" className="flex items-center gap-2 cursor-pointer focus:outline-none group">
                       <div className="">
-                        <Image
-                          src="/unknowon.webp"
-                          alt="user"
-                          width={40}
-                          height={30}
-                          className="rounded-full object-cover ring-2 ring-green-100 group-hover:ring-green-400 transition"
-                        />
+                        <UserCircle className="h-8 w-8 text-neutral-400 group-hover:text-emerald-500 transition-colors" />
                       </div>
                       <span className="hidden md:block text-[14px] font-semibold text-gray-800 max-w-30 truncate">
                         { "User"}
@@ -177,7 +173,7 @@ function JobseekerNavbar() {
                     <DropdownMenuSeparator />
 
                     <DropdownMenuItem
-                      onClick={() => signOut({ callbackUrl: "/login/job-seeker" })}
+                      onClick={() => logout("/login/job-seeker")}
                       className="flex items-center gap-2 text-red-500 focus:text-red-500 focus:bg-red-50 cursor-pointer"
                     >
                       <LogOut size={15} /> Logout

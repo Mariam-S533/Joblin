@@ -6,9 +6,11 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { LoaderCircle } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import * as z from 'zod'
+import { useResetPassword } from '@/hooks/auth'
+import { getErrorMessage } from '@/lib/apiClient/error'
 
 
 interface Inputs{
@@ -17,8 +19,8 @@ interface Inputs{
 }
 
 function ResetPass() {
-
-      const [loading, setLoading] = useState(false)
+      const router = useRouter()
+      const resetMutation = useResetPassword()
 
       const schema = z.object({
         password: z.string().nonempty("password is required *").min(8, 'Password must be at least 8 characters long'),
@@ -31,7 +33,9 @@ function ResetPass() {
       })
 
       async function onSubmit(data: Inputs){
-        console.log(data);
+        resetMutation.mutate(data, {
+          onSuccess: () => router.push('/login/company')
+        });
       }
 
   return (
@@ -76,11 +80,15 @@ function ResetPass() {
             {errors.repassword && <p className='text-sm text-red-600 mt-1'>{errors.repassword.message}</p>}
             </div>
 
-            <Button type='submit' className='h-10 rounded-sm mt-1 w-full bg-[#02905E] text-white text-[17px] font-medium hover:bg-[#04a165] cursor-pointer '>
-            {loading? <LoaderCircle className='animate-spin mx-auto text-white' size={18}/> : 'Save New Password'}
+            <Button type='submit' disabled={resetMutation.isPending} className='h-10 rounded-sm mt-1 w-full bg-[#02905E] text-white text-[17px] font-medium hover:bg-[#04a165] cursor-pointer '>
+            {resetMutation.isPending? <LoaderCircle className='animate-spin mx-auto text-white' size={18}/> : 'Save New Password'}
             </Button>
 
           </form>
+
+          {resetMutation.isError && (
+            <p className='text-red-700 text-center text-sm mt-3'>{getErrorMessage(resetMutation.error, "Failed to reset password.")}</p>
+          )}
 
         </CardContent>
 
@@ -88,7 +96,7 @@ function ResetPass() {
           <p className="text-sm text-muted-foreground">
             Not looking to change your password?{' '}
             <Link
-              href="/login"
+              href="/login/company"
               className="font-medium text-[#02905E] hover:text-[#04a165] underline cursor-pointer"
             >
               Back to Login
