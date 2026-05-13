@@ -11,6 +11,10 @@ import * as z from 'zod'
 import { useForgotPassword } from '@/hooks/auth'
 import { getErrorMessage } from '@/lib/apiClient/error'
 
+const forgotPasswordSchema = z.object({
+  email: z.string().min(1, "email is required *").email('Invalid email address'),
+})
+
 interface Inputs{
   email:string,
 }
@@ -19,12 +23,8 @@ function ForgetBass() {
 
         const forgotMutation = useForgotPassword()
   
-        const schema = z.object({
-          email: z.string().nonempty("email is required *").email('Invalid email address'),
-        })
-        
         const {register, handleSubmit, formState:{errors}} = useForm<Inputs>({
-          resolver: zodResolver(schema)
+          resolver: zodResolver(forgotPasswordSchema)
         })
   
         async function onSubmit(data: Inputs){

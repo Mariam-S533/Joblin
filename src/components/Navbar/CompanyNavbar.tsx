@@ -16,6 +16,13 @@ import { Separator } from "../ui/separator"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "../ui/dropdown-menu"
 import { useLogout } from "@/hooks/useLogout"
 
+const NAV_ITEMS = [
+  { href: "/company/home", label: "Home" },
+  { href: "/company/post-job", label: "Post a Job" },
+  { href: "/company/search-cv", label: "Search CV" },
+  { href: "/company/pricing", label: "Pricing" },
+]
+
 function CompanyNavbar() {
 
   const pathname = usePathname()
@@ -23,13 +30,6 @@ function CompanyNavbar() {
   const isAuthenticated = status === "authenticated"
   const [open, setOpen] = useState(false)
   const logout = useLogout()
-
-  const navItems = [
-    { href: "/company/home", label: "Home" },
-    { href: "/company/post-job", label: "Post a Job" },
-    { href: "/company/search-cv", label: "Search CV" },
-    { href: "/company/pricing", label: "Pricing" },
-  ]
 
   return (
 
@@ -57,7 +57,7 @@ function CompanyNavbar() {
           {/*  nav linkes */}
           <NavigationMenuList className="hidden lg:flex gap-10 text-[16px] font-medium">
 
-            {navItems.map((item) => (
+            {NAV_ITEMS.map((item) => (
               <NavigationMenuItem
                 key={item.href}
                 className={`transition
@@ -231,7 +231,7 @@ function CompanyNavbar() {
 
                   <div className="flex flex-col gap-5">
 
-                    {navItems.map((item) => (
+                    {NAV_ITEMS.map((item) => (
 
                       <Link
                         key={item.href}

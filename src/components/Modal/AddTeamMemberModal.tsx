@@ -47,7 +47,7 @@ export default function AddTeamMemberModal({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleChange = (field: keyof TeamMember, value: string) => {
-    setFormData({ ...formData, [field]: value });
+    setFormData((prev) => ({ ...prev, [field]: value }));
     // Clear validation error for this field when user edits it
     setErrors((prev) => {
       if (!(field in prev)) return prev;

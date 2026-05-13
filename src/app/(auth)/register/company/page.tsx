@@ -16,32 +16,32 @@ import { getErrorMessage } from '@/lib/apiClient/error'
 
 
 
+const companyRegisterSchema = z.object({
+  companyName: z.string().min(1, "first name is required *").min(2, 'First name must be at least 2 characters long'),
+  domain: z.string().min(1, "last name is required *").min(2, 'Last name must be at least 2 characters long'),
+  description: z.string().min(1, "email is required *").min(10, 'Description must be at least 10 characters long'),
+  email: z.string().min(1, "email is required *").email('Invalid email address'),
+  password: z.string().min(1, "password is required *").min(8, 'Password must be at least 8 characters long'),
+  confirmPassword: z.string().min(1, "password is required *").min(8, 'Password must be at least 8 characters long'),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Password doesn't match", path: ["confirmPassword"] })
+
+interface Inputs{
+  companyName: string,
+  domain: string,
+  description: string,
+  email:string,
+  password: string,
+  confirmPassword: string,
+}
+
 function CompanyRegister() {
 
       const router = useRouter()
       const registerMutation = useRegisterCompany()
 
-        interface Inputs{
-        companyName: string,
-        domain: string,
-        description: string,
-        email:string,
-        password: string,
-        confirmPassword: string,
-      }
-
-      const schema = z.object({
-        companyName: z.string().nonempty("first name is required *").min(2, 'First name must be at least 2 characters long'),
-        domain: z.string().nonempty("last name is required *").min(2, 'Last name must be at least 2 characters long'),
-        description: z.string().nonempty("email is required *").min(10, 'Description must be at least 10 characters long'),
-        email: z.string().nonempty("email is required *").email('Invalid email address'),
-        password: z.string().nonempty("password is required *").min(8, 'Password must be at least 8 characters long'),
-        confirmPassword: z.string().nonempty("password is required *").min(8, 'Password must be at least 8 characters long'),
-      }).refine((data) => data.password === data.confirmPassword, {
-        message: "Password doesn't match",path: ["confirmPassword"]})
-      
       const {register, handleSubmit, formState:{errors}} = useForm<Inputs>({
-        resolver: zodResolver(schema)
+        resolver: zodResolver(companyRegisterSchema)
       })
 
       async function onSubmit(data: Inputs){

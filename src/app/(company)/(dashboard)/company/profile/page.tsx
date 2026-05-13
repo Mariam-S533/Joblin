@@ -1,7 +1,7 @@
 "use client";
 import { useSession } from "next-auth/react";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Upload,
   Building2,
@@ -37,9 +37,10 @@ import { getErrorMessage } from "@/lib/apiClient/error";
 
 type TeamMemberWithId = TeamMember & { id?: string };
 
+const FALLBACK_LOGO =
+  "https://upload.wikimedia.org/wikipedia/commons/4/44/BMW.svg";
+
 export default function CompanyProfile() {
-  const FALLBACK_LOGO =
-    "https://upload.wikimedia.org/wikipedia/commons/4/44/BMW.svg";
   const [isEditing, setIsEditing] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [teamMembers, setTeamMembers] = useState<TeamMemberWithId[]>([]);
@@ -78,7 +79,7 @@ export default function CompanyProfile() {
   const isUploadingLogo = uploadLogoMutation.isPending;
   const isUploadingPhotos = uploadPhotosMutation.isPending;
 
-  const handleChange = (field: keyof CompanyProfileFormData, value: string) => {
+  const handleChange = useCallback((field: keyof CompanyProfileFormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     // Clear validation error for this field when user edits it
     setErrors((prev) => {
@@ -87,7 +88,12 @@ export default function CompanyProfile() {
       delete next[field];
       return next;
     });
-  };
+  }, []);
+
+  const handleStartEditing = useCallback(() => {
+    setIsEditing(true);
+    setErrors({});
+  }, []);
 
   // ─── Validation ─────────────────────────────────────────────────────
   const validate = (): boolean => {
@@ -289,10 +295,7 @@ export default function CompanyProfile() {
             isEditing={isEditing}
             isSaving={isSaving}
             isUploadingLogo={isUploadingLogo}
-            onEdit={() => {
-              setIsEditing(true);
-              setErrors({});
-            }}
+            onEdit={handleStartEditing}
             onSave={() => void handleSaveProfile()}
             onLogoUpload={handleLogoUpload}
           />

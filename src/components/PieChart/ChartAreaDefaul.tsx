@@ -36,10 +36,12 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
+const tooltipContent = <ChartTooltipContent indicator="line" />
+
 export function ChartAreaDefault() {
   return (
   
-    <div className="w-28 h-14 relative"> 
+    <div className="w-28 h-14 relative">
     <ChartContainer config={chartConfig}>
           <AreaChart
             accessibilityLayer
@@ -59,7 +61,7 @@ export function ChartAreaDefault() {
             />
             <ChartTooltip
               cursor={false}
-              content={<ChartTooltipContent indicator="line" />}
+              content={tooltipContent}
             />
             <Area
               dataKey="desktop"

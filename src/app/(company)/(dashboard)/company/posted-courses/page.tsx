@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import {
@@ -140,18 +140,21 @@ function PostedCoursesContent({
   const deleteMutation = useDeletePostedCourse();
   const toggleMutation = useToggleCourseStatus();
 
-  const handleDeleteCourse = async (courseId: string) => {
-    if (confirm("Are you sure you want to delete this course?")) {
-      await deleteMutation.mutateAsync(courseId);
-    }
-  };
+  const handleDeleteCourse = useCallback(
+    async (courseId: string) => {
+      if (confirm("Are you sure you want to delete this course?")) {
+        await deleteMutation.mutateAsync(courseId);
+      }
+    },
+    [deleteMutation],
+  );
 
-  const handleToggleStatus = async (
-    courseId: string,
-    newStatus: PostedCourseStatus,
-  ) => {
-    await toggleMutation.mutateAsync({ courseId, newStatus });
-  };
+  const handleToggleStatus = useCallback(
+    async (courseId: string, newStatus: PostedCourseStatus) => {
+      await toggleMutation.mutateAsync({ courseId, newStatus });
+    },
+    [toggleMutation],
+  );
 
   const courses = data?.courses ?? [];
   const departments = data?.departments ?? [];

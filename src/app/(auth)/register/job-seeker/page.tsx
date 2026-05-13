@@ -16,30 +16,30 @@ import { getErrorMessage } from '@/lib/apiClient/error'
 
 
 
+const seekerRegisterSchema = z.object({
+  firstName: z.string().min(1, "first name is required *").min(2, 'First name must be at least 2 characters long'),
+  lastName: z.string().min(1, "last name is required *").min(2, 'Last name must be at least 2 characters long'),
+  email: z.string().min(1, "email is required *").email('Invalid email address'),
+  password: z.string().min(1, "password is required *").min(8, 'Password must be at least 8 characters long'),
+  confirmPassword: z.string().min(1, "password is required *").min(8, 'Password must be at least 8 characters long'),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Password doesn't match", path: ["confirmPassword"] })
+
+interface Inputs{
+  firstName: string,
+  lastName: string,
+  email:string,
+  password: string,
+  confirmPassword: string,
+}
+
 function JobseekerRegister() {
 
       const router = useRouter()
       const registerMutation = useRegisterSeeker()
 
-        interface Inputs{
-        firstName: string,
-        lastName: string,
-        email:string,
-        password: string,
-        confirmPassword: string,
-      }
-
-      const schema = z.object({
-        firstName: z.string().nonempty("first name is required *").min(2, 'First name must be at least 2 characters long'),
-        lastName: z.string().nonempty("last name is required *").min(2, 'Last name must be at least 2 characters long'),
-        email: z.string().nonempty("email is required *").email('Invalid email address'),
-        password: z.string().nonempty("password is required *").min(8, 'Password must be at least 8 characters long'),
-        confirmPassword: z.string().nonempty("password is required *").min(8, 'Password must be at least 8 characters long'),
-      }).refine((data) => data.password === data.confirmPassword, {
-        message: "Password doesn't match",path: ["confirmPassword"]})
-      
       const {register, handleSubmit, formState:{errors}} = useForm<Inputs>({
-        resolver: zodResolver(schema)
+        resolver: zodResolver(seekerRegisterSchema)
       })
 
       async function onSubmit(data: Inputs){

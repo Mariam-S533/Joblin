@@ -16,6 +16,11 @@ import { useForm } from 'react-hook-form'
 import * as z from 'zod'
 
 
+const loginSchema = z.object({
+  email: z.string().min(1, "email is required *").email('Invalid email address'),
+  password: z.string().min(1, "password is required *").min(8, 'Password must be at least 8 characters long'),
+})
+
 interface Inputs{
   email:string,
   password: string,
@@ -28,13 +33,8 @@ function CompanyLogin() {
         const router = useRouter()
         const [errorMsg, setErrorMsg] = useState("")
   
-        const schema = z.object({
-          email: z.string().nonempty("email is required *").email('Invalid email address'),
-          password: z.string().nonempty("password is required *").min(8, 'Password must be at least 8 characters long'),
-        })
-        
         const {register, handleSubmit, formState:{errors}} = useForm<Inputs>({
-          resolver: zodResolver(schema)
+          resolver: zodResolver(loginSchema)
         })
   
         async function onSubmit(data: Inputs){

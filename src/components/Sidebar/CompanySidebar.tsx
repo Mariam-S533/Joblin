@@ -124,11 +124,9 @@ export default function CompanySidebar() {
   const logout = useLogout();
 
   const toggleSidebar = useCallback(() => {
+    if (!isCollapsed) setOpenDropdown(null);
     setIsCollapsed(!isCollapsed);
-    if (!isCollapsed) {
-      setOpenDropdown(null);
-    }
-  },[isCollapsed])  ;
+  }, [isCollapsed]);
 
   const toggleDropdown = useCallback((dropdown: string) => {
     if (isCollapsed) {
@@ -137,7 +135,7 @@ export default function CompanySidebar() {
     } else {
       setOpenDropdown(openDropdown === dropdown ? null : dropdown);
     }
-  },[])  ;
+  }, [isCollapsed, openDropdown]);
 
   return (
     <aside

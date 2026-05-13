@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { BadgeList } from "@/components/job-post/BadgeList";
@@ -35,6 +35,23 @@ export function SkillComposer({
     setLevelValue("");
   };
 
+  const badgeItems = useMemo(
+    () => items.map((item) => `${item.field} / ${item.level}`),
+    [items],
+  );
+
+  const handleBadgeRemove = useCallback(
+    (value: string) => {
+      const found = items.find(
+        (item) => `${item.field} / ${item.level}` === value,
+      );
+      if (found) {
+        onRemove(found);
+      }
+    },
+    [items, onRemove],
+  );
+
   return (
     <div className="space-y-4">
       <div className="grid gap-4 md:grid-cols-[1fr_1fr_auto]">
@@ -55,17 +72,7 @@ export function SkillComposer({
         </Button>
       </div>
 
-      <BadgeList
-        items={items.map((item) => `${item.field} / ${item.level}`)}
-        onRemove={(value) => {
-          const found = items.find(
-            (item) => `${item.field} / ${item.level}` === value,
-          );
-          if (found) {
-            onRemove(found);
-          }
-        }}
-      />
+      <BadgeList items={badgeItems} onRemove={handleBadgeRemove} />
     </div>
   );
 }

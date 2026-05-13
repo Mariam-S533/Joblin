@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowRight,
@@ -18,6 +18,17 @@ import { useSession } from "next-auth/react";
 import { useCompanyHomeData } from "@/hooks/companyHome";
 import { getErrorMessage } from "@/lib/apiClient/error";
 
+const BOX_STYLE = {
+  background: "var(--gray-a2)",
+  borderRadius: "var(--radius-3)",
+};
+
+const EMPTY_STATS = {
+  reviewCount: "—",
+  rating: "—",
+  companyCount: "—",
+};
+
 export default function ForCompaniesPage() {
   const [activeIndex, setActiveIndex] = useState(0);
   const router = useRouter();
@@ -30,7 +41,7 @@ export default function ForCompaniesPage() {
 
   const homeQuery = useCompanyHomeData();
 
-  const handlePostJob = () => {
+  const handlePostJob = useCallback(() => {
     if (!isAuthenticated) {
       router.push("/login/company");
       return;
@@ -41,23 +52,22 @@ export default function ForCompaniesPage() {
       experience: experience,
     });
     router.push(`/company/post-job?${params.toString()}`);
-  };
+  }, [isAuthenticated, jobTitle, jobType, experience, router]);
 
   // Use fetched data or fall back to empty arrays/objects
-  const stats = homeQuery.data?.stats ?? {
-    reviewCount: "—",
-    rating: "—",
-    companyCount: "—",
-  };
+  const stats = homeQuery.data?.stats ?? EMPTY_STATS;
   const efficientSolutions = homeQuery.data?.efficientSolutions ?? [];
   const strategyCards = homeQuery.data?.strategyCards ?? [];
   const testimonials = homeQuery.data?.testimonials ?? [];
 
-  const trustedCards = [
-    { label: "Review", value: stats.reviewCount },
-    { label: "Rating", value: stats.rating },
-    { label: "Company", value: stats.companyCount },
-  ];
+  const trustedCards = useMemo(
+    () => [
+      { label: "Review", value: stats.reviewCount },
+      { label: "Rating", value: stats.rating },
+      { label: "Company", value: stats.companyCount },
+    ],
+    [stats.reviewCount, stats.rating, stats.companyCount],
+  );
 
   return (
     <div className="text-[#101825]">
@@ -113,12 +123,7 @@ export default function ForCompaniesPage() {
           </section>
         </div>
 
-        <Box
-          style={{
-            background: "var(--gray-a2)",
-            borderRadius: "var(--radius-3)",
-          }}
-        >
+        <Box style={BOX_STYLE}>
           <Container size="1">
             <section className="mx-auto w-[92%] max-w-7xl py-14">
               <div className="text-center">

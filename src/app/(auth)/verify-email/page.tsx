@@ -12,6 +12,10 @@ import * as z from 'zod'
 import { useVerifyEmail } from '@/hooks/auth'
 import { getErrorMessage } from '@/lib/apiClient/error'
 
+const verifyEmailSchema = z.object({
+  verifyCode: z.string().min(1, "verification code is required *"),
+})
+
 interface codeType{
   verifyCode: string
 }
@@ -21,12 +25,8 @@ function VerifyEmail() {
         const router = useRouter()
         const verifyMutation = useVerifyEmail()
   
-        const schema = z.object({
-          verifyCode: z.string().nonempty("verification code is required *"),
-        })
-        
         const { control ,handleSubmit} = useForm<codeType>({
-          resolver: zodResolver(schema),
+          resolver: zodResolver(verifyEmailSchema),
           defaultValues:{
             verifyCode: ""
           },

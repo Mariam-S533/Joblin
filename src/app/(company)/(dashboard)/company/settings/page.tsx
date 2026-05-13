@@ -1,7 +1,7 @@
 "use client";
 import { useSession } from "next-auth/react";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Bell,
   Building2,
@@ -175,21 +175,26 @@ export default function CompanyAccountSettingsPage() {
     }
   }, [settingsQuery.isSuccess]);
 
-  const handleChange = (
-    field: keyof CompanyAccountSettingsFormData,
-    value: string | boolean,
-  ) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-    setErrors((prev) => {
-      if (!(field in prev)) return prev;
-      const next = { ...prev };
-      delete next[field];
-      return next;
-    });
-  };
+  const handleChange = useCallback(
+    (field: keyof CompanyAccountSettingsFormData, value: string | boolean) => {
+      setFormData((prev) => ({
+        ...prev,
+        [field]: value,
+      }));
+      setErrors((prev) => {
+        if (!(field in prev)) return prev;
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      });
+    },
+    [],
+  );
+
+  const handleStartEditing = useCallback(() => {
+    setIsEditing(true);
+    setErrors({});
+  }, []);
 
   const validate = () => {
     const nextErrors: Record<string, string> = {};
@@ -351,10 +356,7 @@ export default function CompanyAccountSettingsPage() {
         isUploadingLogo={isUploadingLogo}
         editLabel="Update settings"
         saveLabel="Save settings"
-        onEdit={() => {
-          setIsEditing(true);
-          setErrors({});
-        }}
+        onEdit={handleStartEditing}
         onSave={() => void handleSaveSettings()}
         onLogoUpload={handleLogoUpload}
       />

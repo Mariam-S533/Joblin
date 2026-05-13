@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import {
@@ -230,24 +230,32 @@ function PostedJobsContent({
   const jobs = data?.jobs ?? [];
   const departments = data?.departments ?? [];
 
-  const handleDeleteJob = (jobId: string) => {
-    setMutationError(null);
-    deleteJob.mutate(jobId, {
-      onError: (err) =>
-        setMutationError(err.message || "Failed to delete job."),
-    });
-  };
+  const handleDismissError = useCallback(() => setMutationError(null), []);
 
-  const handleToggleStatus = (jobId: string, newStatus: PostedJobStatus) => {
-    setMutationError(null);
-    toggleStatus.mutate(
-      { jobId, newStatus },
-      {
+  const handleDeleteJob = useCallback(
+    (jobId: string) => {
+      setMutationError(null);
+      deleteJob.mutate(jobId, {
         onError: (err) =>
-          setMutationError(err.message || "Failed to update job status."),
-      },
-    );
-  };
+          setMutationError(err.message || "Failed to delete job."),
+      });
+    },
+    [deleteJob],
+  );
+
+  const handleToggleStatus = useCallback(
+    (jobId: string, newStatus: PostedJobStatus) => {
+      setMutationError(null);
+      toggleStatus.mutate(
+        { jobId, newStatus },
+        {
+          onError: (err) =>
+            setMutationError(err.message || "Failed to update job status."),
+        },
+      );
+    },
+    [toggleStatus],
+  );
 
   return (
     <>
@@ -255,7 +263,7 @@ function PostedJobsContent({
       {mutationError && (
         <MutationErrorBanner
           message={mutationError}
-          onDismiss={() => setMutationError(null)}
+          onDismiss={handleDismissError}
         />
       )}
 

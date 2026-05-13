@@ -45,6 +45,8 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
+const tooltipContent = <ChartTooltipContent hideLabel />
+
 export function ChartPieDonutText() {
   const totalVisitors = React.useMemo(() => {
     return chartData.reduce((acc, curr) => acc + curr.visitors, 0)
@@ -60,7 +62,7 @@ export function ChartPieDonutText() {
           <PieChart>
             <ChartTooltip
               cursor={false}
-              content={<ChartTooltipContent hideLabel />}
+              content={tooltipContent}
             />
             <Pie
               data={chartData}
