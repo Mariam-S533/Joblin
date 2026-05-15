@@ -25,12 +25,12 @@ const authProxy = withAuth(
     }
 
     // 3. Token is guaranteed to exist. Process role-based authorization safely.
-    if (path.startsWith("/company") && token.role !== "Company") {
+    if (path.startsWith("/company") && token?.role !== "Company") {
       const redirectTarget = token.role === "Seeker" ? "/job-seeker/home" : "/";
       return NextResponse.redirect(new URL(redirectTarget, req.url));
     }
 
-    if (path.startsWith("/job-seeker") && token.role !== "Seeker") {
+    if (path.startsWith("/job-seeker") && token?.role !== "Seeker") {
       const redirectTarget = token.role === "Company" ? "/company/home" : "/";
       return NextResponse.redirect(new URL(redirectTarget, req.url));
     }

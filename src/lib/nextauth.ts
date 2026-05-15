@@ -18,36 +18,6 @@ const googleProviderConfig = {
   clientSecret: googleClientSecret as string,
 };
 
-/** Whether to use mock data instead of the real .NET backend */
-const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === "true";
-
-/** Mock users for testing without a backend */
-const MOCK_USERS: Record<
-  string,
-  {
-    id: string;
-    displayName: string;
-    email: string;
-    roles: string[];
-    token: string;
-  }
-> = {
-  "company@mock.com": {
-    id: "mock-company-1",
-    displayName: "Mock Company Ltd",
-    email: "company@mock.com",
-    roles: ["Company"],
-    token: "mock-jwt-token-company",
-  },
-  "seeker@mock.com": {
-    id: "mock-seeker-1",
-    displayName: "Mock Seeker",
-    email: "seeker@mock.com",
-    roles: ["Seeker"],
-    token: "mock-jwt-token-seeker",
-  },
-};
-
 export const options: AuthOptions = {
   providers: [
     ...(useGoogleProvider
@@ -74,54 +44,6 @@ export const options: AuthOptions = {
         loginType: { label: "loginType", type: "text" },
       },
       async authorize(credentials) {
-        // ─── Mock mode: bypass real backend ────────────────────────────
-        if (USE_MOCK) {
-          const mockUser = credentials?.email
-            ? MOCK_USERS[credentials.email]
-            : undefined;
-
-          if (!mockUser) {
-            // Allow any email/password combo in mock mode with a sensible default
-            const loginType = credentials?.loginType ?? "Company";
-            const role = loginType === "Company" ? "Company" : "Seeker";
-            return {
-              id: `mock-${role.toLowerCase()}-1`,
-              displayName:
-                role === "Company" ? "Mock Company Ltd" : "Mock Seeker",
-              email: credentials?.email ?? `mock@${role.toLowerCase()}.com`,
-              roles: [role],
-              token: `mock-jwt-token-${role.toLowerCase()}`,
-            };
-          }
-
-          // Validate role matches login type
-          if (
-            credentials?.loginType === "Seeker" &&
-            mockUser.roles[0] === "Company"
-          ) {
-            throw new Error(
-              "You are an Employer. Please use the Company login page.",
-            );
-          }
-          if (
-            credentials?.loginType === "Company" &&
-            mockUser.roles[0] === "Seeker"
-          ) {
-            throw new Error(
-              "You are a Job Seeker. Please use the Job Seeker login page.",
-            );
-          }
-
-          return {
-            id: mockUser.id,
-            displayName: mockUser.displayName,
-            email: mockUser.email,
-            roles: mockUser.roles,
-            token: mockUser.token,
-          };
-        }
-
-        // ─── Real backend mode ─────────────────────────────────────────
         try {
           if (!credentials?.email || !credentials.password) {
             return null;
@@ -192,44 +114,17 @@ export const options: AuthOptions = {
           account?.provider === "google-company-login")
       ) {
         const cookieStore = await cookies();
-        const isCompanyRegister = account.provider === "google-company-register";
+        const isCompanyRegister =
+          account.provider === "google-company-register";
 
         // ─── Read registration form data from cookies ─────────────
         // These are set by the register form before the OAuth redirect.
-        // Available across all auth actions so both the request builder
-        // and the token assignment can access them.
         const companyName =
           cookieStore.get("google_reg_companyName")?.value ?? "";
         const domain = cookieStore.get("google_reg_domain")?.value ?? null;
         const description =
           cookieStore.get("google_reg_description")?.value ?? null;
 
-        // ─── Mock mode: skip backend, return mock data ──────────────
-        // In mock mode there is no real backend to call, so we construct
-        // the token directly from the Google company provider and profile.
-        if (USE_MOCK) {
-          token.id = "mock-google-company-1";
-          token.displayName = isCompanyRegister
-            ? companyName || user.name || "Mock Google Company"
-            : (user.name ?? "Mock Google Company");
-          token.email = user.email ?? "";
-          token.role = "Company";
-          token.accessToken = "mock-google-jwt-company";
-
-          // Clean up cookies in mock mode too
-          const cookiesToDelete = [
-            "google_reg_companyName",
-            "google_reg_domain",
-            "google_reg_description",
-          ];
-          for (const name of cookiesToDelete) {
-            cookieStore.delete(name);
-          }
-
-          return token;
-        }
-
-        // ─── Real backend mode ──────────────────────────────────────
         try {
           const idToken = account.id_token ?? "";
           const effectiveCompanyName = companyName || user.name || "";

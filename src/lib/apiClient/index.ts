@@ -1,6 +1,5 @@
-import { API_BASE_URL, USE_MOCK, API_WITH_CREDENTIALS } from "./config";
+import { API_BASE_URL, API_WITH_CREDENTIALS } from "./config";
 import { ApiError } from "./error";
-import { mockRouter } from "./mockRouter";
 import type { ApiClientOptions, ApiResponse, HttpMethod } from "./types";
 
 /**
@@ -51,15 +50,6 @@ const request = async <T>(
   options: ApiClientOptions = {},
 ): Promise<ApiResponse<T>> => {
   const method = (options.method ?? "GET") as HttpMethod;
-
-  // ─── Mock mode ───────────────────────────────────────────────────
-  if (USE_MOCK) {
-    const payload = await mockRouter<T>(path, { ...options, method });
-    if (!payload.success) {
-      throw new ApiError(payload.error || payload.message || "Request failed.");
-    }
-    return payload;
-  }
 
   // ─── External .NET backend ───────────────────────────────────────
   const normalized = normalizeBody(options.body, options.headers);

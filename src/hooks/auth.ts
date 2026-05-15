@@ -50,9 +50,9 @@ export const useRegisterSeeker = () =>
 /**
  * Register a new company account via Google OAuth.
  *
- * Note: This hook is primarily for mock mode testing. In production,
- * the Google OAuth flow is handled by NextAuth's jwt callback (server-side).
- * The hook allows testing the service/mock layer from a React component.
+ * Note: In production, the Google OAuth flow is handled by NextAuth's
+ * jwt callback (server-side). This hook is available for direct service
+ * calls if needed.
  *
  * Mutation input: GoogleRegisterCompanyPayload
  * Mutation result: GoogleAuthResponse (ProblemDetails-shaped status body)
@@ -69,9 +69,9 @@ export const useGoogleRegisterCompany = () =>
  * determines the user type from the existing account associated with the
  * Google email.
  *
- * Note: This hook is primarily for mock mode testing. In production,
- * the Google OAuth flow is handled by NextAuth's jwt callback (server-side).
- * The hook allows testing the service/mock layer from a React component.
+ * Note: In production, the Google OAuth flow is handled by NextAuth's
+ * jwt callback (server-side). This hook is available for direct service
+ * calls if needed.
  *
  * Mutation input: GoogleLoginPayload
  * Mutation result: GoogleAuthResponse (ProblemDetails-shaped status body)
