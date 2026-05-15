@@ -2,8 +2,9 @@ import type { ApiResponse } from "@/lib/apiClient/types";
 import type {
   AuthUserResponse,
   AuthMessageResponse,
-  GoogleRegisterResponse,
+  GoogleAuthResponse,
   GoogleRegisterCompanyPayload,
+  GoogleLoginPayload,
   RegisterCompanyPayload,
   RegisterSeekerPayload,
 } from "@/features/auth/types";
@@ -49,17 +50,37 @@ export const registerSeekerMock = async (
 
 /**
  * Mock for google-register-company endpoint.
- * Returns an ENVELOPED response: { success, data: { userId, email, token } }
- * This mirrors the real .NET backend response shape for this endpoint.
+ * Mirrors the current backend response contract for Google registration.
  */
 export const googleRegisterCompanyMock = async (
-  payload?: Partial<GoogleRegisterCompanyPayload>,
-): Promise<ApiResponse<GoogleRegisterResponse>> => {
+  _payload?: Partial<GoogleRegisterCompanyPayload>,
+): Promise<ApiResponse<GoogleAuthResponse>> => {
+  void _payload;
   await wait(800);
   return createResponse({
-    userId: "mock-google-company-" + Math.random().toString(36).slice(2, 9),
-    email: payload?.idToken ? "google-company@test.com" : "mock-google-company@test.com",
-    token: "mock-google-jwt-" + Math.random().toString(36).slice(2, 15),
+    type: null,
+    title: null,
+    status: "Google company registration succeeded.",
+    detail: null,
+    instance: null,
+  });
+};
+
+/**
+ * Mock for google-login endpoint.
+ * Mirrors the current backend response contract for Google login.
+ */
+export const googleLoginMock = async (
+  _payload?: Partial<GoogleLoginPayload>,
+): Promise<ApiResponse<GoogleAuthResponse>> => {
+  void _payload;
+  await wait(800);
+  return createResponse({
+    type: null,
+    title: null,
+    status: "Google login succeeded.",
+    detail: null,
+    instance: null,
   });
 };
 

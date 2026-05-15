@@ -17,6 +17,11 @@ export type RegisterSeekerPayload = {
   confirmPassword: string;
 };
 
+export type LoginPayload = {
+  email: string;
+  password: string;
+};
+
 // ─── Password / Verification Payloads ───────────────────────────────
 
 export type ForgotPasswordPayload = {
@@ -47,6 +52,16 @@ export type GoogleRegisterCompanyPayload = {
   description: string | null;
 };
 
+/**
+ * Payload for google-login endpoint.
+ * idToken comes from Google OAuth (obtained by NextAuth during the redirect).
+ * This endpoint is shared between company and seeker login — the backend
+ * determines the user type from the existing account associated with the Google email.
+ */
+export type GoogleLoginPayload = {
+  idToken: string;
+};
+
 // ─── Responses ──────────────────────────────────────────────────────
 
 /**
@@ -63,24 +78,29 @@ export type AuthUserResponse = {
 };
 
 /**
- * Returned by google-register-company and google-register-seeker endpoints.
- * Unlike register-company/register-seeker, these endpoints return an
- * ENVELOPED response: { success: true, data: { userId, email, token } }.
- * Note: field names differ from AuthUserResponse (userId vs id, no displayName/roles).
- */
-export type GoogleRegisterResponse = {
-  userId: string;
-  email: string;
-  token: string;
-};
-
-/**
  * Returned by forgot-password, reset-password, and verify-email endpoints.
  * These endpoints return a simple message string.
  */
 export type AuthMessageResponse = {
   message: string;
 };
+
+/**
+ * .NET ProblemDetails response (RFC 7807).
+ * Returned by google-register-company and google-login according to the
+ * current API contract. NEEDS BACKEND CONFIRMATION: this shape does not
+ * include the app JWT, user id, role, or email needed for authenticated
+ * downstream API calls after Google auth.
+ */
+export type ProblemDetailsResponse = {
+  type: string | null;
+  title: string | null;
+  status: string | null;
+  detail: string | null;
+  instance: string | null;
+};
+
+export type GoogleAuthResponse = ProblemDetailsResponse;
 
 /**
  * @deprecated Use AuthUserResponse or AuthMessageResponse instead.

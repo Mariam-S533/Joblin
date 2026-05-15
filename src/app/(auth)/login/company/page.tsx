@@ -182,9 +182,17 @@ function CompanyLogin() {
                 </div>
 
                 <Button
-                  onClick={() =>
-                    signIn("google", { callbackUrl: "/company/home" })
-                  }
+                  onClick={() => {
+                    // Set auth_action cookie so the NextAuth jwt callback
+                    // knows this is a company login (not registration).
+                    // The callback reads this cookie to route to the
+                    // google-login endpoint and assign the correct role.
+                    const cookieOptions = "path=/; max-age=300; SameSite=Lax";
+                    document.cookie = `auth_action=login_company; ${cookieOptions}`;
+                    signIn("google-company-login", {
+                      callbackUrl: "/company/home",
+                    });
+                  }}
                   type="button"
                   className="w-full h-11 rounded-sm border border-[#04a165] transparent bg-white text-[#04a165] font-medium text-[16px] hover:bg-gray-50 flex items-center justify-center gap-2 overflow-hidden cursor-pointer"
                 >
@@ -192,7 +200,7 @@ function CompanyLogin() {
                     src="/google-icon.svg"
                     width={20}
                     height={20}
-                    alt="googel logo"
+                    alt="Google logo"
                   />
                   <span>Continue with Google</span>
                 </Button>

@@ -56,6 +56,7 @@ import {
   registerCompanyMock,
   registerSeekerMock,
   googleRegisterCompanyMock,
+  googleLoginMock,
   forgotPasswordMock,
   resetPasswordMock,
   verifyEmailMock,
@@ -64,6 +65,7 @@ import type {
   RegisterCompanyPayload,
   RegisterSeekerPayload,
   GoogleRegisterCompanyPayload,
+  GoogleLoginPayload,
 } from "@/features/auth/types";
 
 const parseJsonBody = <T>(body: unknown): T => {
@@ -440,7 +442,10 @@ export const mockRouter = async <T>(
       };
     }
     const body = parseJsonBody<{ status: PostedCourseStatus }>(options.body);
-    return (await toggleCourseStatusMock(courseId, body.status)) as ApiResponse<T>;
+    return (await toggleCourseStatusMock(
+      courseId,
+      body.status,
+    )) as ApiResponse<T>;
   }
 
   // ─── Authentication ──────────────────────────────────────────────
@@ -470,7 +475,10 @@ export const mockRouter = async <T>(
     )) as ApiResponse<T>;
   }
 
-  if (pathname === "/Authentication/google-register-company" && method === "POST") {
+  if (
+    pathname === "/Authentication/google-register-company" &&
+    method === "POST"
+  ) {
     if (!options.body) {
       return {
         success: false,
@@ -480,6 +488,19 @@ export const mockRouter = async <T>(
     }
     return (await googleRegisterCompanyMock(
       parseJsonBody<GoogleRegisterCompanyPayload>(options.body),
+    )) as ApiResponse<T>;
+  }
+
+  if (pathname === "/Authentication/google-login" && method === "POST") {
+    if (!options.body) {
+      return {
+        success: false,
+        data: undefined as T,
+        error: "Request body is required.",
+      };
+    }
+    return (await googleLoginMock(
+      parseJsonBody<GoogleLoginPayload>(options.body),
     )) as ApiResponse<T>;
   }
 

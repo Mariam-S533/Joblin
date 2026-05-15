@@ -2,13 +2,15 @@ import { apiClient } from "@/lib/apiClient";
 import type {
   RegisterCompanyPayload,
   RegisterSeekerPayload,
+  LoginPayload,
   ForgotPasswordPayload,
   ResetPasswordPayload,
   VerifyEmailPayload,
   GoogleRegisterCompanyPayload,
+  GoogleLoginPayload,
   AuthUserResponse,
   AuthMessageResponse,
-  GoogleRegisterResponse,
+  GoogleAuthResponse,
 } from "@/features/auth/types";
 
 /**
@@ -18,12 +20,23 @@ import type {
  * Adjust the paths below to match your .NET controller routes.
  */
 const endpoints = {
+  login: "/Authentication/login",
   registerCompany: "/Authentication/register-company",
   registerSeeker: "/Authentication/register-seeker",
   googleRegisterCompany: "/Authentication/google-register-company",
+  googleLogin: "/Authentication/google-login",
   forgotPassword: "/Authentication/forgot-password",
   resetPassword: "/Authentication/reset-password",
   verifyEmail: "/Authentication/verify-email",
+};
+
+export const login = async (payload: LoginPayload) => {
+  const response = await apiClient.post<AuthUserResponse>(
+    endpoints.login,
+    payload,
+    { auth: false },
+  );
+  return response.data;
 };
 
 /**
@@ -53,6 +66,7 @@ export const registerCompany = async (payload: RegisterCompanyPayload) => {
   const response = await apiClient.post<AuthUserResponse>(
     endpoints.registerCompany,
     normalized,
+    { auth: false },
   );
   return response.data;
 };
@@ -60,20 +74,32 @@ export const registerCompany = async (payload: RegisterCompanyPayload) => {
 /**
  * Register a new company account via Google OAuth.
  *
- * Unlike register-company, this endpoint returns an ENVELOPED response:
- * { success: true, data: { userId, email, token } }
- * The apiClient auto-wraps flat responses, but since this response already
- * has a `success` field, it will be treated as enveloped and the `data`
- * property will be extracted automatically.
- *
- * Note: This function is primarily for mock mode testing. In production,
- * NextAuth's jwt callback calls the backend directly (server-side fetch).
+ * The current backend contract returns a ProblemDetails-shaped body on
+ * success. NEEDS BACKEND CONFIRMATION: it does not include the app token.
  */
-export const googleRegisterCompany = async (payload: GoogleRegisterCompanyPayload) => {
-  const normalized = stripNulls(payload);
-  const response = await apiClient.post<GoogleRegisterResponse>(
+export const googleRegisterCompany = async (
+  payload: GoogleRegisterCompanyPayload,
+) => {
+  const response = await apiClient.post<GoogleAuthResponse>(
     endpoints.googleRegisterCompany,
-    normalized,
+    payload,
+    { auth: false },
+  );
+  return response.data;
+};
+
+/**
+ * Login via Google OAuth.
+ *
+ * This endpoint is shared between company and seeker login.
+ * NEEDS BACKEND CONFIRMATION: current response contract omits user details
+ * and app JWT, so NextAuth derives route role from the auth_action cookie.
+ */
+export const googleLogin = async (payload: GoogleLoginPayload) => {
+  const response = await apiClient.post<GoogleAuthResponse>(
+    endpoints.googleLogin,
+    payload,
+    { auth: false },
   );
   return response.data;
 };
@@ -87,6 +113,7 @@ export const registerSeeker = async (payload: RegisterSeekerPayload) => {
   const response = await apiClient.post<AuthUserResponse>(
     endpoints.registerSeeker,
     payload,
+    { auth: false },
   );
   return response.data;
 };
@@ -100,6 +127,7 @@ export const forgotPassword = async (payload: ForgotPasswordPayload) => {
   const response = await apiClient.post<AuthMessageResponse>(
     endpoints.forgotPassword,
     payload,
+    { auth: false },
   );
   return response.data;
 };
@@ -113,6 +141,7 @@ export const resetPassword = async (payload: ResetPasswordPayload) => {
   const response = await apiClient.post<AuthMessageResponse>(
     endpoints.resetPassword,
     payload,
+    { auth: false },
   );
   return response.data;
 };
@@ -126,6 +155,7 @@ export const verifyEmail = async (payload: VerifyEmailPayload) => {
   const response = await apiClient.post<AuthMessageResponse>(
     endpoints.verifyEmail,
     payload,
+    { auth: false },
   );
   return response.data;
 };

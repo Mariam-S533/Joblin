@@ -3,6 +3,7 @@ import {
   registerCompany,
   registerSeeker,
   googleRegisterCompany,
+  googleLogin,
   forgotPassword,
   resetPassword,
   verifyEmail,
@@ -11,12 +12,13 @@ import type {
   RegisterCompanyPayload,
   RegisterSeekerPayload,
   GoogleRegisterCompanyPayload,
+  GoogleLoginPayload,
   ForgotPasswordPayload,
   ResetPasswordPayload,
   VerifyEmailPayload,
   AuthUserResponse,
   AuthMessageResponse,
-  GoogleRegisterResponse,
+  GoogleAuthResponse,
 } from "@/features/auth/types";
 
 /**
@@ -44,24 +46,43 @@ export const useRegisterSeeker = () =>
   useMutation<AuthUserResponse, Error, RegisterSeekerPayload>({
     mutationFn: registerSeeker,
   });
-  
-  /**
-   * Register a new company account via Google OAuth.
-   *
-   * Note: This hook is primarily for mock mode testing. In production,
-   * the Google OAuth flow is handled by NextAuth's jwt callback (server-side).
-   * The hook allows testing the service/mock layer from a React component.
-   *
-   * Mutation input: GoogleRegisterCompanyPayload
-   * Mutation result: GoogleRegisterResponse (userId, email, token)
-   */
-  export const useGoogleRegisterCompany = () =>
-    useMutation<GoogleRegisterResponse, Error, GoogleRegisterCompanyPayload>({
-      mutationFn: googleRegisterCompany,
-    });
-  
-  /**
-   * Request a password reset link.
+
+/**
+ * Register a new company account via Google OAuth.
+ *
+ * Note: This hook is primarily for mock mode testing. In production,
+ * the Google OAuth flow is handled by NextAuth's jwt callback (server-side).
+ * The hook allows testing the service/mock layer from a React component.
+ *
+ * Mutation input: GoogleRegisterCompanyPayload
+ * Mutation result: GoogleAuthResponse (ProblemDetails-shaped status body)
+ */
+export const useGoogleRegisterCompany = () =>
+  useMutation<GoogleAuthResponse, Error, GoogleRegisterCompanyPayload>({
+    mutationFn: googleRegisterCompany,
+  });
+
+/**
+ * Login via Google OAuth.
+ *
+ * This endpoint is shared between company and seeker login — the backend
+ * determines the user type from the existing account associated with the
+ * Google email.
+ *
+ * Note: This hook is primarily for mock mode testing. In production,
+ * the Google OAuth flow is handled by NextAuth's jwt callback (server-side).
+ * The hook allows testing the service/mock layer from a React component.
+ *
+ * Mutation input: GoogleLoginPayload
+ * Mutation result: GoogleAuthResponse (ProblemDetails-shaped status body)
+ */
+export const useGoogleLogin = () =>
+  useMutation<GoogleAuthResponse, Error, GoogleLoginPayload>({
+    mutationFn: googleLogin,
+  });
+
+/**
+ * Request a password reset link.
  *
  * Mutation input: ForgotPasswordPayload
  * Mutation result: AuthMessageResponse

@@ -75,6 +75,7 @@ function CompanyRegister() {
     register,
     handleSubmit,
     getValues,
+    trigger,
     formState: { errors },
   } = useForm<CompanyRegisterInputs>({
     resolver: zodResolver(companyRegisterSchema),
@@ -95,7 +96,7 @@ function CompanyRegister() {
       confirmPassword: data.confirmPassword,
     };
     registerMutation.mutate(payload, {
-      onSuccess: () => router.push("/login/company"),
+      onSuccess: () => router.push("/verify-email?next=/login/company"),
     });
   }
 
@@ -242,24 +243,24 @@ function CompanyRegister() {
                 </div>
 
                 <Button
-                  onClick={() => {
-                    // Store auth action and form data in cookies before Google OAuth redirect.
-                    // The NextAuth jwt callback reads these cookies to build the full
-                    // request payload for google-register-company endpoint.
-                    // companyName is required by the backend; domain & description are optional.
-                    const formValues = getValues();
-                    const companyName = formValues.companyName || "";
-                    if (!companyName) {
-                      // Trigger validation to show error on companyName field
-                      handleSubmit(() => {})();
+                  onClick={async () => {
+                    const isCompanyNameValid = await trigger("companyName");
+                    if (!isCompanyNameValid) {
                       return;
                     }
+
+                    // Store auth action and any partial form data in cookies before
+                    // Google OAuth redirect. The NextAuth jwt callback reads these
+                    // cookies to build the request payload for google-register-company.
+                    // domain & description are always optional.
+                    const formValues = getValues();
                     const cookieOptions = "path=/; max-age=300; SameSite=Lax";
-                    document.cookie = `auth_action=register_company; ${cookieOptions}`;
-                    document.cookie = `google_reg_companyName=${encodeURIComponent(companyName)}; ${cookieOptions}`;
+                    document.cookie = `google_reg_companyName=${encodeURIComponent(formValues.companyName)}; ${cookieOptions}`;
                     document.cookie = `google_reg_domain=${encodeURIComponent(formValues.domain || "")}; ${cookieOptions}`;
                     document.cookie = `google_reg_description=${encodeURIComponent(formValues.description || "")}; ${cookieOptions}`;
-                    signIn("google", { callbackUrl: "/company/home" });
+                    signIn("google-company-register", {
+                      callbackUrl: "/verify-email?next=/company/home",
+                    });
                   }}
                   type="button"
                   className="w-full h-11 rounded-sm border border-[#04a165] transparent bg-white text-[#04a165] font-medium text-[16px] hover:bg-gray-50 flex items-center justify-center gap-2 overflow-hidden cursor-pointer"

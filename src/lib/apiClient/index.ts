@@ -66,9 +66,11 @@ const request = async <T>(
 
   // Attach auth token
   const requestHeaders = new Headers(normalized.headers);
-  const token = await getAuthToken();
-  if (token) {
-    requestHeaders.set("Authorization", `Bearer ${token}`);
+  if (options.auth !== false) {
+    const token = await getAuthToken();
+    if (token) {
+      requestHeaders.set("Authorization", `Bearer ${token}`);
+    }
   }
 
   const response = await fetch(`${API_BASE_URL}${path}`, {
@@ -86,6 +88,8 @@ const request = async <T>(
   // ─── Error responses (enveloped or flat) ──────────────────────────
   if (!response.ok) {
     const message =
+      rawPayload?.detail ||
+      rawPayload?.title ||
       rawPayload?.error ||
       rawPayload?.message ||
       `Request failed with status ${response.status}`;

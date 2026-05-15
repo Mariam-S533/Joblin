@@ -2,11 +2,21 @@ import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { AuthOptions } from "next-auth";
 import { cookies } from "next/headers";
+import {
+  googleLogin,
+  googleRegisterCompany,
+  login,
+} from "@/services/authService";
+import { ApiError } from "@/lib/apiClient/error";
 
 // Only include Google provider when credentials are configured
 const googleClientId = process.env.GOOGLE_CLIENT_ID;
 const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
 const useGoogleProvider = googleClientId && googleClientSecret;
+const googleProviderConfig = {
+  clientId: googleClientId as string,
+  clientSecret: googleClientSecret as string,
+};
 
 /** Whether to use mock data instead of the real .NET backend */
 const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === "true";
@@ -43,8 +53,14 @@ export const options: AuthOptions = {
     ...(useGoogleProvider
       ? [
           GoogleProvider({
-            clientId: googleClientId as string,
-            clientSecret: googleClientSecret as string,
+            id: "google-company-register",
+            name: "Google Company Register",
+            ...googleProviderConfig,
+          }),
+          GoogleProvider({
+            id: "google-company-login",
+            name: "Google Company Login",
+            ...googleProviderConfig,
           }),
         ]
       : []),
@@ -106,18 +122,16 @@ export const options: AuthOptions = {
         }
 
         // ─── Real backend mode ─────────────────────────────────────────
-        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
-        const res = await fetch(`${baseUrl}/api/Authentication/login`, {
-          method: "POST",
-          body: JSON.stringify({
-            email: credentials?.email,
-            password: credentials?.password,
-          }),
-          headers: { "Content-Type": "application/json" },
-        });
-        const user = await res.json();
+        try {
+          if (!credentials?.email || !credentials.password) {
+            return null;
+          }
 
-        if (res.ok && user) {
+          const user = await login({
+            email: credentials.email,
+            password: credentials.password,
+          });
+
           if (
             credentials?.loginType === "Seeker" &&
             user.roles[0] === "Company"
@@ -143,9 +157,12 @@ export const options: AuthOptions = {
             roles: user.roles,
             token: user.token,
           };
+        } catch (error) {
+          if (error instanceof Error) {
+            throw error;
+          }
+          return null;
         }
-
-        return null;
       },
     }),
   ],
@@ -155,7 +172,8 @@ export const options: AuthOptions = {
   },
 
   pages: {
-    signIn: "/login/job-seeker",
+    signIn: "/login/company",
+    error: "/register/company",
   },
 
   callbacks: {
@@ -168,10 +186,13 @@ export const options: AuthOptions = {
         token.accessToken = user.token;
       }
 
-      if (user && account?.provider === "google") {
+      if (
+        user &&
+        (account?.provider === "google-company-register" ||
+          account?.provider === "google-company-login")
+      ) {
         const cookieStore = await cookies();
-        const authAction = cookieStore.get("auth_action")?.value;
-        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+        const isCompanyRegister = account.provider === "google-company-register";
 
         // ─── Read registration form data from cookies ─────────────
         // These are set by the register form before the OAuth redirect.
@@ -183,79 +204,83 @@ export const options: AuthOptions = {
         const description =
           cookieStore.get("google_reg_description")?.value ?? null;
 
-        // ─── Build request payload based on auth action ──────────
-        // For register_company: include companyName, domain, description
-        // from cookies (set by the register form before OAuth redirect).
-        // For register_seeker: include firstName, lastName from cookies.
-        // For login: just send the idToken.
-        let backendEndpoint = `${baseUrl}/api/Authentication/google-login`;
-        let requestBody: Record<string, unknown> = {
-          idToken: account.id_token,
-        };
+        // ─── Mock mode: skip backend, return mock data ──────────────
+        // In mock mode there is no real backend to call, so we construct
+        // the token directly from the Google company provider and profile.
+        if (USE_MOCK) {
+          token.id = "mock-google-company-1";
+          token.displayName = isCompanyRegister
+            ? companyName || user.name || "Mock Google Company"
+            : (user.name ?? "Mock Google Company");
+          token.email = user.email ?? "";
+          token.role = "Company";
+          token.accessToken = "mock-google-jwt-company";
 
-        if (authAction === "register_company") {
-          backendEndpoint = `${baseUrl}/api/Authentication/google-register-company`;
-          requestBody = {
-            idToken: account.id_token,
-            companyName,
-            domain: domain || null,
-            description: description || null,
-          };
-        } else if (authAction === "register_seeker") {
-          backendEndpoint = `${baseUrl}/api/Authentication/google-register-seeker`;
-          // Read seeker form data from cookies (to be implemented later)
-          requestBody = { idToken: account.id_token };
+          // Clean up cookies in mock mode too
+          const cookiesToDelete = [
+            "google_reg_companyName",
+            "google_reg_domain",
+            "google_reg_description",
+          ];
+          for (const name of cookiesToDelete) {
+            cookieStore.delete(name);
+          }
+
+          return token;
         }
 
+        // ─── Real backend mode ──────────────────────────────────────
         try {
-          const res = await fetch(backendEndpoint, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(requestBody),
-          });
+          const idToken = account.id_token ?? "";
+          const effectiveCompanyName = companyName || user.name || "";
 
-          const raw = await res.json();
+          if (isCompanyRegister) {
+            console.info("[Google company register] Calling backend", {
+              endpoint: "/Authentication/google-register-company",
+              hasIdToken: Boolean(idToken),
+              companyName: effectiveCompanyName,
+              domain: domain || null,
+              hasDescription: Boolean(description),
+              googleEmail: user.email ?? null,
+            });
 
-          // ─── Handle response shape ──────────────────────────────
-          // google-register-company returns an ENVELOPED response:
-          //   { success: true, data: { userId, email, token } }
-          // google-login returns a FLAT response:
-          //   { id, displayName, email, roles, token }
-          if (res.ok) {
-            if (authAction === "register_company") {
-              // Enveloped response: extract data from wrapper
-              const data = raw.success ? raw.data : raw;
-              token.id = data.userId ?? data.id;
-              token.displayName = companyName; // Use company name from registration form, not Google's personal name
-              token.email = data.email;
-              token.role = "Company";
-              token.accessToken = data.token;
-            } else {
-              // Flat response (login / register-seeker)
-              token.id = raw.id;
-              token.displayName = raw.displayName ?? user.name ?? "";
-              token.email = raw.email;
-              token.role = raw.roles?.[0] ?? "Seeker";
-              token.accessToken = raw.token;
-            }
+            await googleRegisterCompany({
+              idToken,
+              companyName: effectiveCompanyName,
+              domain: domain || null,
+              description: description || null,
+            });
           } else {
-            console.error("Backend error during Google auth:", raw);
+            await googleLogin({ idToken });
           }
 
-          // ─── Clean up registration cookies ──────────────────────
-          if (authAction) {
-            const cookiesToDelete = [
-              "auth_action",
-              "google_reg_companyName",
-              "google_reg_domain",
-              "google_reg_description",
-            ];
-            for (const name of cookiesToDelete) {
-              cookieStore.delete(name);
-            }
+          token.id = user.email ?? account.providerAccountId ?? "";
+          token.displayName = isCompanyRegister
+            ? effectiveCompanyName
+            : (user.name ?? "");
+          token.email = user.email ?? "";
+          token.role = "Company";
+          // NEEDS BACKEND CONFIRMATION: google-register-company/google-login
+          // currently return only ProblemDetails { status }, not the app JWT.
+          token.accessToken = idToken;
+
+          // ─── Clean up auth action cookies ──────────────────────
+          const cookiesToDelete = [
+            "google_reg_companyName",
+            "google_reg_domain",
+            "google_reg_description",
+          ];
+          for (const name of cookiesToDelete) {
+            cookieStore.delete(name);
           }
         } catch (error) {
-          console.error("Fetch to custom backend failed of google:", error);
+          console.error("Google auth service call failed:", {
+            message: error instanceof Error ? error.message : String(error),
+            status: error instanceof ApiError ? error.status : undefined,
+            provider: account.provider,
+            operation: isCompanyRegister ? "register_company" : "login_company",
+          });
+          throw error;
         }
       }
 

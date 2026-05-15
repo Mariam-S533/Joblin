@@ -11,4 +11,5 @@ export type ApiClientOptions = {
   method?: HttpMethod;
   body?: BodyInit | object | null;
   headers?: HeadersInit;
+  auth?: boolean;
 };
