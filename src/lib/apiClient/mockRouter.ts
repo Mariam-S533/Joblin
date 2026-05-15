@@ -55,10 +55,16 @@ import type { CourseApplicationStatus } from "@/features/course-applications/typ
 import {
   registerCompanyMock,
   registerSeekerMock,
+  googleRegisterCompanyMock,
   forgotPasswordMock,
   resetPasswordMock,
   verifyEmailMock,
 } from "@/mocks/auth";
+import type {
+  RegisterCompanyPayload,
+  RegisterSeekerPayload,
+  GoogleRegisterCompanyPayload,
+} from "@/features/auth/types";
 
 const parseJsonBody = <T>(body: unknown): T => {
   if (typeof body === "string") {
@@ -439,11 +445,42 @@ export const mockRouter = async <T>(
 
   // ─── Authentication ──────────────────────────────────────────────
   if (pathname === "/Authentication/register-company" && method === "POST") {
-    return (await registerCompanyMock()) as ApiResponse<T>;
+    if (!options.body) {
+      return {
+        success: false,
+        data: undefined as T,
+        error: "Request body is required.",
+      };
+    }
+    return (await registerCompanyMock(
+      parseJsonBody<RegisterCompanyPayload>(options.body),
+    )) as ApiResponse<T>;
   }
 
   if (pathname === "/Authentication/register-seeker" && method === "POST") {
-    return (await registerSeekerMock()) as ApiResponse<T>;
+    if (!options.body) {
+      return {
+        success: false,
+        data: undefined as T,
+        error: "Request body is required.",
+      };
+    }
+    return (await registerSeekerMock(
+      parseJsonBody<RegisterSeekerPayload>(options.body),
+    )) as ApiResponse<T>;
+  }
+
+  if (pathname === "/Authentication/google-register-company" && method === "POST") {
+    if (!options.body) {
+      return {
+        success: false,
+        data: undefined as T,
+        error: "Request body is required.",
+      };
+    }
+    return (await googleRegisterCompanyMock(
+      parseJsonBody<GoogleRegisterCompanyPayload>(options.body),
+    )) as ApiResponse<T>;
   }
 
   if (pathname === "/Authentication/forgot-password" && method === "POST") {

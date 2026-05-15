@@ -52,7 +52,7 @@ function CompanyInfo() {
   });
 
   async function onSubmit(data: InfoInputs) {
-    console.log(data);
+    // TODO: implement company info submission
   }
 
   return (

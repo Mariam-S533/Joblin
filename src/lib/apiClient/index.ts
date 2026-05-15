@@ -79,24 +79,43 @@ const request = async <T>(
   });
 
   const contentType = response.headers.get("content-type") ?? "";
-  const payload = contentType.includes("application/json")
-    ? ((await response.json()) as ApiResponse<T>)
+  const rawPayload = contentType.includes("application/json")
+    ? await response.json()
     : null;
 
+  // ─── Error responses (enveloped or flat) ──────────────────────────
   if (!response.ok) {
     const message =
-      payload?.error ||
-      payload?.message ||
+      rawPayload?.error ||
+      rawPayload?.message ||
       `Request failed with status ${response.status}`;
     throw new ApiError(message, response.status);
   }
 
-  if (!payload) {
+  if (rawPayload === null) {
     throw new ApiError("Empty response from server.", response.status);
   }
 
-  if (!payload.success) {
-    throw new ApiError(payload.error || payload.message || "Request failed.");
+  // ─── Normalize response format ────────────────────────────────────
+  // The .NET backend may return either:
+  //   1. Enveloped: { success: boolean, data: T, message?: string }
+  //   2. Flat:      the response body IS the data (no wrapper)
+  //
+  // We auto-wrap flat responses so every caller always receives
+  // ApiResponse<T> regardless of backend format.
+  let payload: ApiResponse<T>;
+
+  if (typeof rawPayload.success === "boolean") {
+    // Already enveloped — validate the success flag
+    if (!rawPayload.success) {
+      throw new ApiError(
+        rawPayload.error || rawPayload.message || "Request failed.",
+      );
+    }
+    payload = rawPayload as ApiResponse<T>;
+  } else {
+    // Flat response — auto-wrap into ApiResponse envelope
+    payload = { success: true, data: rawPayload as T };
   }
 
   return payload;

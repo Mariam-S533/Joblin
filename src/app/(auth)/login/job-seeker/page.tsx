@@ -51,7 +51,6 @@ function JobseekerLogin() {
   });
 
   async function onSubmit(data: Inputs) {
-    console.log(data);
     try {
       setLoading(true);
       const res = await signIn("credentials", {
@@ -65,7 +64,6 @@ function JobseekerLogin() {
         router.push("/");
         // window.location.href = "/"
       } else {
-        console.log(res?.error);
         setErrorMsg(res?.error || "Invalid email or password");
         //               if (res?.error) {
         //                 if (res.error === "CredentialsSignin") {
@@ -77,7 +75,6 @@ function JobseekerLogin() {
         setLoading(false);
       }
     } catch (error) {
-      console.log(error);
       setErrorMsg("An error occurred. Please try again.");
       setLoading(false);
     }
@@ -172,25 +169,31 @@ function JobseekerLogin() {
               </Button>
             </form>
 
-            <div className="relative flex items-center gap-2 my-4">
-              <Separator className="flex-1" />
-              <span className="text-xs text-gray-400 font-medium px-2">OR</span>
-              <Separator className="flex-1" />
-            </div>
+            {process.env.NEXT_PUBLIC_GOOGLE_OAUTH_ENABLED === "true" && (
+              <>
+                <div className="relative flex items-center gap-2 my-4">
+                  <Separator className="flex-1" />
+                  <span className="text-xs text-gray-400 font-medium px-2">
+                    OR
+                  </span>
+                  <Separator className="flex-1" />
+                </div>
 
-            <Button
-              onClick={() => signIn("google", { callbackUrl: "/" })}
-              type="button"
-              className="w-full h-11 rounded-sm border border-[#04a165] transparent bg-white text-[#04a165] font-medium text-[16px] hover:bg-gray-50 flex items-center justify-center gap-2 overflow-hidden cursor-pointer"
-            >
-              <Image
-                src="/google-icon.svg"
-                width={20}
-                height={20}
-                alt="googel logo"
-              />
-              <span>Continue with Google</span>
-            </Button>
+                <Button
+                  onClick={() => signIn("google", { callbackUrl: "/" })}
+                  type="button"
+                  className="w-full h-11 rounded-sm border border-[#04a165] transparent bg-white text-[#04a165] font-medium text-[16px] hover:bg-gray-50 flex items-center justify-center gap-2 overflow-hidden cursor-pointer"
+                >
+                  <Image
+                    src="/google-icon.svg"
+                    width={20}
+                    height={20}
+                    alt="googel logo"
+                  />
+                  <span>Continue with Google</span>
+                </Button>
+              </>
+            )}
           </CardContent>
 
           <CardFooter className="flex justify-center pb-2">
