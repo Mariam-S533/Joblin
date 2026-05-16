@@ -32,34 +32,38 @@ import type {
   JobApplicant,
   JobApplicationStatus,
 } from "@/features/job-applications/types";
+import {
+  APPLICATION_STATUS_OPTIONS,
+  getJobApplicationStatusLabel,
+} from "@/features/job-applications/types";
 
 const STATUS_TABS: { label: string; value: JobApplicationStatus | "all" }[] = [
   { label: "All", value: "all" },
-  { label: "New", value: "new" },
-  { label: "Reviewing", value: "reviewing" },
-  { label: "Rejected", value: "rejected" },
-  { label: "Interviewed", value: "interviewed" },
+  ...APPLICATION_STATUS_OPTIONS.map((opt) => ({
+    label: opt.label,
+    value: opt.value as JobApplicationStatus,
+  })),
 ];
 
 const statusLabelMap: Record<JobApplicationStatus, string> = {
-  new: "New",
-  reviewing: "Under Review",
-  rejected: "Rejected",
-  accepted: "Accepted",
-  interviewed: "Interviewed",
+  Pending: "Pending",
+  UnderReview: "Under Review",
+  Accepted: "Accepted",
+  Rejected: "Rejected",
+  Withdrawn: "Withdrawn",
 };
 
 const statusBadgeClasses = (status: JobApplicationStatus): string => {
   switch (status) {
-    case "new":
+    case "Pending":
       return "bg-blue-50 text-blue-600 border-blue-200";
-    case "reviewing":
+    case "UnderReview":
       return "bg-amber-50 text-amber-700 border-amber-200";
-    case "accepted":
+    case "Accepted":
       return "bg-emerald-50 text-emerald-700 border-emerald-200";
-    case "rejected":
+    case "Rejected":
       return "bg-red-50 text-red-600 border-red-200";
-    case "interviewed":
+    case "Withdrawn":
       return "bg-neutral-100 text-neutral-600 border-neutral-200";
     default:
       return "";
@@ -121,8 +125,6 @@ export default function JobApplicationsPage() {
     );
   }
 
-
-
   if (!jobId) {
     return (
       <div className="rounded-lg border border-neutral-200 bg-white p-6 text-sm text-neutral-600">
@@ -151,9 +153,12 @@ function JobApplicationsContent({ jobId }: { jobId: string }) {
     useState<JobApplicant | null>(null);
   const queryOptions = useMemo(
     () => ({ status: activeTab, sort: sortOrder }),
-    [activeTab, sortOrder]
+    [activeTab, sortOrder],
   );
-  const { data, isLoading, isError, error } = useJobApplications(jobId, queryOptions);
+  const { data, isLoading, isError, error } = useJobApplications(
+    jobId,
+    queryOptions,
+  );
 
   const updateStatus = useUpdateApplicationStatus(jobId);
   const [mutationError, setMutationError] = useState<string | null>(null);
@@ -170,26 +175,27 @@ function JobApplicationsContent({ jobId }: { jobId: string }) {
 
   const applicants = data?.applicants ?? [];
   const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
-useEffect(() => {
-  setPortalTarget(document.body);
-}, []);
+  useEffect(() => {
+    setPortalTarget(document.body);
+  }, []);
   const summary = data?.summary;
 
   const handleStatusChange = useCallback(
-    (applicantId: string,
-    status: JobApplicationStatus) => {
-    setMutationError(null);
-    setSelectedApplicant((prev) =>
-      prev && prev.id === applicantId ? { ...prev, status } : prev,
-    );
-    updateStatus.mutate(
-      { applicantId, status },
-      {
-        onError: (err) =>
-          setMutationError(getErrorMessage(err, "Failed to update status.")),
-      },
-    );
-  },[updateStatus]);
+    (applicantId: string, status: JobApplicationStatus) => {
+      setMutationError(null);
+      setSelectedApplicant((prev) =>
+        prev && prev.id === applicantId ? { ...prev, status } : prev,
+      );
+      updateStatus.mutate(
+        { applicantId, status },
+        {
+          onError: (err) =>
+            setMutationError(getErrorMessage(err, "Failed to update status.")),
+        },
+      );
+    },
+    [updateStatus],
+  );
 
   return (
     <div className="space-y-6">
@@ -219,12 +225,12 @@ useEffect(() => {
             />
             <SummaryCard
               label="New"
-              value={summary.newCount}
+              value={summary.pendingCount}
               className="border-blue-200 bg-blue-50 text-blue-600"
             />
             <SummaryCard
               label="Review"
-              value={summary.reviewCount}
+              value={summary.underReviewCount}
               className="border-amber-200 bg-amber-50 text-amber-700"
             />
             <SummaryCard
@@ -317,23 +323,26 @@ useEffect(() => {
     </div>
   );
 }
-const ApplicantCard = memo(function ApplicantCard({ applicant,
+const ApplicantCard = memo(function ApplicantCard({
+  applicant,
   jobTitle,
   onViewDetails,
   onStatusChange,
-  isUpdating,}: {  applicant: JobApplicant;
+  isUpdating,
+}: {
+  applicant: JobApplicant;
   jobTitle: string;
   onViewDetails: (applicant: JobApplicant) => void;
   onStatusChange: (applicantId: string, status: JobApplicationStatus) => void;
-  isUpdating: boolean;}) {
-
+  isUpdating: boolean;
+}) {
   const statusLabel = statusLabelMap[applicant.status];
 
-  const canStartReview = applicant.status === "new";
+  const canStartReview = applicant.status === "Pending";
   const canAcceptOrReject =
-    applicant.status === "new" ||
-    applicant.status === "reviewing" ||
-    applicant.status === "interviewed";
+    applicant.status === "Pending" ||
+    applicant.status === "UnderReview" ||
+    applicant.status === "Withdrawn";
 
   return (
     <div className="rounded-xl border border-neutral-200 bg-white p-5 space-y-4">
@@ -410,7 +419,7 @@ const ApplicantCard = memo(function ApplicantCard({ applicant,
             variant="outline"
             size="sm"
             className="h-9 border-amber-400 text-amber-600"
-            onClick={() => onStatusChange(applicant.id, "reviewing")}
+            onClick={() => onStatusChange(applicant.id, "UnderReview")}
             disabled={isUpdating}
           >
             <Clock className="h-4 w-4" />
@@ -423,7 +432,7 @@ const ApplicantCard = memo(function ApplicantCard({ applicant,
               variant="outline"
               size="sm"
               className="h-9 border-emerald-500 text-emerald-600"
-              onClick={() => onStatusChange(applicant.id, "accepted")}
+              onClick={() => onStatusChange(applicant.id, "Accepted")}
               disabled={isUpdating}
             >
               <Check className="h-4 w-4" />
@@ -433,7 +442,7 @@ const ApplicantCard = memo(function ApplicantCard({ applicant,
               variant="outline"
               size="sm"
               className="h-9 border-red-500 text-red-600"
-              onClick={() => onStatusChange(applicant.id, "rejected")}
+              onClick={() => onStatusChange(applicant.id, "Rejected")}
               disabled={isUpdating}
             >
               <X className="h-4 w-4" />

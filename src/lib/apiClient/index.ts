@@ -87,7 +87,7 @@ const request = async <T>(
   }
 
   if (rawPayload === null) {
-    throw new ApiError("Empty response from server.", response.status);
+    return { success: true, data: undefined as T };
   }
 
   // ─── Normalize response format ────────────────────────────────────

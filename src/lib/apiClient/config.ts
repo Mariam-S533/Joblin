@@ -4,7 +4,7 @@
  * All requests go directly to the .NET backend at NEXT_PUBLIC_API_BASE_URL.
  * Auth token is automatically attached from the NextAuth session.
  * Example: NEXT_PUBLIC_API_BASE_URL=/api/proxy
- *   Then a call to /CompanyProfile is proxied to the .NET backend.
+ *   Then a call to /Company is proxied to the .NET backend.
  */
 
 /** Base URL for the .NET backend API (e.g. https://localhost:5001/api) */

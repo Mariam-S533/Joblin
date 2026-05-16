@@ -59,7 +59,35 @@ async function proxyRequest(request: NextRequest, method: string) {
       responseHeaders.set("Content-Type", respContentType);
     }
 
+    // HTTP 204/205 must not include a response body — NextResponse constructor
+    // rejects these status codes when a body (even empty) is provided.
+    const NO_BODY_STATUS_CODES = new Set([204, 205]);
+
+    if (NO_BODY_STATUS_CODES.has(backendResponse.status)) {
+      if (process.env.NODE_ENV !== "production") {
+        console.log("[API Proxy] No-content response:", {
+          method,
+          backendUrl,
+          status: backendResponse.status,
+        });
+      }
+      return new NextResponse(null, {
+        status: backendResponse.status,
+        headers: responseHeaders,
+      });
+    }
+
     const responseBody = await backendResponse.arrayBuffer();
+
+    if (!backendResponse.ok && process.env.NODE_ENV !== "production") {
+      const bodyText = new TextDecoder().decode(responseBody);
+      console.error("[API Proxy] Backend error response:", {
+        method,
+        backendUrl,
+        status: backendResponse.status,
+        body: bodyText.slice(0, 2000),
+      });
+    }
 
     return new NextResponse(responseBody, {
       status: backendResponse.status,

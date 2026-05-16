@@ -1,115 +1,69 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
-  CompanyProfile,
-  TeamMember,
+  CompanyDataResponse,
+  UpsertCompanyPayload,
+  UpsertCompanyResponse,
 } from "@/features/company-profile/types";
 import {
-  addTeamMember,
-  getCompanyProfile,
-  removeTeamMember,
-  updateCompanyProfile,
-  uploadCompanyLogo,
-  uploadCompanyPhotos,
+  getCompanyById,
+  upsertCompany,
 } from "@/services/companyProfileService";
 
 import { queryKeys } from "@/lib/queryKeys";
 
-export const useCompanyProfile = (options?: { enabled?: boolean }) =>
-  useQuery({
-    queryKey: queryKeys.companyProfile.all,
-    queryFn: getCompanyProfile,
-    enabled: options?.enabled ?? true,
-  });
+/**
+ * Input type for the upsertCompany mutation.
+ *
+ * The {id} path parameter (user's id from session) is required
+ * alongside the payload body, since the backend route is
+ * PUT /api/Company/{id}.
+ */
+export type UpsertCompanyInput = {
+  id: string;
+  payload: UpsertCompanyPayload;
+  logoFile?: File;
+};
 
-export const useUpdateCompanyProfile = () => {
+/**
+ * Create or update a company profile (PUT /api/Company/{id}).
+ *
+ * Mutation input: UpsertCompanyInput (id + payload)
+ * Mutation result: UpsertCompanyResponse
+ *
+ * On success, invalidates the company-data query so the dashboard
+ * profile page and onboarding page pick up the updated data.
+ */
+export const useUpsertCompany = () => {
   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: updateCompanyProfile,
-    onSuccess: (profile) => {
-      queryClient.setQueryData(queryKeys.companyProfile.all, profile);
+  return useMutation<UpsertCompanyResponse, Error, UpsertCompanyInput>({
+    mutationFn: ({ id, payload }) =>
+      upsertCompany(id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.companyData.all });
     },
   });
 };
 
-export const useUploadCompanyLogo = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: uploadCompanyLogo,
-    onSuccess: ({ logoUrl }) => {
-      queryClient.setQueryData<CompanyProfile | undefined>(
-        queryKeys.companyProfile.all,
-        (current) =>
-          current
-            ? {
-                ...current,
-                logoUrl,
-              }
-            : current,
-      );
-    },
+/**
+ * Get company data by user id (GET /api/Company/{id}).
+ *
+ * Used on both:
+ *   - The company-info onboarding page to determine whether
+ *     the user already has company data:
+ *       - If data exists → redirect to dashboard
+ *       - If 404 → show the create form (PUT /api/Company/{id})
+ *   - The dashboard profile page to display and edit company data
+ *
+ * The query is disabled by default and must be explicitly enabled
+ * once the session (with user id) is available.
+ */
+export const useGetCompanyById = (
+  id: string | undefined,
+  options?: { enabled?: boolean },
+) =>
+  useQuery<CompanyDataResponse, Error>({
+    queryKey: queryKeys.companyData.detail(id),
+    queryFn: () => getCompanyById(id!),
+    enabled: options?.enabled ?? !!id,
   });
-};
-
-export const useUploadCompanyPhotos = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: uploadCompanyPhotos,
-    onSuccess: ({ photoUrls }) => {
-      queryClient.setQueryData<CompanyProfile | undefined>(
-        queryKeys.companyProfile.all,
-        (current) =>
-          current
-            ? {
-                ...current,
-                photos: [...(current.photos ?? []), ...photoUrls],
-              }
-            : current,
-      );
-    },
-  });
-};
-
-export const useAddTeamMember = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: addTeamMember,
-    onSuccess: (member) => {
-      queryClient.setQueryData<CompanyProfile | undefined>(
-        queryKeys.companyProfile.all,
-        (current) =>
-          current
-            ? {
-                ...current,
-                teamMembers: [...(current.teamMembers ?? []), member],
-              }
-            : current,
-      );
-    },
-  });
-};
-
-export const useRemoveTeamMember = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: removeTeamMember,
-    onSuccess: (_, memberId) => {
-      queryClient.setQueryData<CompanyProfile | undefined>(
-        queryKeys.companyProfile.all,
-        (current) =>
-          current
-            ? {
-                ...current,
-                teamMembers: (current.teamMembers ?? []).filter(
-                  (member) => member.id !== memberId,
-                ),
-              }
-            : current,
-      );
-    },
-  });
-};

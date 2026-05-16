@@ -4,7 +4,10 @@ import type {
   CourseApplicationsQueryParams,
   CourseApplicationStatus,
   UpdateCourseApplicationStatusResponse,
+  RawCourseApplicationsPageData,
+  RawUpdateCourseApplicationStatusResponse,
 } from "@/features/course-applications/types";
+import { normalizeCourseApplicationStatus } from "@/features/course-applications/types";
 
 /**
  * Endpoint paths for course applications.
@@ -16,6 +19,21 @@ const endpoints = {
   updateStatus: (courseId: string, applicantId: string) =>
     `/PostedCourses/${courseId}/applications/${applicantId}/status`,
 };
+
+/**
+ * Normalize raw API response data so that all ApplicationStatus values
+ * are PascalCase strings regardless of whether the backend sent them
+ * as numeric integers, stringified integers, or PascalCase strings.
+ */
+const normalizeCourseApplicationsPageData = (
+  raw: RawCourseApplicationsPageData,
+): CourseApplicationsPageData => ({
+  ...raw,
+  applicants: raw.applicants.map((applicant) => ({
+    ...applicant,
+    status: normalizeCourseApplicationStatus(applicant.status),
+  })),
+});
 
 export const getCourseApplications = async (
   courseId: string,
@@ -39,10 +57,12 @@ export const getCourseApplications = async (
   }
 
   const qs = queryParams.toString();
-  const path = qs ? `${endpoints.list(courseId)}?${qs}` : endpoints.list(courseId);
+  const path = qs
+    ? `${endpoints.list(courseId)}?${qs}`
+    : endpoints.list(courseId);
 
-  const response = await apiClient.get<CourseApplicationsPageData>(path);
-  return response.data;
+  const response = await apiClient.get<RawCourseApplicationsPageData>(path);
+  return normalizeCourseApplicationsPageData(response.data);
 };
 
 export const updateCourseApplicationStatus = async (
@@ -50,9 +70,13 @@ export const updateCourseApplicationStatus = async (
   applicantId: string,
   status: CourseApplicationStatus,
 ) => {
-  const response = await apiClient.put<UpdateCourseApplicationStatusResponse>(
-    endpoints.updateStatus(courseId, applicantId),
-    { status },
-  );
-  return response.data;
+  const response =
+    await apiClient.put<RawUpdateCourseApplicationStatusResponse>(
+      endpoints.updateStatus(courseId, applicantId),
+      { status },
+    );
+  return {
+    ...response.data,
+    status: normalizeCourseApplicationStatus(response.data.status),
+  } satisfies UpdateCourseApplicationStatusResponse;
 };

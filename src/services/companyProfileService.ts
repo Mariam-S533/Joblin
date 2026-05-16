@@ -1,69 +1,69 @@
 import { apiClient } from "@/lib/apiClient";
 import type {
-  CompanyProfile,
-  TeamMember,
+  CompanyDataResponse,
+  UpsertCompanyPayload,
+  UpsertCompanyResponse,
 } from "@/features/company-profile/types";
+
 
 /**
  * Endpoint paths for company profile CRUD.
  *
- * These paths are appended to API_BASE_URL when calling the .NET backend.
- * Example: API_BASE_URL=https://localhost:5001/api → full URL becomes
- *   https://localhost:5001/api/CompanyProfile
+ * The backend only has two endpoints for company data:
+ *   - GET  /api/Company/{id}  — fetch company data by user id
+ *   - PUT  /api/Company/{id}  — create or update company data
  *
- * Adjust the paths below to match your .NET controller routes.
+ * Both require the {id} path parameter (the user's id from session).
+ * There is NO /CompanyProfile endpoint and NO POST at /Company.
+ * Logo, photos, and team-member sub-endpoints do NOT exist.
  */
 const endpoints = {
-  profile: "/CompanyProfile",
-  logo: "/CompanyProfile/logo",
-  photos: "/CompanyProfile/photos",
-  teamMembers: "/CompanyProfile/team-members",
+  company: "/Company",
 };
 
-export const getCompanyProfile = async () => {
-  const response = await apiClient.get<CompanyProfile>(endpoints.profile);
-  return response.data;
-};
-
-export const updateCompanyProfile = async (payload: CompanyProfile) => {
-  const response = await apiClient.put<CompanyProfile>(
-    endpoints.profile,
+/**
+ * Create or update a company profile (PUT /api/Company/{id}).
+ *
+ * This is used both for:
+ *   - Initial company creation (onboarding step after registration)
+ *   - Updating existing company profile data on the dashboard
+ *
+ * The {id} path parameter is the user's id (from session.id).
+ * userId is also included in the payload body for the backend.
+ *
+ * REQUIRES BACKEND CONFIRMATION: the exact response shape is unknown.
+ * The apiClient auto-wraps flat responses, so we always return
+ * ApiResponse<UpsertCompanyResponse>.data.
+ */
+export const upsertCompany = async (
+  id: string,
+  payload: UpsertCompanyPayload,
+) => {
+  const response = await apiClient.put<UpsertCompanyResponse>(
+    `${endpoints.company}/${id}`,
     payload,
   );
   return response.data;
 };
 
-export const uploadCompanyLogo = async (file: File) => {
-  const formData = new FormData();
-  formData.append("file", file);
-  const response = await apiClient.post<{ logoUrl: string }>(
-    endpoints.logo,
-    formData,
-  );
-  return response.data;
-};
-
-export const uploadCompanyPhotos = async (files: File[]) => {
-  const formData = new FormData();
-  files.forEach((file) => formData.append("files", file));
-  const response = await apiClient.post<{ photoUrls: string[] }>(
-    endpoints.photos,
-    formData,
-  );
-  return response.data;
-};
-
-export const addTeamMember = async (payload: TeamMember) => {
-  const response = await apiClient.post<TeamMember>(
-    endpoints.teamMembers,
-    payload,
-  );
-  return response.data;
-};
-
-export const removeTeamMember = async (id: string) => {
-  const response = await apiClient.delete<null>(
-    `${endpoints.teamMembers}?id=${id}`,
+/**
+ * Get company profile data by user id.
+ *
+ * GET /api/Company/{id} — returns the company data for the given user.
+ * The {id} path parameter is the user's id (from session.id).
+ *
+ * Used on the company-info onboarding page to check if the user
+ * already has company data. If data exists, redirect to dashboard;
+ * if 404, show the create form.
+ *
+ * Also used on the dashboard profile page to display and edit
+ * company profile data.
+ *
+ * REQUIRES BACKEND CONFIRMATION: the exact response shape is unknown.
+ */
+export const getCompanyById = async (id: string) => {
+  const response = await apiClient.get<CompanyDataResponse>(
+    `${endpoints.company}/${id}`,
   );
   return response.data;
 };

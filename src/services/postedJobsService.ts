@@ -1,65 +1,71 @@
 import { apiClient } from "@/lib/apiClient";
 import type {
+  CompanyJobPostResponse,
   PostedJobsPageData,
-  PostedJobsQueryParams,
   DeleteJobResponse,
   ToggleJobStatusResponse,
   PostedJobStatus,
 } from "@/features/posted-jobs/types";
+import { transformCompanyJobPosts } from "@/features/posted-jobs/utils";
 
 /**
  * Endpoint paths for posted jobs CRUD.
  *
- * These paths are appended to API_BASE_URL when calling the .NET backend.
- * Adjust the paths below to match your .NET controller routes.
+ * These paths are appended to API_BASE_URL when calling the .NET backend
+ * via the proxy route.
+ *
+ * Confirmed backend endpoints:
+ *   - GET /api/job-posts/company/{companyId}
+ *   - PATCH /api/job-posts/{id}/status with { jobStatus }
+ *
+ * REQUIRES BACKEND CONFIRMATION:
+ *   - DELETE /api/job-posts/{id} — assumed, not confirmed
  */
 const endpoints = {
-  list: "/PostedJobs",
-  delete: "/PostedJobs",
-  toggleStatus: "/PostedJobs/status",
+  /** GET /api/job-posts/company/{companyId} — fetch all jobs for a company */
+  listByCompany: "/job-posts/company",
+  /** DELETE /api/job-posts/{id} — delete a job post (assumed) */
+  delete: "/job-posts",
+  /** PATCH /api/job-posts/{id}/status — update job status */
+  status: "/job-posts",
 };
-
-/** UI-only label prepended to department filters. Not sent by the API. */
-const ALL_DEPARTMENTS_LABEL = "All Departments";
 
 /**
- * Fetch posted jobs with optional filters.
+ * Fetch all job posts for a given company.
  *
- * Normalization: the API returns real department names only.
- * We prepend "All Departments" here so the UI always has the "no filter" option
- * without the backend needing to know about it.
+ * GET /api/job-posts/company/{companyId}
+ *
+ * The backend returns a flat JSON array of CompanyJobPostResponse objects.
+ * The apiClient auto-wraps the response into ApiResponse<CompanyJobPostResponse[]>,
+ * so we access response.data to get the raw array.
+ *
+ * We then transform the raw array into PostedJobsPageData for UI consumption:
+ *   - Normalize jobStatus strings to PostedJobStatus enum values
+ *   - Compute daysRemaining from deadline
+ *   - Compute stats (total, active, closed counts)
+ *   - Extract unique technicalDomain values for the filter UI
  */
-export const getPostedJobs = async (params?: PostedJobsQueryParams) => {
-  const queryParams = new URLSearchParams();
-  if (params?.status && params.status !== "all") {
-    queryParams.set("status", params.status);
-  }
-  if (params?.department && params.department !== ALL_DEPARTMENTS_LABEL) {
-    queryParams.set("department", params.department);
-  }
-  if (params?.search) {
-    queryParams.set("search", params.search);
-  }
-  if (params?.page) {
-    queryParams.set("page", String(params.page));
-  }
-  if (params?.pageSize) {
-    queryParams.set("pageSize", String(params.pageSize));
-  }
+export const getPostedJobs = async (
+  companyId: string,
+): Promise<PostedJobsPageData> => {
+  const response = await apiClient.get<CompanyJobPostResponse[]>(
+    `${endpoints.listByCompany}/${companyId}`,
+  );
 
-  const qs = queryParams.toString();
-  const path = qs ? `${endpoints.list}?${qs}` : endpoints.list;
-
-  const response = await apiClient.get<PostedJobsPageData>(path);
-
-  // Normalize: prepend "All Departments" for the UI filter
-  const data = response.data;
-  return {
-    ...data,
-    departments: [ALL_DEPARTMENTS_LABEL, ...data.departments],
-  } satisfies PostedJobsPageData;
+  const rawJobs = response.data;
+  console.log(
+    "[getPostedJobs] raw first job before transformation:",
+    rawJobs[0],
+  );
+  return transformCompanyJobPosts(rawJobs);
 };
 
+/**
+ * Delete a job post by ID.
+ *
+ * REQUIRES BACKEND CONFIRMATION: the exact endpoint path and response
+ * shape are unknown. Assumed to be DELETE /api/job-posts/{id}.
+ */
 export const deletePostedJob = async (jobId: string) => {
   const response = await apiClient.delete<DeleteJobResponse>(
     `${endpoints.delete}/${jobId}`,
@@ -67,13 +73,19 @@ export const deletePostedJob = async (jobId: string) => {
   return response.data;
 };
 
+/**
+ * Update a job post's status.
+ *
+ * PATCH /api/job-posts/{id}/status
+ * Body: { jobStatus: "Active" | "Closed" | "Cancelled" }
+ */
 export const toggleJobStatus = async (
   jobId: string,
   newStatus: PostedJobStatus,
 ) => {
-  const response = await apiClient.put<ToggleJobStatusResponse>(
-    `${endpoints.toggleStatus}/${jobId}`,
-    { status: newStatus },
+  const response = await apiClient.patch<ToggleJobStatusResponse>(
+    `${endpoints.status}/${jobId}/status`,
+    { jobStatus: newStatus },
   );
   return response.data;
 };

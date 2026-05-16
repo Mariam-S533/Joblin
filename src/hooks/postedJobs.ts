@@ -5,16 +5,30 @@ import {
   toggleJobStatus,
 } from "@/services/postedJobsService";
 import type {
-  PostedJobsQueryParams,
   PostedJobStatus,
+  PostedJobsPageData,
 } from "@/features/posted-jobs/types";
 
 import { queryKeys } from "@/lib/queryKeys";
 
-export const usePostedJobs = (params?: PostedJobsQueryParams) =>
+/**
+ * Fetch all job posts for a company.
+ *
+ * GET /api/job-posts/company/{companyId}
+ *
+ * The companyId is required — the query is disabled until a valid
+ * companyId is provided. The page component should obtain companyId
+ * from the company profile data (CompanyDataResponse.id).
+ *
+ * Client-side filtering (by status, domain, search) is done in the
+ * page component, not via query params, because the backend endpoint
+ * returns all jobs for the company without filtering support.
+ */
+export const usePostedJobs = (companyId: string | undefined) =>
   useQuery({
-    queryKey: queryKeys.postedJobs.list(params),
-    queryFn: () => getPostedJobs(params),
+    queryKey: queryKeys.postedJobs.list(companyId),
+    queryFn: () => getPostedJobs(companyId!),
+    enabled: !!companyId,
   });
 
 export const useDeletePostedJob = () => {
@@ -40,9 +54,59 @@ export const useToggleJobStatus = () => {
       jobId: string;
       newStatus: PostedJobStatus;
     }) => toggleJobStatus(jobId, newStatus),
+
+    // ── Optimistic update: apply new status to cache BEFORE API call ──
+    onMutate: async ({ jobId, newStatus }) => {
+      // Cancel any outgoing refetches so they don't overwrite our optimistic update
+      await queryClient.cancelQueries({ queryKey: queryKeys.postedJobs.all });
+
+      // Snapshot the previous cache data for rollback on error
+      const previousData = queryClient.getQueriesData<PostedJobsPageData>({
+        queryKey: queryKeys.postedJobs.all,
+      });
+
+      // Optimistically update the job status in all matching queries
+      queryClient.setQueriesData<PostedJobsPageData>(
+        { queryKey: queryKeys.postedJobs.all },
+        (current) => {
+          if (!current) return current;
+
+          const jobs = current.jobs.map((job) =>
+            job.id === jobId ? { ...job, jobStatus: newStatus } : job,
+          );
+
+          return {
+            ...current,
+            jobs,
+            stats: {
+              ...current.stats,
+              activeJobs: jobs.filter((job) => job.jobStatus === "Active")
+                .length,
+              closedJobs: jobs.filter((job) => job.jobStatus === "Closed")
+                .length,
+            },
+          };
+        },
+      );
+
+      // Return snapshot context for onError rollback
+      return { previousData };
+    },
+
+    // ── Rollback: restore previous cache data if mutation fails ──
+    onError: (_err, _vars, context) => {
+      if (!context?.previousData) return;
+      for (const [queryKey, data] of context.previousData) {
+        queryClient.setQueryData(queryKey, data);
+      }
+    },
+
+    // ── Refetch: invalidate only on success so the optimistic update
+    //    is confirmed with fresh backend data. On error, onError already
+    //    rolls back to the snapshot, so invalidating would re-fetch stale
+    //    data and overwrite the rollback — causing the "reverts to Closed" bug.
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.postedJobs.all });
     },
-    // Same as delete — page component handles error feedback via mutation state.
   });
 };

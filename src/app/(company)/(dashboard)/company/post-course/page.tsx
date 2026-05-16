@@ -18,6 +18,13 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { FloatingInput } from "@/components/FloatingInputField";
 import { FloatingTextArea } from "@/components/FloatingTextAreaField";
 import { SectionCard } from "@/components/SectionCard";
@@ -30,6 +37,11 @@ import type {
   CoursePostPayload,
   CoursePostTemplate,
   DeliveryMode,
+  DifficultyLevel,
+} from "@/features/course-post/types";
+import {
+  DIFFICULTY_LEVEL_OPTIONS,
+  getDifficultyLevelLabel,
 } from "@/features/course-post/types";
 
 type CoursePostLocalState = CoursePostTemplate;
@@ -39,6 +51,7 @@ const emptyState: CoursePostLocalState = {
   courseCategory: "",
   organizationIndustry: "",
   courseLevel: "",
+  courseLevelOptions: DIFFICULTY_LEVEL_OPTIONS,
   deliveryModes: ["Online", "In Person", "Hybrid", "Self-Paced"],
   selectedDeliveryModes: [],
   country: "",
@@ -101,11 +114,11 @@ function PostCourseContent() {
   const templateQuery = useCoursePostTemplate();
   const submitMutation = useSubmitCoursePost();
 
- useEffect(() => {
-  if (templateQuery.data) {
-    setState(templateQuery.data);
-  }
-}, [templateQuery.data]);
+  useEffect(() => {
+    if (templateQuery.data) {
+      setState(templateQuery.data);
+    }
+  }, [templateQuery.data]);
 
   const templateError = templateQuery.error
     ? getErrorMessage(
@@ -223,7 +236,17 @@ function PostCourseContent() {
     if (!validate()) return;
 
     try {
-      const payload: CoursePostPayload = { ...state };
+      const {
+        courseLevelOptions,
+        deliveryModes,
+        benefits,
+        courseLevel,
+        ...rest
+      } = state;
+      const payload: CoursePostPayload = {
+        ...rest,
+        courseLevel: courseLevel as DifficultyLevel,
+      };
       const response = await submitMutation.mutateAsync(payload);
       setSuccessMessage(response.message);
       setErrors({});
@@ -290,11 +313,24 @@ function PostCourseContent() {
                   label="Organization Industry"
                   value={state.organizationIndustry}
                 />
-                <PreviewField label="Course Level" value={state.courseLevel} />
+                <PreviewField
+                  label="Course Level"
+                  value={
+                    state.courseLevel
+                      ? getDifficultyLevelLabel(
+                          state.courseLevel as DifficultyLevel,
+                        )
+                      : ""
+                  }
+                />
               </div>
             </SectionCard>
 
-            <SectionCard icon={IdCard} title="Delivery Mode" className="rounded-lg">
+            <SectionCard
+              icon={IdCard}
+              title="Delivery Mode"
+              className="rounded-lg"
+            >
               <PreviewTagList
                 items={state.selectedDeliveryModes}
                 emptyLabel="No delivery mode selected"
@@ -327,7 +363,11 @@ function PostCourseContent() {
               </div>
             </SectionCard>
 
-            <SectionCard icon={HandHelping} title="Skills" className="rounded-lg">
+            <SectionCard
+              icon={HandHelping}
+              title="Skills"
+              className="rounded-lg"
+            >
               <PreviewTagList
                 items={state.skills}
                 emptyLabel="No skills added"
@@ -345,7 +385,9 @@ function PostCourseContent() {
                   {state.courseDescription}
                 </p>
               ) : (
-                <p className="text-sm text-neutral-400">No description provided</p>
+                <p className="text-sm text-neutral-400">
+                  No description provided
+                </p>
               )}
             </SectionCard>
 
@@ -356,7 +398,10 @@ function PostCourseContent() {
             >
               <div className="grid gap-3 md:grid-cols-2">
                 <PreviewField label="Duration" value={state.duration} />
-                <PreviewField label="Maximum Student" value={state.maxStudents} />
+                <PreviewField
+                  label="Maximum Student"
+                  value={state.maxStudents}
+                />
                 <PreviewField label="Start Date" value={state.startDate} />
                 <PreviewField label="End Date" value={state.endDate} />
               </div>
@@ -474,19 +519,45 @@ function PostCourseContent() {
                 required
                 error={errors.organizationIndustry}
               />
-              <FloatingInput
-                id="courseLevel"
-                label="Course level"
-                value={state.courseLevel}
-                onChange={(e) => updateField("courseLevel", e.target.value)}
-                placeholder="Please type your Organizational level"
-                required
-                error={errors.courseLevel}
-              />
+              <div className="space-y-1.5">
+                <Label
+                  htmlFor="courseLevel"
+                  className="text-sm font-medium text-neutral-700"
+                >
+                  Course level
+                </Label>
+                <Select
+                  value={state.courseLevel || undefined}
+                  onValueChange={(value: string) =>
+                    updateField("courseLevel", value as DifficultyLevel | "")
+                  }
+                >
+                  <SelectTrigger
+                    id="courseLevel"
+                    className="w-full h-12 border-neutral-300 focus:border-emerald-500 focus:ring-emerald-500"
+                  >
+                    <SelectValue placeholder="Select course level" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {state.courseLevelOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors.courseLevel && (
+                  <p className="text-xs text-red-500">{errors.courseLevel}</p>
+                )}
+              </div>
             </div>
           </SectionCard>
 
-          <SectionCard icon={IdCard} title="Delivery Mode" className="rounded-lg">
+          <SectionCard
+            icon={IdCard}
+            title="Delivery Mode"
+            className="rounded-lg"
+          >
             <CheckboxOptionGroup
               options={state.deliveryModes}
               selected={state.selectedDeliveryModes}
@@ -555,8 +626,8 @@ function PostCourseContent() {
                 </Label>
               </div>
               <p className="text-xs text-neutral-500">
-                Course listings that transparently display their price receive 45%
-                more enrollments on average.
+                Course listings that transparently display their price receive
+                45% more enrollments on average.
               </p>
               <CheckboxOptionGroup
                 options={state.benefits}
