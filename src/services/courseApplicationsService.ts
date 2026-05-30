@@ -1,4 +1,5 @@
 import { apiClient } from "@/lib/apiClient";
+import { courseApplications as endpoints } from "@/lib/apiClient/endpoints";
 import type {
   CourseApplicationsPageData,
   CourseApplicationsQueryParams,
@@ -8,17 +9,6 @@ import type {
   RawUpdateCourseApplicationStatusResponse,
 } from "@/features/course-applications/types";
 import { normalizeCourseApplicationStatus } from "@/features/course-applications/types";
-
-/**
- * Endpoint paths for course applications.
- *
- * Adjust the paths below to match your .NET controller routes.
- */
-const endpoints = {
-  list: (courseId: string) => `/PostedCourses/${courseId}/applications`,
-  updateStatus: (courseId: string, applicantId: string) =>
-    `/PostedCourses/${courseId}/applications/${applicantId}/status`,
-};
 
 /**
  * Normalize raw API response data so that all ApplicationStatus values

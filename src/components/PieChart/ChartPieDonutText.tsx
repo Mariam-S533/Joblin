@@ -1,8 +1,8 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { TrendingUp } from "lucide-react"
-import { Label, Pie, PieChart } from "recharts"
+import * as React from "react";
+import { TrendingUp } from "lucide-react";
+import { Label, Pie, PieChart } from "recharts";
 
 import {
   Card,
@@ -11,21 +11,27 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
+} from "@/components/ui/card";
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
   type ChartConfig,
-} from "@/components/ui/chart"
+} from "@/components/ui/chart";
 
-export const description = "A donut chart with text"
+export const description = "A donut chart with text";
 
-const chartData = [
-  { browser: "Under Review", visitors: 8, fill: "var(--color-chrome)" },
-  { browser: "Accepted", visitors: 4, fill: "var(--color-safari)" },
-  { browser: "Rejected", visitors: 3, fill: "var(--color-firefox)" },
-]
+export type ChartPieDataItem = {
+  browser: string;
+  visitors: number;
+  fill: string;
+};
+
+interface ChartPieDonutTextProps {
+  data?: ChartPieDataItem[];
+}
+
+const defaultChartData: ChartPieDataItem[] = [];
 
 const chartConfig = {
   visitors: {
@@ -43,67 +49,64 @@ const chartConfig = {
     label: "Rejected",
     color: "var(--chart-3)",
   },
-} satisfies ChartConfig
+} satisfies ChartConfig;
 
-const tooltipContent = <ChartTooltipContent hideLabel />
+const tooltipContent = <ChartTooltipContent hideLabel />;
 
-export function ChartPieDonutText() {
+export function ChartPieDonutText({
+  data = defaultChartData,
+}: ChartPieDonutTextProps) {
   const totalVisitors = React.useMemo(() => {
-    return chartData.reduce((acc, curr) => acc + curr.visitors, 0)
-  }, [])
+    return data.reduce((acc, curr) => acc + curr.visitors, 0);
+  }, [data]);
 
   return (
-  
     <div className="w-full h-[250px]">
-        <ChartContainer
-          config={chartConfig}
-          className="mx-auto aspect-square max-h-[250px]"
-        >
-          <PieChart>
-            <ChartTooltip
-              cursor={false}
-              content={tooltipContent}
-            />
-            <Pie
-              data={chartData}
-              dataKey="visitors"
-              nameKey="browser"
-              innerRadius={60}
-              strokeWidth={5}
-            >
-              <Label
-                content={({ viewBox }) => {
-                  if (viewBox && "cx" in viewBox && "cy" in viewBox) {
-                    return (
-                      <text
+      <ChartContainer
+        config={chartConfig}
+        className="mx-auto aspect-square max-h-[250px]"
+      >
+        <PieChart>
+          <ChartTooltip cursor={false} content={tooltipContent} />
+          <Pie
+            data={data}
+            dataKey="visitors"
+            nameKey="browser"
+            innerRadius={60}
+            strokeWidth={5}
+          >
+            <Label
+              content={({ viewBox }) => {
+                if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+                  return (
+                    <text
+                      x={viewBox.cx}
+                      y={viewBox.cy}
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                    >
+                      <tspan
                         x={viewBox.cx}
                         y={viewBox.cy}
-                        textAnchor="middle"
-                        dominantBaseline="middle"
+                        className="fill-foreground text-3xl font-bold"
                       >
-                        <tspan
-                          x={viewBox.cx}
-                          y={viewBox.cy}
-                          className="fill-foreground text-3xl font-bold"
-                        >
-                          {totalVisitors.toLocaleString()}
-                        </tspan>
-                        <tspan
-                          x={viewBox.cx}
-                          y={(viewBox.cy || 0) + 24}
-                          className="fill-muted-foreground"
-                        >
-                          Visitors
-                        </tspan>
-                      </text>
-                    )
-                  }
-                }}
-              />
-            </Pie>
-          </PieChart>
-        </ChartContainer>
-        </div>
-     
-  )
+                        {totalVisitors.toLocaleString()}
+                      </tspan>
+                      <tspan
+                        x={viewBox.cx}
+                        y={(viewBox.cy || 0) + 24}
+                        className="fill-muted-foreground"
+                      >
+                        Visitors
+                      </tspan>
+                    </text>
+                  );
+                }
+              }}
+            />
+          </Pie>
+        </PieChart>
+      </ChartContainer>
+    </div>
+  );
 }

@@ -10,7 +10,6 @@ import {
   NavigationMenuItem,
   NavigationMenuList,
 } from "@/components/ui/navigation-menu";
-import { Badge } from "@/components/ui/badge";
 import {
   Sheet,
   SheetContent,
@@ -56,7 +55,7 @@ function JobseekerNavbar() {
   const pathname = usePathname();
   const session = useSession();
   const [open, setOpen] = useState(false);
-  const logout = useLogout();
+  const { mutate: logout } = useLogout();
 
   return (
     <div className="fixed top-0 left-0 w-full z-30 bg-white pt-6 ">
@@ -102,9 +101,6 @@ function JobseekerNavbar() {
               <div className="relative">
                 <Bell size={22} className="cursor-pointer text-[#222222]" />
               </div>
-              <Badge className="absolute -top-3 -right-2 h-5 min-w-5 rounded-full px-1 bg-[#DC0000] text-white">
-                12
-              </Badge>
             </NavigationMenuItem>
 
             {/* employer and user dropdownmenu  */}
@@ -136,7 +132,9 @@ function JobseekerNavbar() {
                           <UserCircle className="h-8 w-8 text-neutral-400 group-hover:text-emerald-500 transition-colors" />
                         </div>
                         <span className="hidden md:block text-[14px] font-semibold text-gray-800 max-w-30 truncate">
-                          {"User"}
+                          {session.data?.displayName ||
+                            session.data?.user?.name ||
+                            ""}
                         </span>
                         <ChevronDown size={20} className="text-gray-700" />
                       </button>
@@ -146,10 +144,14 @@ function JobseekerNavbar() {
                     <DropdownMenuContent className="w-56" align="end">
                       <DropdownMenuLabel>
                         <p className="text-[13px] font-semibold text-gray-800 truncate">
-                          {"User"}
+                          {session.data?.displayName ||
+                            session.data?.user?.name ||
+                            ""}
                         </p>
                         <p className="text-[11px] text-gray-400 font-normal truncate">
-                          {"mariam232@gmail.com"}
+                          {session.data?.email ||
+                            session.data?.user?.email ||
+                            ""}
                         </p>
                       </DropdownMenuLabel>
 
@@ -211,7 +213,13 @@ function JobseekerNavbar() {
                       <DropdownMenuSeparator />
 
                       <DropdownMenuItem
-                        onClick={() => logout("/login/job-seeker")}
+                        onClick={() =>
+                          logout(undefined, {
+                            onSuccess: () => {
+                              window.location.href = "/login/job-seeker";
+                            },
+                          })
+                        }
                         className="flex items-center gap-2 text-red-500 focus:text-red-500 focus:bg-red-50 cursor-pointer"
                       >
                         <LogOut size={15} /> Logout

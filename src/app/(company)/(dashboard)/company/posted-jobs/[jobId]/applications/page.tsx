@@ -364,7 +364,7 @@ const ApplicantCard = memo(function ApplicantCard({
               {applicant.name}
             </p>
             <p className="text-sm text-emerald-600">
-              Applied for: {jobTitle || "UI/UX Designer"}
+              Applied for: {jobTitle || ""}
             </p>
           </div>
         </div>
@@ -492,7 +492,7 @@ function ApplicantDetailsPanel({
               {applicant.name}
             </p>
             <p className="text-sm text-emerald-600">
-              Applied for: {jobTitle || "UI/UX Designer"}
+              Applied for: {jobTitle || ""}
             </p>
           </div>
         </div>

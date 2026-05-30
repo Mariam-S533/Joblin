@@ -2,27 +2,23 @@
 import { useSession } from "next-auth/react";
 
 import React, { useCallback, useMemo, useState } from "react";
-import {
-  Building2,
-  AlignLeft,
-} from "lucide-react";
+import { Building2, AlignLeft } from "lucide-react";
 import { FloatingInput } from "@/components/FloatingInputField";
 import { FloatingTextArea } from "@/components/FloatingTextAreaField";
 import { SectionCard } from "@/components/SectionCard";
 import { ProfileUploadingCard } from "@/components/Modal/ProfileUploadingCard";
-import {
-  useGetCompanyById,
-  useUpsertCompany,
-} from "@/hooks/companyProfile";
+import { useGetCompanyById, useUpsertCompany } from "@/hooks/companyProfile";
 import {
   mapCompanyDataToEditForm,
   mapEditFormToUpsertPayload,
 } from "@/features/company-profile/utils";
-import type { CompanyEditFormData, AddressResponse } from "@/features/company-profile/types";
+import type {
+  CompanyEditFormData,
+  AddressResponse,
+} from "@/features/company-profile/types";
 import { getErrorMessage } from "@/lib/apiClient/error";
 
-const FALLBACK_LOGO =
-  "https://upload.wikimedia.org/wikipedia/commons/4/44/BMW.svg";
+const FALLBACK_LOGO = "";
 
 const EMPTY_FORM: CompanyEditFormData = {
   companyName: "",
@@ -34,8 +30,11 @@ const EMPTY_FORM: CompanyEditFormData = {
 
 export default function CompanyProfile() {
   const [isEditing, setIsEditing] = useState(false);
-  const [editFormData, setEditFormData] = useState<CompanyEditFormData>(EMPTY_FORM);
-  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [editFormData, setEditFormData] =
+    useState<CompanyEditFormData>(EMPTY_FORM);
+  const [validationErrors, setValidationErrors] = useState<
+    Record<string, string>
+  >({});
 
   const { data: session } = useSession();
   const userId = session?.id as string;
@@ -56,14 +55,15 @@ export default function CompanyProfile() {
     : null;
 
   const displayFormData = useMemo(
-    () => companyData ? mapCompanyDataToEditForm(companyData) : EMPTY_FORM,
+    () => (companyData ? mapCompanyDataToEditForm(companyData) : EMPTY_FORM),
     [companyData],
   );
 
   const displayLogoUrl = companyData?.logoUrl || FALLBACK_LOGO;
 
-  const primaryAddress = companyData?.addresses?.find((a) => a.isHeadQuarters)
-    ?? companyData?.addresses?.[0];
+  const primaryAddress =
+    companyData?.addresses?.find((a) => a.isHeadQuarters) ??
+    companyData?.addresses?.[0];
   const displayLocation = primaryAddress
     ? `${primaryAddress.city ?? ""}, ${primaryAddress.country ?? ""}`
     : "—";
@@ -72,15 +72,18 @@ export default function CompanyProfile() {
   const activeFormData = isEditing ? editFormData : displayFormData;
   const activeLogoUrl = isEditing ? displayLogoUrl : displayLogoUrl;
 
-  const handleChange = useCallback((field: keyof CompanyEditFormData, value: string) => {
-    setEditFormData((prev) => ({ ...prev, [field]: value }));
-    setValidationErrors((prev) => {
-      if (!(field in prev)) return prev;
-      const next = { ...prev };
-      delete next[field];
-      return next;
-    });
-  }, []);
+  const handleChange = useCallback(
+    (field: keyof CompanyEditFormData, value: string) => {
+      setEditFormData((prev) => ({ ...prev, [field]: value }));
+      setValidationErrors((prev) => {
+        if (!(field in prev)) return prev;
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      });
+    },
+    [],
+  );
 
   const handleStartEditing = useCallback(() => {
     // Initialize edit form with current data from query
@@ -113,18 +116,23 @@ export default function CompanyProfile() {
 
     // Build addresses from the fetched data (preserve existing addresses)
     const existingAddresses: AddressResponse[] = companyData?.addresses ?? [];
-    const addressesForPayload = existingAddresses.length > 0
-      ? existingAddresses.map((addr) => ({
-          branchName: addr.branchName ?? "",
-          country: addr.country ?? "",
-          city: addr.city ?? "",
-          regionOrState: addr.regionOrState ?? null,
-          postalCode: addr.postalCode ?? null,
-          isHeadQuarters: addr.isHeadQuarters ?? false,
-        }))
-      : [];
+    const addressesForPayload =
+      existingAddresses.length > 0
+        ? existingAddresses.map((addr) => ({
+            branchName: addr.branchName ?? "",
+            country: addr.country ?? "",
+            city: addr.city ?? "",
+            regionOrState: addr.regionOrState ?? null,
+            postalCode: addr.postalCode ?? null,
+            isHeadQuarters: addr.isHeadQuarters ?? false,
+          }))
+        : [];
 
-    const payload = mapEditFormToUpsertPayload(userId, editFormData, addressesForPayload);
+    const payload = mapEditFormToUpsertPayload(
+      userId,
+      editFormData,
+      addressesForPayload,
+    );
 
     try {
       await upsertMutation.mutateAsync({ id: userId, payload });
@@ -132,7 +140,6 @@ export default function CompanyProfile() {
       setIsEditing(false);
     } catch (error) {
       // Error is handled by the mutation state; we don't need to set local state
-      console.error("Failed to save company profile:", getErrorMessage(error));
     }
   };
 
@@ -212,7 +219,9 @@ export default function CompanyProfile() {
                 id="publicContactMail"
                 label="Public Contact Email"
                 value={editFormData.publicContactMail}
-                onChange={(e) => handleChange("publicContactMail", e.target.value)}
+                onChange={(e) =>
+                  handleChange("publicContactMail", e.target.value)
+                }
                 placeholder="contact@company.com"
                 required
                 error={validationErrors.publicContactMail}

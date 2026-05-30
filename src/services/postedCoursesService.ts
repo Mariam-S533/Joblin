@@ -1,4 +1,5 @@
 import { apiClient } from "@/lib/apiClient";
+import { postedCourses as endpoints } from "@/lib/apiClient/endpoints";
 import type {
   PostedCoursesPageData,
   PostedCoursesQueryParams,
@@ -6,18 +7,6 @@ import type {
   ToggleCourseStatusResponse,
   PostedCourseStatus,
 } from "@/features/posted-courses/types";
-
-/**
- * Endpoint path for posted courses list.
- *
- * This path is appended to API_BASE_URL when calling the .NET backend.
- * Adjust the path below to match your .NET controller route.
- */
-const endpoints = {
-  list: "/PostedCourses",
-  delete: "/PostedCourses",
-  toggleStatus: "/PostedCourses/status",
-};
 
 /** UI-only label prepended to department filters. Not sent by the API. */
 const ALL_DEPARTMENTS_LABEL = "All Departments";
@@ -69,4 +58,3 @@ export const toggleCourseStatus = async (
   );
   return response.data;
 };
-

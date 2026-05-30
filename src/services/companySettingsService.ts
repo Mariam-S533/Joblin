@@ -1,23 +1,11 @@
 import { apiClient } from "@/lib/apiClient";
+import { companySettings as endpoints } from "@/lib/apiClient/endpoints";
 import type {
   CompanyAccountSettings,
   CompanyLogoResponse,
   CompanyPasswordPayload,
   CompanyPasswordResponse,
 } from "@/features/company-settings/types";
-
-/**
- * Endpoint paths for company account settings CRUD.
- *
- * These paths are appended to API_BASE_URL when calling the .NET backend.
- * Example: API_BASE_URL=https://localhost:5001/api → full URL becomes
- *   https://localhost:5001/api/CompanySettings
- */
-const endpoints = {
-  settings: "/CompanySettings",
-  logo: "/CompanySettings/logo",
-  password: "/CompanySettings/password",
-};
 
 export const getCompanyAccountSettings = async () => {
   const response = await apiClient.get<CompanyAccountSettings>(

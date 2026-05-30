@@ -1,4 +1,5 @@
 import { apiClient } from "@/lib/apiClient";
+import { postedJobs as endpoints } from "@/lib/apiClient/endpoints";
 import type {
   CompanyJobPostResponse,
   PostedJobsPageData,
@@ -7,28 +8,6 @@ import type {
   PostedJobStatus,
 } from "@/features/posted-jobs/types";
 import { transformCompanyJobPosts } from "@/features/posted-jobs/utils";
-
-/**
- * Endpoint paths for posted jobs CRUD.
- *
- * These paths are appended to API_BASE_URL when calling the .NET backend
- * via the proxy route.
- *
- * Confirmed backend endpoints:
- *   - GET /api/job-posts/company/{companyId}
- *   - PATCH /api/job-posts/{id}/status with { jobStatus }
- *
- * REQUIRES BACKEND CONFIRMATION:
- *   - DELETE /api/job-posts/{id} — assumed, not confirmed
- */
-const endpoints = {
-  /** GET /api/job-posts/company/{companyId} — fetch all jobs for a company */
-  listByCompany: "/job-posts/company",
-  /** DELETE /api/job-posts/{id} — delete a job post (assumed) */
-  delete: "/job-posts",
-  /** PATCH /api/job-posts/{id}/status — update job status */
-  status: "/job-posts",
-};
 
 /**
  * Fetch all job posts for a given company.
@@ -53,10 +32,6 @@ export const getPostedJobs = async (
   );
 
   const rawJobs = response.data;
-  console.log(
-    "[getPostedJobs] raw first job before transformation:",
-    rawJobs[0],
-  );
   return transformCompanyJobPosts(rawJobs);
 };
 

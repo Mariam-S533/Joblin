@@ -1,12 +1,6 @@
 import { apiClient } from "@/lib/apiClient";
+import { skills as endpoints } from "@/lib/apiClient/endpoints";
 import type { SkillResponse } from "@/features/job-post/types";
-
-/**
- * Endpoint paths for Skills CRUD.
- */
-const endpoints = {
-  list: "/Skills",
-};
 
 /**
  * Fetch all available skills (GET /api/Skills).

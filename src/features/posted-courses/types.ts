@@ -1,4 +1,4 @@
-import type { Department, PaginationMeta } from "@/features/posted-jobs/types";
+import type { Department, PaginationMeta } from "@/features/shared/types";
 
 export type PostedCourseStatus = "active" | "closed" | "draft" | "archived";
 

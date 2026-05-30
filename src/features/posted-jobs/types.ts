@@ -16,35 +16,12 @@ export {
   normalizeJobStatus as normalizePostedJobStatus,
 };
 
-// ─── Shared Utility Types (used by other features) ────────────────────
-
-/**
- * Pagination metadata — shared across list endpoints.
- *
- * REQUIRES BACKEND CONFIRMATION: the exact pagination shape is unknown.
- * Kept here because other features (job-applications, course-applications,
- * posted-courses) import it from this file.
- */
-export type PaginationMeta = {
-  totalCount: number;
-  page: number;
-  pageSize: number;
-  totalPages: number;
-};
-
-/**
- * Department names — shared across features that filter by department.
- *
- * REQUIRES BACKEND CONFIRMATION: the real department values from the
- * backend are unknown. "All Departments" is a UI-only filter label.
- * Kept here because posted-courses imports it from this file.
- */
-export type Department =
-  | "Design"
-  | "Engineering"
-  | "Product"
-  | "Marketing"
-  | "Sales";
+// ─── Shared Utility Types (re-exported from shared/types.ts) ─────────
+// PaginationMeta and Department have been moved to src/features/shared/types.ts
+// to eliminate cross-feature dependencies. They are re-exported here for
+// backward compatibility — existing imports from this file still work.
+import type { PaginationMeta, Department } from "@/features/shared/types";
+export type { PaginationMeta, Department };
 
 // ─── Raw API Response (exact mirror of backend) ──────────────────────
 /**

@@ -81,33 +81,33 @@ const titleFromPath = (pathname: string) => {
 export default function DashboardHeader({
   title,
   subtitle,
-  notificationCount = 30,
+  notificationCount = 0,
 }: DashboardHeaderProps) {
   const pathname = usePathname();
   const [searchQuery, setSearchQuery] = useState("");
   const handleSearchChange = useCallback(
-  (e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value),
-  [],
-);
+    (e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value),
+    [],
+  );
 
   const resolvedMeta = useMemo(() => {
-  const matched = routeMeta.find((item) => item.match(pathname));
-  const isCourseRoute =
-    pathname.includes("/company/post-course") ||
-    pathname.includes("/company/posted-courses");
+    const matched = routeMeta.find((item) => item.match(pathname));
+    const isCourseRoute =
+      pathname.includes("/company/post-course") ||
+      pathname.includes("/company/posted-courses");
 
-  return {
-    ...(matched ?? {
-      title: titleFromPath(pathname),
-      subtitle: "Manage and review your company activities",
-    }),
-    postActionLabel: isCourseRoute ? "Post a Course" : "Post a Job",
-  };
-}, [pathname]);
+    return {
+      ...(matched ?? {
+        title: titleFromPath(pathname),
+        subtitle: "Manage and review your company activities",
+      }),
+      postActionLabel: isCourseRoute ? "Post a Course" : "Post a Job",
+    };
+  }, [pathname]);
 
   const headerTitle = title ?? resolvedMeta.title;
   const headerSubtitle = subtitle ?? resolvedMeta.subtitle;
-const { postActionLabel } = resolvedMeta; 
+  const { postActionLabel } = resolvedMeta;
   return (
     <div className="w-full bg-neutral-50/50 backdrop-blur-md sticky top-0 z-40 border-b border-neutral-200">
       <div className="px-6 py-4 flex flex-col lg:flex-row  items-center justify-between gap-8">

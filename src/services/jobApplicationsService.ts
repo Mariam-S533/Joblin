@@ -1,4 +1,5 @@
 import { apiClient } from "@/lib/apiClient";
+import { jobApplications as endpoints } from "@/lib/apiClient/endpoints";
 import type {
   JobApplicationsPageData,
   JobApplicationsQueryParams,
@@ -8,17 +9,6 @@ import type {
   RawUpdateApplicationStatusResponse,
 } from "@/features/job-applications/types";
 import { normalizeJobApplicationStatus } from "@/features/job-applications/types";
-
-/**
- * Endpoint paths for job applications.
- *
- * Adjust the paths below to match your .NET controller routes.
- */
-const endpoints = {
-  list: (jobId: string) => `/PostedJobs/${jobId}/applications`,
-  updateStatus: (jobId: string, applicantId: string) =>
-    `/PostedJobs/${jobId}/applications/${applicantId}/status`,
-};
 
 /**
  * Normalize raw API response data so that all ApplicationStatus values

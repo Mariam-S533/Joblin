@@ -1,22 +1,9 @@
 import { apiClient } from "@/lib/apiClient";
+import { jobPost as endpoints } from "@/lib/apiClient/endpoints";
 import type {
   CreateJobPostApiPayload,
   SubmitJobPostResponse,
 } from "@/features/job-post/types";
-
-/**
- * Endpoint paths for job post CRUD.
- *
- * These paths are appended to API_BASE_URL when calling the .NET backend.
- * Example: API_BASE_URL=https://localhost:5001/api → full URL becomes
- *   https://localhost:5001/api/job-posts
- *
- * NOTE: There is NO /job-posts/template endpoint. The form starts with
- * empty state only — no template fetch is needed.
- */
-const endpoints = {
-  submit: "/job-posts",
-};
 
 /**
  * Strip null/undefined fields from the payload before sending to the backend.
@@ -24,7 +11,9 @@ const endpoints = {
  * The .NET backend treats null fields as missing required values and may
  * return 400 validation errors. This is the same pattern used in authService.
  */
-const stripNullsAndEmptyArrays = <T extends Record<string, unknown>>(obj: T): Partial<T> => {
+const stripNullsAndEmptyArrays = <T extends Record<string, unknown>>(
+  obj: T,
+): Partial<T> => {
   const result: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(obj)) {
     if (value !== null && value !== undefined) {

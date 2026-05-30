@@ -167,6 +167,12 @@ export default function PostJobPage() {
     if (!responsibilities.trim())
       newErrors.responsibilities = "Responsibilities are required";
     if (
+      contactMail.trim() &&
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactMail.trim())
+    ) {
+      newErrors.contactMail = "Contact email is not a valid e-mail address";
+    }
+    if (
       minSalary !== "" &&
       (isNaN(Number(minSalary)) || Number(minSalary) <= 0)
     ) {
@@ -174,9 +180,9 @@ export default function PostJobPage() {
     }
     if (
       reqExpYears !== "" &&
-      (isNaN(Number(reqExpYears)) || Number(reqExpYears) <= 0)
+      (isNaN(Number(reqExpYears)) || Number(reqExpYears) < 0 || Number(reqExpYears) > 50)
     ) {
-      newErrors.reqExpYears = "Experience years must be a positive number";
+      newErrors.reqExpYears = "Experience years must be between 0 and 50";
     }
 
     setErrors(newErrors);
@@ -240,7 +246,7 @@ export default function PostJobPage() {
   // ─── Auth guards ────────────────────────────────────────────────────────
   if (status === "loading") {
     return (
-      <div className="w-full px-4 py-4 md:px-6 md:py-6 lg:px-8 lg:py-8">
+      <div className="w-full px-4 py-4 md:px-6 md:py-6 lg:px-6 lg:py-6">
         <div className="space-y-4">
           <div className="h-16 animate-pulse rounded-xl bg-neutral-200" />
           <div className="h-64 animate-pulse rounded-xl bg-neutral-100" />
@@ -479,9 +485,13 @@ export default function PostJobPage() {
               id="contactMail"
               label="Contact Email"
               value={contactMail}
-              onChange={(event) => setContactMail(event.target.value)}
+              onChange={(event) => {
+                setContactMail(event.target.value);
+                clearError("contactMail");
+              }}
               placeholder="jobs@company.com"
               type="email"
+              error={errors.contactMail}
             />
           </div>
         </SectionCard>

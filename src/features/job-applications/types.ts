@@ -1,4 +1,4 @@
-import type { PaginationMeta } from "@/features/posted-jobs/types";
+import type { PaginationMeta } from "@/features/shared/types";
 import type { ApplicationStatus, EnumOption } from "@/features/enums";
 import {
   APPLICATION_STATUS_OPTIONS,

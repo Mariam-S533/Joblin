@@ -4,8 +4,7 @@ import type {
   CompanyAccountSettingsParsed,
 } from "./types";
 
-const FALLBACK_LOGO_URL =
-  "https://upload.wikimedia.org/wikipedia/commons/4/44/BMW.svg";
+const FALLBACK_LOGO_URL = "";
 
 const toStringValue = (value?: string | number | null) =>
   value === undefined || value === null ? "" : String(value);

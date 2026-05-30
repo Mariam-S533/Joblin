@@ -1,4 +1,5 @@
 import { apiClient } from "@/lib/apiClient";
+import { auth as endpoints } from "@/lib/apiClient/endpoints";
 import type {
   RegisterCompanyPayload,
   RegisterSeekerPayload,
@@ -12,23 +13,6 @@ import type {
   AuthMessageResponse,
   GoogleAuthResponse,
 } from "@/features/auth/types";
-
-/**
- * Endpoint paths for authentication operations.
- *
- * These paths are appended to API_BASE_URL when calling the .NET backend.
- * Adjust the paths below to match your .NET controller routes.
- */
-const endpoints = {
-  login: "/Authentication/login",
-  registerCompany: "/Authentication/register-company",
-  registerSeeker: "/Authentication/register-seeker",
-  googleRegisterCompany: "/Authentication/google-register-company",
-  googleLogin: "/Authentication/google-login",
-  forgotPassword: "/Authentication/forgot-password",
-  resetPassword: "/Authentication/reset-password",
-  verifyEmail: "/Authentication/verify-email",
-};
 
 export const login = async (payload: LoginPayload) => {
   const response = await apiClient.post<AuthUserResponse>(

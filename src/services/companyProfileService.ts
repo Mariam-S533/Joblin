@@ -1,25 +1,10 @@
 import { apiClient } from "@/lib/apiClient";
+import { companyProfile as endpoints } from "@/lib/apiClient/endpoints";
 import type {
   CompanyDataResponse,
   UpsertCompanyPayload,
   UpsertCompanyResponse,
 } from "@/features/company-profile/types";
-
-
-/**
- * Endpoint paths for company profile CRUD.
- *
- * The backend only has two endpoints for company data:
- *   - GET  /api/Company/{id}  — fetch company data by user id
- *   - PUT  /api/Company/{id}  — create or update company data
- *
- * Both require the {id} path parameter (the user's id from session).
- * There is NO /CompanyProfile endpoint and NO POST at /Company.
- * Logo, photos, and team-member sub-endpoints do NOT exist.
- */
-const endpoints = {
-  company: "/Company",
-};
 
 /**
  * Create or update a company profile (PUT /api/Company/{id}).
