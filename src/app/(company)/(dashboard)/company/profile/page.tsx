@@ -35,6 +35,10 @@ export default function CompanyProfile() {
   const [validationErrors, setValidationErrors] = useState<
     Record<string, string>
   >({});
+  const [logoPreviewUrl, setLogoPreviewUrl] = useState("");
+  const [logoPayloadUrl, setLogoPayloadUrl] = useState<string | null>(null);
+  const [logoError, setLogoError] = useState<string | null>(null);
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
 
   const { data: session } = useSession();
   const userId = session?.id as string;
@@ -59,7 +63,12 @@ export default function CompanyProfile() {
     [companyData],
   );
 
-  const displayLogoUrl = companyData?.logoUrl || FALLBACK_LOGO;
+  const rawLogoUrl = companyData?.logoUrl || "";
+  const displayLogoUrl = rawLogoUrl
+    ? rawLogoUrl.startsWith("http") || rawLogoUrl.startsWith("data:")
+      ? rawLogoUrl
+      : `data:image/jpeg;base64,${rawLogoUrl}`
+    : FALLBACK_LOGO;
 
   const primaryAddress =
     companyData?.addresses?.find((a) => a.isHeadQuarters) ??
@@ -70,7 +79,13 @@ export default function CompanyProfile() {
 
   // When editing, use local editFormData; when viewing, use derived displayFormData
   const activeFormData = isEditing ? editFormData : displayFormData;
-  const activeLogoUrl = isEditing ? displayLogoUrl : displayLogoUrl;
+  const activeLogoUrl = isEditing
+    ? logoPreviewUrl || displayLogoUrl
+    : displayLogoUrl;
+
+  // Note: logoPreviewUrl is only used while editing. When not editing,
+  // activeLogoUrl will use displayLogoUrl directly, so no effect is needed
+  // to synchronize logoPreviewUrl from displayLogoUrl (avoids setState in effect).
 
   const handleChange = useCallback(
     (field: keyof CompanyEditFormData, value: string) => {
@@ -90,9 +105,44 @@ export default function CompanyProfile() {
     if (companyData) {
       setEditFormData(mapCompanyDataToEditForm(companyData));
     }
+    setLogoPreviewUrl(displayLogoUrl || "");
+    setLogoPayloadUrl(null);
     setIsEditing(true);
     setValidationErrors({});
-  }, [companyData]);
+    setLogoError(null);
+  }, [companyData, displayLogoUrl]);
+
+  const handleLogoUpload = async (file: File) => {
+    const previousPreview = logoPreviewUrl;
+    const previousPayload = logoPayloadUrl;
+
+    setIsUploadingLogo(true);
+    setLogoError(null);
+
+    try {
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          if (typeof reader.result === "string") {
+            resolve(reader.result);
+          } else {
+            reject(new Error("Failed to read logo file."));
+          }
+        };
+        reader.onerror = () => reject(new Error("Failed to read logo file."));
+        reader.readAsDataURL(file);
+      });
+
+      setLogoPreviewUrl(dataUrl);
+      setLogoPayloadUrl(dataUrl);
+    } catch (error) {
+      setLogoError(getErrorMessage(error, "Failed to prepare logo file."));
+      setLogoPreviewUrl(previousPreview);
+      setLogoPayloadUrl(previousPayload ?? null);
+    } finally {
+      setIsUploadingLogo(false);
+    }
+  };
 
   // ─── Validation ─────────────────────────────────────────────────────
   const validate = (): boolean => {
@@ -128,10 +178,13 @@ export default function CompanyProfile() {
           }))
         : [];
 
+    const payloadLogoUrl =
+      logoPayloadUrl ?? (rawLogoUrl ? rawLogoUrl : null);
     const payload = mapEditFormToUpsertPayload(
       userId,
       editFormData,
       addressesForPayload,
+      payloadLogoUrl,
     );
 
     try {
@@ -148,7 +201,7 @@ export default function CompanyProfile() {
     ? getErrorMessage(upsertMutation.error, "Failed to save company profile")
     : null;
 
-  const combinedError = profileError || mutationError;
+  const combinedError = profileError || mutationError || logoError;
 
   return (
     <>
@@ -181,8 +234,10 @@ export default function CompanyProfile() {
             logoUrl={activeLogoUrl}
             isEditing={isEditing}
             isSaving={isSaving}
+            isUploadingLogo={isUploadingLogo}
             onEdit={handleStartEditing}
             onSave={() => void handleSaveProfile()}
+            onLogoUpload={handleLogoUpload}
           />
         )}
 

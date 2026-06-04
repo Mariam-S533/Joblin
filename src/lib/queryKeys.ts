@@ -21,7 +21,8 @@ export const queryKeys = {
   },
   postedCourses: {
     all: ["posted-courses"] as const,
-    list: (params?: unknown) => ["posted-courses", "list", params] as const,
+    list: (companyId?: string) =>
+      ["posted-courses", "list", companyId] as const,
   },
   jobApplications: {
     all: ["job-applications"] as const,

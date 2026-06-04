@@ -194,6 +194,27 @@ export const DIFFICULTY_LEVEL_VALUES: DifficultyLevel[] =
 export const getDifficultyLevelLabel = (value: DifficultyLevel): string =>
   DIFFICULTY_LEVEL_OPTIONS.find((o) => o.value === value)?.label ?? value;
 
+// ─── DeliveryMode ───────────────────────────────────────────────────
+// Backend: public enum DeliveryMode
+//   Online = 1, InPerson = 2, Hybrid = 3, SelfPaced = 4
+
+export type DeliveryMode = "Online" | "In Person" | "Hybrid" | "Self-Paced";
+
+export const DELIVERY_MODE_OPTIONS: EnumOption[] = [
+  { label: "Online", value: "Online" },
+  { label: "In Person", value: "In Person" },
+  { label: "Hybrid", value: "Hybrid" },
+  { label: "Self-Paced", value: "Self-Paced" },
+];
+
+export const DELIVERY_MODE_VALUES: DeliveryMode[] = DELIVERY_MODE_OPTIONS.map(
+  (o) => o.value as DeliveryMode,
+);
+
+/** Lookup a user-friendly label for a backend DeliveryMode value. */
+export const getDeliveryModeLabel = (value: DeliveryMode): string =>
+  DELIVERY_MODE_OPTIONS.find((o) => o.value === value)?.label ?? value;
+
 // ─── Enum Normalization Helpers ──────────────────────────────────────
 //
 // The .NET backend may serialize enums as:

@@ -1,13 +1,11 @@
 "use client";
 import Link from "next/link";
 import Image from "next/image";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowRight,
   Atom,
-  CheckCircle2,
-  Circle,
   Cpu,
   Database,
   ShieldCheck,
@@ -15,19 +13,67 @@ import {
 import { Container } from "@radix-ui/themes";
 import { Box } from "@radix-ui/themes";
 import { useSession } from "next-auth/react";
-import { useCompanyHomeData } from "@/hooks/companyHome";
-import { getErrorMessage } from "@/lib/apiClient/error";
 
 const BOX_STYLE = {
   background: "var(--gray-a2)",
   borderRadius: "var(--radius-3)",
 };
 
-const EMPTY_STATS = {
-  reviewCount: "—",
-  rating: "—",
-  companyCount: "—",
+const STATS = {
+  reviewCount: "1M",
+  rating: "4.6",
+  companyCount: "2K",
 };
+
+const EFFICIENT_SOLUTIONS = [
+  "Robust Resume Search",
+  "Flexible and Performance",
+  "Efficient Recruiting Process",
+  "Increase your visibility",
+];
+
+const STRATEGY_CARDS = [
+  {
+    title: "Candidate Sourcing",
+    text: "Find skilled candidates faster with smart filters, strong talent pools, and personalized recommendations that match your role needs.",
+  },
+  {
+    title: "Tech Job Posts",
+    text: "Create optimized job posts with clear requirements, SEO-friendly structure, and rich media that improve qualified applications.",
+  },
+  {
+    title: "Career Events",
+    text: "Host virtual and on-site events to engage candidates early, highlight your culture, and build long-term hiring pipelines.",
+  },
+  {
+    title: "Permit Sourcing",
+    text: "Reach global candidates and manage compliance-ready hiring with structured workflows and verified documentation support.",
+  },
+];
+
+const TESTIMONIALS = [
+  {
+    text: "JOBLIN helped us cut hiring time in half and consistently delivers candidates that match both role and culture.",
+    name: "Maya Lee",
+    role: "People Ops Lead",
+    company: "Northwind",
+    avatar: "/avater.jpg",
+  },
+  {
+    text: "We filled three critical positions in two weeks. The workflow and screening tools are simple and effective.",
+    name: "Omar Hassan",
+    role: "Talent Partner",
+    company: "BluePeak",
+    avatar: "/avater.jpg",
+  },
+  {
+    text: "The quality of applicants improved instantly. JOBLIN makes it easy to prioritize and collaborate on hiring.",
+    name: "Sofia Martinez",
+    role: "HR Manager",
+    company: "Maple Labs",
+    avatar: "/avater.jpg",
+  },
+];
 
 export default function ForCompaniesPage() {
   const [activeIndex, setActiveIndex] = useState(0);
@@ -38,8 +84,6 @@ export default function ForCompaniesPage() {
   const [jobTitle, setJobTitle] = useState("Web Developer");
   const [jobType, setJobType] = useState("Full-Time");
   const [experience, setExperience] = useState("More than 2 years");
-
-  const homeQuery = useCompanyHomeData();
 
   const handlePostJob = useCallback(() => {
     if (!isAuthenticated) {
@@ -54,20 +98,11 @@ export default function ForCompaniesPage() {
     router.push(`/company/post-job?${params.toString()}`);
   }, [isAuthenticated, jobTitle, jobType, experience, router]);
 
-  // Use fetched data or fall back to empty arrays/objects
-  const stats = homeQuery.data?.stats ?? EMPTY_STATS;
-  const efficientSolutions = homeQuery.data?.efficientSolutions ?? [];
-  const strategyCards = homeQuery.data?.strategyCards ?? [];
-  const testimonials = homeQuery.data?.testimonials ?? [];
-
-  const trustedCards = useMemo(
-    () => [
-      { label: "Review", value: stats.reviewCount },
-      { label: "Rating", value: stats.rating },
-      { label: "Company", value: stats.companyCount },
-    ],
-    [stats.reviewCount, stats.rating, stats.companyCount],
-  );
+  const trustedCards = [
+    { label: "Review", value: STATS.reviewCount },
+    { label: "Rating", value: STATS.rating },
+    { label: "Company", value: STATS.companyCount },
+  ];
 
   return (
     <div className="text-[#101825]">
@@ -135,58 +170,33 @@ export default function ForCompaniesPage() {
                 </p>
               </div>
 
-              {/* Loading skeleton for stats */}
-              {homeQuery.isLoading && (
-                <div className="mt-10 grid gap-5 md:grid-cols-3 justify-center">
-                  {[1, 2, 3].map((i) => (
-                    <div
-                      key={i}
-                      className="max-w-80 animate-pulse rounded-2xl border border-[#e4e7ea] bg-white p-6"
-                    >
-                      <div className="h-4 w-20 rounded bg-neutral-100" />
-                      <div className="mt-3 h-8 w-16 rounded bg-neutral-100" />
+              <div className="mt-10 grid gap-5 md:grid-cols-3 justify-center">
+                {trustedCards.map((card) => (
+                  <article
+                    key={card.label}
+                    className="max-w-80 inline-flex justify-between items-end gap-8 rounded-2xl border border-[#e4e7ea] bg-white p-6 shadow-[2px_4px_32px_0px_rgba(1,70,177,0.08)]"
+                  >
+                    <div className="inline-flex flex-col justify-start items-start gap-1">
+                      <p className="text-center text-xl md:text-2xl font-medium text-[#6f7784]">
+                        {card.label}
+                      </p>
+                      <p className="text-center text-4xl mt-1 md:text-5xl font-semibold">
+                        {card.value}
+                      </p>
                     </div>
-                  ))}
-                </div>
-              )}
 
-              {/* Error state */}
-              {homeQuery.error && (
-                <div className="mt-10 text-center text-sm text-red-600">
-                  Failed to load stats:{" "}
-                  {getErrorMessage(homeQuery.error, "Unknown error")}
-                </div>
-              )}
-
-              {!homeQuery.isLoading && (
-                <div className="mt-10 grid gap-5 md:grid-cols-3 justify-center">
-                  {trustedCards.map((card) => (
-                    <article
-                      key={card.label}
-                      className="max-w-80 inline-flex justify-between items-end gap-8 rounded-2xl border border-[#e4e7ea] bg-white p-6 shadow-[2px_4px_32px_0px_rgba(1,70,177,0.08)]"
-                    >
-                      <div className="inline-flex flex-col justify-start items-start gap-1">
-                        <p className="text-center text-xl md:text-2xl font-medium text-[#6f7784]">
-                          {card.label}
-                        </p>
-                        <p className="text-center text-4xl mt-1 md:text-5xl font-semibold">
-                          {card.value}
-                        </p>
-                      </div>
-
-                      <div className="mt-4 h-16 rounded-xl">
-                        <Image
-                          src={`/Charts.svg`}
-                          alt={`${card.label} illustration`}
-                          width={64}
-                          height={64}
-                          className="h-auto w-auto"
-                        />
-                      </div>
-                    </article>
-                  ))}
-                </div>
-              )}
+                    <div className="mt-4 h-16 rounded-xl">
+                      <Image
+                        src={`/Charts.svg`}
+                        alt={`${card.label} illustration`}
+                        width={64}
+                        height={64}
+                        className="h-auto w-auto"
+                      />
+                    </div>
+                  </article>
+                ))}
+              </div>
             </section>
 
             <section
@@ -254,53 +264,38 @@ export default function ForCompaniesPage() {
                 </p>
               </div>
 
-              {homeQuery.isLoading ? (
-                <div className="mt-8 grid gap-5 grid-cols-2 lg:grid-cols-4">
-                  {[1, 2, 3, 4].map((i) => (
-                    <div
-                      key={i}
-                      className="rounded-2xl bg-white p-6 w-72 mx-auto animate-pulse"
-                    >
-                      <div className="h-20 w-20 mx-auto rounded-xl bg-neutral-100" />
-                      <div className="mt-4 h-6 w-40 mx-auto rounded bg-neutral-100" />
-                      <div className="mt-2 h-4 w-52 mx-auto rounded bg-neutral-100" />
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="mt-8 grid gap-5 grid-cols-2 lg:grid-cols-4 ">
-                  {efficientSolutions.map((title, idx) => (
-                    <article
-                      key={title}
-                      className="rounded-2xl bg-white p-6 w-72 mx-auto text-center outline -outline-offset-1 outline-gray-200 inline-flex flex-col justify-start items-center gap-2"
-                    >
-                      <div className="inline-flex h-20 w-20 items-center justify-center rounded-xl  text-[#2C8BFF]">
-                        {(idx === 0 && (
-                          <Database color="hsla(159, 97%, 29%, 1)" size={100} />
+              <div className="mt-8 grid gap-5 grid-cols-2 lg:grid-cols-4 ">
+                {EFFICIENT_SOLUTIONS.map((title, idx) => (
+                  <article
+                    key={title}
+                    className="rounded-2xl bg-white p-6 w-72 mx-auto text-center outline -outline-offset-1 outline-gray-200 inline-flex flex-col justify-start items-center gap-2"
+                  >
+                    <div className="inline-flex h-20 w-20 items-center justify-center rounded-xl text-[#2C8BFF]">
+                      {(idx === 0 && (
+                        <Database color="hsla(159, 97%, 29%, 1)" size={100} />
+                      )) ||
+                        (idx === 1 && (
+                          <Cpu color="hsla(159, 97%, 29%, 1)" size={100} />
                         )) ||
-                          (idx === 1 && (
-                            <Cpu color="hsla(159, 97%, 29%, 1)" size={100} />
-                          )) ||
-                          (idx === 2 && (
-                            <Atom color="hsla(159, 97%, 29%, 1)" size={100} />
-                          )) ||
-                          (idx === 3 && (
-                            <ShieldCheck
-                              color="hsla(159, 97%, 29%, 1)"
-                              size={100}
-                            />
-                          ))}
-                      </div>
-                      <h3 className="mt-4 text-lg md:text-3xl font-semibold text-[#1a2330]">
-                        {title}
-                      </h3>
-                      <p className="mt-2 text-[#606a78] text-sm font-medium leading-6">
-                        Sponser your work to make sure the right people see it.
-                      </p>
-                    </article>
-                  ))}
-                </div>
-              )}
+                        (idx === 2 && (
+                          <Atom color="hsla(159, 97%, 29%, 1)" size={100} />
+                        )) ||
+                        (idx === 3 && (
+                          <ShieldCheck
+                            color="hsla(159, 97%, 29%, 1)"
+                            size={100}
+                          />
+                        ))}
+                    </div>
+                    <h3 className="mt-4 text-lg md:text-3xl font-semibold text-[#1a2330]">
+                      {title}
+                    </h3>
+                    <p className="mt-2 text-[#606a78] text-sm font-medium leading-6">
+                      Sponser your work to make sure the right people see it.
+                    </p>
+                  </article>
+                ))}
+              </div>
             </section>
 
             <section className="mx-auto w-[92%] max-w-7xl py-14 flex flex-col gap-8">
@@ -314,65 +309,54 @@ export default function ForCompaniesPage() {
                 </p>
               </div>
 
-              {homeQuery.isLoading ? (
-                <div className="flex flex-col lg:flex-row gap-6 items-stretch">
-                  {[1, 2, 3, 4].map((i) => (
-                    <div
-                      key={i}
-                      className="h-[540px] flex-1 animate-pulse rounded-2xl bg-neutral-100 p-8"
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="flex flex-col lg:flex-row gap-6 items-stretch">
-                  {strategyCards.map((card, index) => {
-                    const isOpen = activeIndex === index;
-                    return (
-                      <article
-                        key={card.title}
-                        onClick={() => setActiveIndex(index)}
-                        className={`group relative flex flex-col justify-between p-8 rounded-2xl h-[540px] cursor-pointer transition-all duration-500 ease-out overflow-hidden ${
+              <div className="flex flex-col lg:flex-row gap-6 items-stretch">
+                {STRATEGY_CARDS.map((card, index) => {
+                  const isOpen = activeIndex === index;
+                  return (
+                    <article
+                      key={card.title}
+                      onClick={() => setActiveIndex(index)}
+                      className={`group relative flex flex-col justify-between p-8 rounded-2xl h-[540px] cursor-pointer transition-all duration-500 ease-out overflow-hidden ${
+                        isOpen
+                          ? "bg-gray-200 lg:flex-[1.7] shadow-sm"
+                          : "bg-stone-50 border border-stone-100 hover:bg-stone-100 lg:flex-1"
+                      }`}
+                    >
+                      <div className="flex flex-col gap-8 w-full relative z-10">
+                        <h3
+                          className={`text-2xl font-medium transition-colors duration-300 ${isOpen ? "text-neutral-800 font-semibold" : "text-neutral-800"}`}
+                        >
+                          {card.title}
+                        </h3>
+                        <p
+                          className={`text-lg leading-7 transition-colors duration-300 ${isOpen ? "text-neutral-600 line-clamp-[11]" : "text-neutral-500 line-clamp-[10]"}`}
+                        >
+                          {card.text}
+                        </p>
+                      </div>
+
+                      <div
+                        className={`relative z-10 shrink-0 transition-all duration-500 ease-out flex flex-col justify-end ${
                           isOpen
-                            ? "bg-gray-200 lg:flex-[1.7] shadow-sm"
-                            : "bg-stone-50 border border-stone-100 hover:bg-stone-100 lg:flex-1"
+                            ? "opacity-100 h-12 mt-8 translate-y-0"
+                            : "opacity-0 h-0 mt-0 translate-y-4 pointer-events-none"
                         }`}
                       >
-                        <div className="flex flex-col gap-8 w-full relative z-10">
-                          <h3
-                            className={`text-2xl font-medium transition-colors duration-300 ${isOpen ? "text-neutral-800 font-semibold" : "text-neutral-800"}`}
-                          >
-                            {card.title}
-                          </h3>
-                          <p
-                            className={`text-lg leading-7 transition-colors duration-300 ${isOpen ? "text-neutral-600 line-clamp-[11]" : "text-neutral-500 line-clamp-[10]"}`}
-                          >
-                            {card.text}
-                          </p>
-                        </div>
-
-                        <div
-                          className={`relative z-10 shrink-0 transition-all duration-500 ease-out flex flex-col justify-end ${
-                            isOpen
-                              ? "opacity-100 h-12 mt-8 translate-y-0"
-                              : "opacity-0 h-0 mt-0 translate-y-4 pointer-events-none"
-                          }`}
+                        <Link
+                          href={status === "loading" ? "#" : (isAuthenticated ? "/company/post-job" : "/register/company")}
+                          className={`flex justify-center items-center h-12 w-full rounded-lg bg-zinc-800 text-lg font-medium text-white hover:bg-zinc-700 transition ${status === "loading" ? "animate-pulse pointer-events-none" : ""}`}
+                          onClick={(e) => {
+                            if (!isOpen) e.preventDefault();
+                            e.stopPropagation();
+                          }}
                         >
-                          <Link
-                            href={status === "loading" ? "#" : (isAuthenticated ? "/company/post-job" : "/register/company")}
-                            className={`flex justify-center items-center h-12 w-full rounded-lg bg-zinc-800 text-lg font-medium text-white hover:bg-zinc-700 transition ${status === "loading" ? "animate-pulse pointer-events-none" : ""}`}
-                            onClick={(e) => {
-                              if (!isOpen) e.preventDefault();
-                              e.stopPropagation();
-                            }}
-                          >
-                            Find Top Talent
-                          </Link>
-                        </div>
-                      </article>
-                    );
-                  })}
-                </div>
-              )}
+                          Find Top Talent
+                        </Link>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
             </section>
 
             <section className="mx-auto w-[92%] max-w-7xl py-14 flex flex-col justify-start items-center gap-8">
@@ -388,67 +372,51 @@ export default function ForCompaniesPage() {
               </div>
 
               <div className="w-full flex flex-col justify-start items-center gap-6">
-                {homeQuery.isLoading ? (
-                  <div className="w-full grid md:grid-cols-3 gap-6">
-                    {[1, 2, 3].map((i) => (
-                      <div
-                        key={i}
-                        className="p-6 bg-stone-50 rounded-lg animate-pulse space-y-4"
-                      >
-                        <div className="h-6 w-8 rounded bg-neutral-100" />
-                        <div className="h-20 w-full rounded bg-neutral-100" />
-                        <div className="h-px bg-neutral-100" />
-                        <div className="h-12 w-full rounded bg-neutral-100" />
+                <div className="w-full grid md:grid-cols-3 gap-6">
+                  {TESTIMONIALS.map((item) => (
+                    <article
+                      key={item.name}
+                      className="p-6 bg-stone-50 rounded-lg flex flex-col justify-start items-start gap-6 border border-stone-100"
+                    >
+                      <div className="text-5xl font-serif text-neutral-800 leading-none h-8 mt-2">
+                        &ldquo;
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="w-full grid md:grid-cols-3 gap-6">
-                    {testimonials.map((item) => (
-                      <article
-                        key={item.name}
-                        className="p-6 bg-stone-50 rounded-lg flex flex-col justify-start items-start gap-6 border border-stone-100"
-                      >
-                        <div className="text-5xl font-serif text-neutral-800 leading-none h-8 mt-2">
-                          &ldquo;
+
+                      <p className="min-h-[100px] text-zinc-800 text-base font-normal leading-6">
+                        {item.text}
+                      </p>
+
+                      <div className="w-full h-px bg-gray-200" />
+
+                      <div className="w-full flex justify-start items-center gap-3">
+                        <div className="w-16 h-16 rounded-full bg-gray-200 overflow-hidden relative shrink-0">
+                          <Image
+                            src={item.avatar}
+                            alt={item.name}
+                            fill
+                            className="object-cover"
+                          />
                         </div>
-
-                        <p className="min-h-[100px] text-zinc-800 text-base font-normal leading-6">
-                          {item.text}
-                        </p>
-
-                        <div className="w-full h-px bg-gray-200" />
-
-                        <div className="w-full flex justify-start items-center gap-3">
-                          <div className="w-16 h-16 rounded-full bg-gray-200 overflow-hidden relative shrink-0">
-                            <Image
-                              src={`/${item.name.replace(" ", "").toLowerCase()}.jpg`}
-                              alt={item.name}
-                              fill
-                              className="object-cover"
-                            />
-                          </div>
-                          <div className="flex flex-col justify-center items-start gap-1">
-                            <h4 className="text-neutral-800 text-base font-medium">
-                              {item.name}
-                            </h4>
-                            <p className="text-neutral-500 text-xs font-normal">
-                              {item.role}
-                            </p>
-                            <div className="flex items-center gap-1.5 mt-1">
-                              <div className="w-4 h-4 bg-emerald-600 rounded flex items-center justify-center text-white shrink-0">
-                                <Atom size={10} />
-                              </div>
-                              <span className="text-neutral-500 text-xs font-medium">
-                                {item.company}
-                              </span>
+                        <div className="flex flex-col justify-center items-start gap-1">
+                          <h4 className="text-neutral-800 text-base font-medium">
+                            {item.name}
+                          </h4>
+                          <p className="text-neutral-500 text-xs font-normal">
+                            {item.role}
+                          </p>
+                          <div className="flex items-center gap-1.5 mt-1">
+                            <div className="w-4 h-4 bg-emerald-600 rounded flex items-center justify-center text-white shrink-0">
+                              <Atom size={10} />
                             </div>
+                            <span className="text-neutral-500 text-xs font-medium">
+                              {item.company}
+                            </span>
                           </div>
                         </div>
-                      </article>
-                    ))}
-                  </div>
-                )}
+                      </div>
+                    </article>
+                  ))}
+                </div>
 
                 <div className="h-4 flex justify-center items-center gap-2 mt-4">
                   <div className="w-2 h-2 bg-neutral-800 rounded-full" />

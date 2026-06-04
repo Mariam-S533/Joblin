@@ -41,8 +41,7 @@ export const courseApplications = {
 };
 
 export const coursePost = {
-  template: "/CoursePost/template",
-  submit: "/CoursePost",
+  submit: "/offering-posts",
 };
 
 export const jobApplications = {
@@ -56,9 +55,9 @@ export const jobPost = {
 };
 
 export const postedCourses = {
-  list: "/PostedCourses",
-  delete: "/PostedCourses",
-  toggleStatus: "/PostedCourses/status",
+  listByCompany: (companyId: string) => `/offering-posts/company/${companyId}`,
+  delete: (courseId: string) => `/offering-posts/${courseId}`,
+  toggleStatus: (courseId: string) => `/offering-posts/${courseId}/status`,
 };
 
 export const postedJobs = {
