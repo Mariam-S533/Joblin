@@ -20,6 +20,7 @@ function JobseekerRegister() {
       const [loading, setLoading] = useState(false)
       const [errorMsg, setErrorMsg] = useState("")
       const router = useRouter()
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL
 
         interface Inputs{
         firstName: string,
@@ -46,7 +47,7 @@ function JobseekerRegister() {
         try{
           console.log(data)
           setLoading(true)
-          const response = await fetch("https://pnm6zhh3-7127.uks1.devtunnels.ms/api/Authentication/register-seeker", {
+          const response = await fetch(`${baseUrl}/api/Authentication/register-seeker`, {
             method: "POST",
             headers: {"Content-Type": "application/json",
               "X-Tunnel-Skip-AntiPhishing-Page": "true"
@@ -56,7 +57,7 @@ function JobseekerRegister() {
           const resData = await response.json()
           setLoading(false)
           if(response.ok){
-            router.push('/login/job-seeker')
+            router.push('/login/generalLogin')
           }
           else{
             console.log(resData);
@@ -175,7 +176,7 @@ function JobseekerRegister() {
           <p className="text-sm text-muted-foreground">
             Do you already have an account?
             <Link
-              href="/login/job-seeker"
+              href="/login/generalLogin"
               className="font-medium text-[#02905E] hover:text-[#04a165] underline cursor-pointer"
             >
               Login
