@@ -20,6 +20,9 @@ function CompanyRegister() {
       const [loading, setLoading] = useState(false)
       const [errorMsg, setErrorMsg] = useState("")
       const router = useRouter()
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL
+
+
 
         interface Inputs{
         companyName: string,
@@ -48,7 +51,7 @@ function CompanyRegister() {
         try{
           console.log(data)
           setLoading(true)
-          const response = await fetch("https://pnm6zhh3-7127.uks1.devtunnels.ms/api/Authentication/register-company", {
+          const response = await fetch(`${baseUrl}/api/Authentication/register-company`, {
             method: "POST",
             headers: {"Content-Type": "application/json"
                       ,"X-Tunnel-Skip-AntiPhishing-Page": "true"
@@ -58,7 +61,7 @@ function CompanyRegister() {
           const resData = await response.json()
           setLoading(false)
           if(response.ok){
-            router.push('/login/company')
+            router.push('/login/generalLogin')
           }
           else{
             console.log(resData);
@@ -188,7 +191,7 @@ function CompanyRegister() {
           <p className="text-sm text-muted-foreground">
             Do you already have an account?
             <Link
-              href="/login/company"
+              href="/login/generalLogin"
               className="font-medium text-[#02905E] hover:text-[#04a165] underline cursor-pointer"
             >
               Login

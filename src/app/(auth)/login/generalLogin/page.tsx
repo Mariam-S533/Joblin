@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { LoaderCircle } from 'lucide-react'
-import { signIn } from 'next-auth/react'
+import { getSession, signIn } from 'next-auth/react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -21,7 +21,7 @@ interface Inputs{
   password: string,
 }
 
-function CompanyLogin() {
+function LoginPage() {
 
 
         const [loading, setLoading] = useState(false)
@@ -48,11 +48,18 @@ function CompanyLogin() {
             })
             setLoading(false)
             if(res?.ok){
-              router.push('/company/home')
+              const session = await getSession()
+              console.log('sessionnn', session)
+              if (session?.role === 'Company') {
+                router.push('/company/home')
+              } else {
+                router.push('/')
+              }
               // window.location.href = "/"
             }else{
               console.log(res?.error);
               setErrorMsg(res?.error || "Invalid email or password" )
+
               setLoading(false)
             }
           }
@@ -76,7 +83,8 @@ function CompanyLogin() {
           </div>
           <div className='text-center'>
             <CardDescription className='text-[#757575] text-[14px] font-medium flex justify-center w-3/4 mx-auto'>
-              Are You Job Seeker? <Link href="/register/job-seeker" className=' text-[#02905E] pl-1'>Click Here</Link>
+              {/* Are You Employer? <Link href="/register/company" className=' text-[#02905E] pl-1'>Click Here</Link> */}
+              Welcome back! Log in to access your dashboard profile.
             </CardDescription>
           </div>
         </CardHeader>
@@ -133,7 +141,7 @@ function CompanyLogin() {
             <Separator className="flex-1" />
             </div>
 
-            <Button onClick={() => signIn('google', { callbackUrl: '/company/home' })} type='button' className='w-full h-11 rounded-sm border border-[#04a165] transparent bg-white text-[#04a165] font-medium text-[16px] hover:bg-gray-50 flex items-center justify-center gap-2 overflow-hidden cursor-pointer'>
+            <Button onClick={() => signIn('google', { callbackUrl: '/' })} type='button' className='w-full h-11 rounded-sm border border-[#04a165] transparent bg-white text-[#04a165] font-medium text-[16px] hover:bg-gray-50 flex items-center justify-center gap-2 overflow-hidden cursor-pointer'>
               <Image src="/google-icon.svg" width={20} height={20} alt='googel logo'/>
               <span>Continue with Google</span>
             </Button>
@@ -142,14 +150,11 @@ function CompanyLogin() {
 
           <CardFooter className="flex justify-center pb-2">
           <p className="text-sm text-muted-foreground">
-            Don&apos;t have any account?
-            <Link
-              href="/register/company"
-              className="font-medium text-[#02905E] hover:text-[#04a165] underline cursor-pointer"
-            >
-              Sign up
-            </Link>
+            Don&apos;t have an account? Register as a{' '}
+            <Link href="/register/job-seeker" className="font-bold text-[#02905E] underline">Seeker</Link> or{' '}
+            <Link href="/register/company" className="font-bold text-[#02905E] underline">Company</Link>
           </p>
+          
         </CardFooter>
 
       </Card>
@@ -158,4 +163,4 @@ function CompanyLogin() {
   )
 }
 
-export default CompanyLogin
+export default LoginPage
