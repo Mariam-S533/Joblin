@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { LoaderCircle } from 'lucide-react'
+import { Eye, EyeClosed, LoaderCircle } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useState } from 'react'
@@ -12,15 +12,22 @@ import { useForm } from 'react-hook-form'
 import { useRouter } from 'next/navigation';
 import * as z from 'zod'
 import { signIn } from 'next-auth/react'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { toast } from 'sonner';
 
 
 
 function CompanyRegister() {
 
       const [loading, setLoading] = useState(false)
-      const [errorMsg, setErrorMsg] = useState("")
+      // const [errorMsg, setErrorMsg] = useState("")
       const router = useRouter()
       const baseUrl = process.env.NEXT_PUBLIC_BASE_URL
+
+      const [showPassword, setShowPassword] = useState(false);
+      const [showConfirm, setShowConfirm] = useState(false);
+      
 
 
 
@@ -61,18 +68,18 @@ function CompanyRegister() {
           const resData = await response.json()
           setLoading(false)
           if(response.ok){
+            toast.success("Registration successful! Redirecting to login page...", {position: "top-center", duration: 3000})
             router.push('/login/generalLogin')
           }
           else{
-            console.log(resData);
-            setErrorMsg(resData.message || "Registration failed. Please try again.")
+            toast.error(resData.title, {position: "top-center", duration: 3000})
             setLoading(false)
           }
         }
         catch(error){
-           console.error("Register error:", error)
-          setErrorMsg("An error occurred. Please try again.")
+          const message = error instanceof Error ? error.message : "Something went wrong";
           setLoading(false)
+          toast.error(message, {position: "top-center", duration: 3000})
         }
       }
 
@@ -103,7 +110,7 @@ function CompanyRegister() {
               <InputField
               {...register("companyName")}
               id="companyname"
-              label="Firs Name"
+              label="First Name"
               type="text"
               placeholder="Enter your First Name"
             />
@@ -143,26 +150,55 @@ function CompanyRegister() {
             {errors.email && <p className='text-sm text-red-600 mt-1'>{errors.email.message}</p>}
             </div>
 
-            <div className=''>
-              <InputField
-              {...register("password")}
-              id="password"
-              label="Password"
-              type="password"
-              placeholder="Enter your Password"
-            />
-            {errors.password && <p className='text-sm text-red-600 mt-1'>{errors.password.message}</p>}
-            </div>
+           <div className="w-full flex flex-col">
+                    <div className="relative">
+                <Input
+                  {...register("password")}
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter your Password"
+                  className="h-11 rounded-sm border border-[#A5A5A5] focus-visible:ring-0
+                            focus-visible:border-gray-700 w-full placeholder:text-[#A5A5A5] pr-10 relative
+                            "
+                />
+                <Label htmlFor="password" className="absolute left-3 top-0 -translate-y-1/2 bg-white px-1 text-sm text-gray-600 font-medium gap-1">
+                  Password <span className="text-red-600">*</span>
+                </Label>
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
+                >
+                  {showPassword ? <Eye size={19}/> : <EyeClosed size={19}/> }
+                </button>
+              </div>
 
-            <div className=''>
-              <InputField
-              {...register("confirmPassword")}
-              id="confirmpassword"
-              label="Confirm Password"
-              type="password"
-              placeholder="Confirm your Password"
-            />
-            {errors.confirmPassword && <p className='text-sm text-red-600 mt-1'>{errors.confirmPassword.message}</p>}
+              {errors.password && <p className='text-sm text-red-600 mt-1'>{errors.password.message}</p>}
+          </div>
+
+
+            <div className="w-full flex flex-col">
+              <div className="relative">
+                <Input
+                  {...register("confirmPassword")}
+                  id="confirmpassword"
+                  type={showConfirm ? "text" : "password"}
+                  placeholder="Confirm your Password"
+                  className="h-11 rounded-sm border border-[#A5A5A5] focus-visible:ring-0
+                            focus-visible:border-gray-700 w-full placeholder:text-[#A5A5A5] pr-10"
+                />
+                <Label htmlFor="confirmpassword" className="absolute left-3 top-0 -translate-y-1/2 bg-white px-1 text-sm text-gray-600 font-medium gap-1">
+                  Confirm Password <span className="text-red-600">*</span>
+                </Label>
+                <button
+                  type="button"
+                  onClick={() => setShowConfirm(!showConfirm)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
+                >
+                  {showConfirm ? <Eye size={19}/> : <EyeClosed size={19}/>}
+                </button>
+              </div>
+              {errors.confirmPassword && <p className='text-sm text-red-600 mt-1'>{errors.confirmPassword.message}</p>}
             </div>
 
             <Button type='submit' className='h-10 rounded-sm mt-1 w-full bg-[#02905E] text-white text-[17px] font-medium hover:bg-[#04a165] cursor-pointer '>
@@ -197,7 +233,6 @@ function CompanyRegister() {
               Login
             </Link>
           </p>
-           {errorMsg && <p className='text-red-700 text-center'>{errorMsg}</p>}
         </CardFooter>
 
       </Card>

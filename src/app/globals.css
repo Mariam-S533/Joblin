@@ -44,6 +44,15 @@
   --radius-2xl: calc(var(--radius) + 8px);
   --radius-3xl: calc(var(--radius) + 12px);
   --radius-4xl: calc(var(--radius) + 16px);
+
+    /* joblin custom properties */
+
+    --color-joblin-primary: var(--joblin-primary);
+    --color-joblin-black: var(--joblin-black);
+    --color-joblin-dark-gray: var(--joblin-dark-gray);
+    --color-joblin-light-gray: var(--joblin-light-gray);
+    --color-joblin-light-green: var(--joblin-light-green);
+
 }
 
 :root {
@@ -79,6 +88,15 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  /* joblin custom colors */
+
+  --joblin-primary:#02905E;
+  --joblin-light-green:#E6F8F1;
+  --joblin-black: #222222 ;
+  --joblin-dark-gray:  #515151;
+  --joblin-light-gray: #757575;
+
 }
 
 .dark {
@@ -121,5 +139,24 @@
   }
   body {
     @apply bg-background text-foreground;
+
+      .fixed {
+        padding-right: var(--removed-body-scroll-bar-size, 0px);
+      }
+
+      /* Removes the default reveal eye icon in Microsoft Edge */
+        input::-ms-reveal,
+        input::-ms-clear {
+          display: none !important;
+        }
+
+        /* Removes the default reveal eye icon in WebKit/Chrome-based browsers if enabled */
+        input::-webkit-contacts-auto-fill-button,
+        input::-webkit-credentials-auto-fill-button {
+          visibility: hidden !important;
+          display: none !important;
+          pointer-events: none !important;
+        }
+
   }
 }
