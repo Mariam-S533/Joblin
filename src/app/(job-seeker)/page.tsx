@@ -71,7 +71,7 @@ export default async function Home() {
   <div>
 
   <div className=" w-full  bg-joblin-light-green min-h-screen pt-30 pb-12  ">
-      <div className="lg:container md:w-[80%] w-[90%] mx-auto ">
+      <div className="lg:container md:w-[85%] w-[90%] mx-auto ">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
             {/* left part */}
           <div className="space-y-4 flex flex-col items-center md:items-center lg:items-start text-center lg:text-left">
