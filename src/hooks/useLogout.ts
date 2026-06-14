@@ -1,37 +1,44 @@
 import { signOut } from "next-auth/react";
-import { useQueryClient, useMutation } from "@tanstack/react-query";
+import { useState, useCallback } from "react";
 import { invalidateAuthTokenCache } from "@/lib/apiClient";
 
-/**
- * Logout mutation hook.
- *
- * Clears React Query cache, localStorage, and calls NextAuth signOut.
- * Returns a standard useMutation result object (mutate, isPending, isError, etc.).
- *
- * Navigation MUST be handled by the caller via onSuccess callback:
- *   const { mutate: logout } = useLogout();
- *   logout(undefined, { onSuccess: () => { window.location.href = "/login/company"; } });
- *
- * Hook contains NO navigation logic — follows UI → Hook → Service → apiClient rule.
- */
+import type { QueryClient } from "@tanstack/react-query";
+let _queryClient: QueryClient | null = null;
+
+export const setLogoutQueryClient = (client: QueryClient) => {
+  _queryClient = client;
+};
+
 export const useLogout = () => {
-  const queryClient = useQueryClient();
+  const [isPending, setIsPending] = useState(false);
 
-  return useMutation<void, Error, void>({
-    mutationFn: async () => {
-      // 1. Invalidate cached auth token so stale tokens aren't reused
-      invalidateAuthTokenCache();
+  const mutate = useCallback(
+    async (
+      _variables?: unknown,
+      options?: { onSuccess?: () => void; onError?: (err: Error) => void },
+    ) => {
+      setIsPending(true);
+      try {
+        invalidateAuthTokenCache();
 
-      // 2. Clear React Query cache so no sensitive or stale data remains in UI
-      queryClient.clear();
+        if (_queryClient) {
+          _queryClient.clear();
+        }
 
-      // 2. Clear localStorage
-      if (typeof window !== "undefined") {
-        localStorage.clear();
+        if (typeof window !== "undefined") {
+          localStorage.clear();
+        }
+
+        await signOut({ redirect: false });
+        options?.onSuccess?.();
+      } catch (err) {
+        options?.onError?.(err instanceof Error ? err : new Error(String(err)));
+      } finally {
+        setIsPending(false);
       }
-
-      // 3. Perform NextAuth sign-out without automatic reload
-      await signOut({ redirect: false });
     },
-  });
+    [],
+  );
+
+  return { mutate, isPending, isError: false };
 };
