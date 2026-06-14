@@ -79,7 +79,17 @@ async function proxyRequest(request: NextRequest, method: string) {
 
     const responseBody = await backendResponse.arrayBuffer();
 
-    if (!backendResponse.ok && process.env.NODE_ENV !== "production") {
+    const isCompanyLookup =
+      method === "GET" && backendUrl.includes("/api/Company/");
+
+    if (
+      !backendResponse.ok &&
+      process.env.NODE_ENV !== "production" &&
+      !(
+        isCompanyLookup &&
+        (backendResponse.status === 400 || backendResponse.status === 404)
+      )
+    ) {
       const bodyText = new TextDecoder().decode(responseBody);
       console.error("[API Proxy] Backend error response:", {
         method,

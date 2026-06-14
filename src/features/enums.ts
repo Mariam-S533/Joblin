@@ -65,6 +65,19 @@ export type ApplicationStatus =
   | "Rejected"
   | "Withdrawn";
 
+export const ApplicationStatus = {
+  Pending: 0,
+  UnderReview: 1,
+  Accepted: 2,
+  Rejected: 3,
+  Withdrawn: 4,
+  0: "Pending",
+  1: "UnderReview",
+  2: "Accepted",
+  3: "Rejected",
+  4: "Withdrawn",
+} as const;
+
 export const APPLICATION_STATUS_OPTIONS: EnumOption[] = [
   { label: "Pending", value: "Pending" },
   { label: "Under Review", value: "UnderReview" },

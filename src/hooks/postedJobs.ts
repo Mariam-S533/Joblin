@@ -1,12 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getPostedJobs,
+  getJobPostById,
   deletePostedJob,
   toggleJobStatus,
 } from "@/services/postedJobsService";
 import type {
   PostedJobStatus,
   PostedJobsPageData,
+  CompanyJobPostResponse,
 } from "@/features/posted-jobs/types";
 
 import { queryKeys } from "@/lib/queryKeys";
@@ -29,6 +31,13 @@ export const usePostedJobs = (companyId: string | undefined) =>
     queryKey: queryKeys.postedJobs.list(companyId),
     queryFn: () => getPostedJobs(companyId!),
     enabled: !!companyId,
+  });
+
+export const useJobPostById = (jobPostId: string | undefined) =>
+  useQuery<CompanyJobPostResponse>({
+    queryKey: queryKeys.postedJobs.detail(jobPostId!),
+    queryFn: () => getJobPostById(jobPostId!),
+    enabled: !!jobPostId,
   });
 
 export const useDeletePostedJob = () => {

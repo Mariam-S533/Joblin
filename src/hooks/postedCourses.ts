@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getPostedCourses,
+  getPostedCourseById,
   deletePostedCourse,
   toggleCourseStatus,
 } from "@/services/postedCoursesService";
@@ -18,6 +19,13 @@ export const usePostedCourses = (companyId?: string) =>
       return getPostedCourses(companyId);
     },
     enabled: Boolean(companyId),
+  });
+
+export const usePostedCourseById = (courseId: string) =>
+  useQuery({
+    queryKey: queryKeys.postedCourses.detail(courseId),
+    queryFn: () => getPostedCourseById(courseId),
+    enabled: !!courseId,
   });
 
 export const useDeletePostedCourse = () => {

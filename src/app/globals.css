@@ -38,6 +38,19 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-brand-primary: var(--brand-primary);
+  --color-brand-primary-hover: var(--brand-primary-hover);
+  --color-content-secondary: var(--content-secondary);
+  --color-border-light: var(--border-light);
+  --color-status-pending: var(--status-pending);
+  --color-status-pending-bg: var(--status-pending-bg);
+  --color-status-review: var(--status-review);
+  --color-status-review-bg: var(--status-review-bg);
+  --color-status-accepted: var(--status-accepted);
+  --color-status-accepted-bg: var(--status-accepted-bg);
+  --color-status-rejected: var(--status-rejected);
+  --color-status-rejected-bg: var(--status-rejected-bg);
+  --color-status-rejected-border: var(--status-rejected-border);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -81,6 +94,21 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  --brand-primary: #02905e;
+  --brand-primary-hover: #02704d;
+  --content-secondary: #515151;
+  --border-light: #ededed;
+
+  --status-pending: #00aeae;
+  --status-pending-bg: #e4ffff;
+  --status-review: #f6b500;
+  --status-review-bg: #ffebb2;
+  --status-accepted: #009e00;
+  --status-accepted-bg: #eefff0;
+  --status-rejected: #dc0000;
+  --status-rejected-bg: #fee;
+  --status-rejected-border: #ba1a1a;
 }
 
 .dark {
@@ -115,6 +143,21 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+
+  --brand-primary: #3dc98e;
+  --brand-primary-hover: #2db77d;
+  --content-secondary: #a0a0a0;
+  --border-light: #333333;
+
+  --status-pending: #00d4d4;
+  --status-pending-bg: #0a2a2a;
+  --status-review: #ffc940;
+  --status-review-bg: #2a2415;
+  --status-accepted: #00d400;
+  --status-accepted-bg: #0a2a0a;
+  --status-rejected: #ff4444;
+  --status-rejected-bg: #2a0a0a;
+  --status-rejected-border: #cc3333;
 }
 
 @layer base {

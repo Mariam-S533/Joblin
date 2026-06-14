@@ -40,6 +40,15 @@ export const courseApplications = {
     `/PostedCourses/${courseId}/applications/${applicantId}/status`,
 };
 
+export const OFFERING_ENROLLMENTS_BY_OFFERING = (offeringId: string) =>
+  `/offering-enrollments/offering/${offeringId}/applicants`;
+
+export const OFFERING_ENROLLMENT_DETAILS = (enrollmentId: string) =>
+  `/offering-enrollments/${enrollmentId}/details`;
+
+export const OFFERING_ENROLLMENT_STATUS = (enrollmentId: string) =>
+  `/offering-enrollments/${enrollmentId}/status`;
+
 export const coursePost = {
   submit: "/offering-posts",
 };
@@ -50,20 +59,33 @@ export const jobApplications = {
     `/PostedJobs/${jobId}/applications/${applicantId}/status`,
 };
 
+export const APPLICATIONS_BY_JOB_POST = (jobPostId: string) =>
+  `/applications/${jobPostId}/all`;
+
+export const UPDATE_APPLICATION_STATUS = (applicationId: string) =>
+  `/applications/${applicationId}/status`;
+
 export const jobPost = {
   submit: "/job-posts",
 };
 
 export const postedCourses = {
   listByCompany: (companyId: string) => `/offering-posts/company/${companyId}`,
+  getById: (courseId: string) => `/offering-posts/${courseId}`,
   delete: (courseId: string) => `/offering-posts/${courseId}`,
   toggleStatus: (courseId: string) => `/offering-posts/${courseId}/status`,
 };
 
 export const postedJobs = {
   listByCompany: "/job-posts/company",
+  getById: (id: string) => `/job-posts/${id}`,
   delete: "/job-posts",
   status: "/job-posts",
+};
+
+export const seekerProfile = {
+  skills: (profileId: string) => `/Profile/${profileId}/skills`,
+  workExperiences: (profileId: string) => `/Profile/${profileId}/work-experiences`,
 };
 
 export const skills = {

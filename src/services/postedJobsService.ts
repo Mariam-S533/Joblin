@@ -8,6 +8,7 @@ import type {
   PostedJobStatus,
 } from "@/features/posted-jobs/types";
 import { transformCompanyJobPosts } from "@/features/posted-jobs/utils";
+import { normalizePostedJobStatus } from "@/features/posted-jobs/types";
 
 /**
  * Fetch all job posts for a given company.
@@ -33,6 +34,15 @@ export const getPostedJobs = async (
 
   const rawJobs = response.data;
   return transformCompanyJobPosts(rawJobs);
+};
+
+export const getJobPostById = async (
+  jobPostId: string,
+): Promise<CompanyJobPostResponse> => {
+  const response = await apiClient.get<CompanyJobPostResponse>(
+    endpoints.getById(jobPostId),
+  );
+  return response.data;
 };
 
 /**

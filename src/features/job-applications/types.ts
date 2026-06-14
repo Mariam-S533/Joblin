@@ -36,6 +36,31 @@ export type JobApplicant = {
   resumeFileName?: string;
 };
 
+export interface JobApplicationRecord {
+  applicationId: string;
+  seekerId: string;
+  seekerFirstName: string;
+  seekerLastName: string;
+  seekerProfilePictureUrl: string | null;
+  seekerProfileId: string;
+  seekerProfileName: string;
+  technicalDomain: string;
+  skills: string[];
+  applicationStatus: ApplicationStatus;
+  matchingScore: string;
+  appliedAt: string;
+  updatedAt: string;
+}
+
+export interface RawJobApplicationRecord
+  extends Omit<JobApplicationRecord, "applicationStatus"> {
+  applicationStatus: string | number;
+}
+
+export interface UpdateApplicationStatusPayload {
+  applicationStatus: string;
+}
+
 export type JobApplicationsSummary = {
   total: number;
   pendingCount: number;

@@ -16,6 +16,7 @@ import type {
   CompanyEditFormData,
   AddressResponse,
 } from "@/features/company-profile/types";
+import { ApiError } from "@/lib/apiClient/error";
 import { getErrorMessage } from "@/lib/apiClient/error";
 
 const FALLBACK_LOGO = "";
@@ -54,9 +55,14 @@ export default function CompanyProfile() {
 
   // ─── Derive display data from query (no useEffect+setState) ───────
   const companyData = profileQuery.data;
-  const profileError = profileQuery.error
-    ? getErrorMessage(profileQuery.error, "Failed to load company profile")
-    : null;
+  const isExpectedLookupError =
+    profileQuery.error instanceof ApiError &&
+    (profileQuery.error.status === 400 || profileQuery.error.status === 404);
+
+  const profileError =
+    profileQuery.error && !isExpectedLookupError
+      ? getErrorMessage(profileQuery.error, "Failed to load company profile")
+      : null;
 
   const displayFormData = useMemo(
     () => (companyData ? mapCompanyDataToEditForm(companyData) : EMPTY_FORM),
@@ -178,8 +184,7 @@ export default function CompanyProfile() {
           }))
         : [];
 
-    const payloadLogoUrl =
-      logoPayloadUrl ?? (rawLogoUrl ? rawLogoUrl : null);
+    const payloadLogoUrl = logoPayloadUrl ?? (rawLogoUrl ? rawLogoUrl : null);
     const payload = mapEditFormToUpsertPayload(
       userId,
       editFormData,

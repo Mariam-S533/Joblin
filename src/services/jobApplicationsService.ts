@@ -1,5 +1,9 @@
 import { apiClient } from "@/lib/apiClient";
-import { jobApplications as endpoints } from "@/lib/apiClient/endpoints";
+import {
+  jobApplications as endpoints,
+  APPLICATIONS_BY_JOB_POST,
+  UPDATE_APPLICATION_STATUS,
+} from "@/lib/apiClient/endpoints";
 import type {
   JobApplicationsPageData,
   JobApplicationsQueryParams,
@@ -7,6 +11,9 @@ import type {
   UpdateApplicationStatusResponse,
   RawJobApplicationsPageData,
   RawUpdateApplicationStatusResponse,
+  JobApplicationRecord,
+  RawJobApplicationRecord,
+  UpdateApplicationStatusPayload,
 } from "@/features/job-applications/types";
 import { normalizeJobApplicationStatus } from "@/features/job-applications/types";
 
@@ -53,14 +60,35 @@ export const getJobApplications = async (
   return normalizeJobApplicationsPageData(response.data);
 };
 
+export const getApplicationsByJobPost = async (
+  jobPostId: string,
+): Promise<JobApplicationRecord[]> => {
+  const response = await apiClient.get<RawJobApplicationRecord[]>(
+    APPLICATIONS_BY_JOB_POST(jobPostId),
+  );
+
+  return response.data.map((record) => ({
+    ...record,
+    applicationStatus: normalizeJobApplicationStatus(record.applicationStatus),
+  }));
+};
+
 export const updateApplicationStatus = async (
-  jobId: string,
-  applicantId: string,
-  status: JobApplicationStatus,
-) => {
+  firstArg: string,
+  secondArg: string | UpdateApplicationStatusPayload,
+  thirdArg?: JobApplicationStatus,
+): Promise<UpdateApplicationStatusResponse | void> => {
+  if (typeof secondArg === "object" && secondArg !== null) {
+    await apiClient.patch<void>(
+      UPDATE_APPLICATION_STATUS(firstArg),
+      secondArg,
+    );
+    return;
+  }
+
   const response = await apiClient.put<RawUpdateApplicationStatusResponse>(
-    endpoints.updateStatus(jobId, applicantId),
-    { status },
+    endpoints.updateStatus(firstArg, secondArg),
+    { status: thirdArg },
   );
   return {
     ...response.data,
