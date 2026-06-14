@@ -48,7 +48,7 @@ function CompanyRegister() {
         try{
           console.log(data)
           setLoading(true)
-          const response = await fetch("https://pnm6zhh3-7127.uks1.devtunnels.ms/api/Authentication/register-company", {
+          const response = await fetch("http://joblin.runasp.net/api/Authentication/register-company", {
             method: "POST",
             headers: {"Content-Type": "application/json"
                       ,"X-Tunnel-Skip-AntiPhishing-Page": "true"

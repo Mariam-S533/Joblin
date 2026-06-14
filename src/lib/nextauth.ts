@@ -20,10 +20,9 @@ export const options: AuthOptions = {
     credentials: {
       email: { label: "Email", type: "email" },
       password: { label: "Password", type: "password" },
-      loginType: { label: "loginType", type: "text" }
-    }, 
-    async authorize(credentials) {
+    },
 
+    async authorize(credentials) {
       const baseUrl = process.env.NEXT_PUBLIC_BASE_URL
       const res = await fetch(`${baseUrl}/api/Authentication/login`, {
         method: 'POST',
@@ -37,14 +36,6 @@ export const options: AuthOptions = {
       console.log('finallres auth',user);
 
       if (res.ok && user) {
-
-        if (credentials?.loginType === "Seeker" && user.roles[0] === "Company") {
-            throw new Error("You are an Employer. Please use the Company login page.");
-        }
-
-        if (credentials?.loginType === "Company" && user.roles[0] === "Seeker") {
-              throw new Error("You are a Job Seeker. Please use the Job Seeker login page.")
-            }
 
         return {
                 id: user.id,
@@ -65,7 +56,7 @@ export const options: AuthOptions = {
         },
  
     pages: {
-        signIn: '/login/job-seeker',
+        signIn: '/login/generalLogin',
     },
 
     callbacks: { 
