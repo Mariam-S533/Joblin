@@ -9,19 +9,17 @@ import { NavigationMenu, NavigationMenuItem, NavigationMenuList } from "@/compon
 import { Badge } from "@/components/ui/badge"
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 
-import { Search, Bell, Menu, LogOut, LogIn, ChevronDown, User, Briefcase, BookOpen, Settings, UserCircle } from "lucide-react"
+import { Search, Bell, Menu, LogOut, LogIn, ChevronDown, User, Briefcase, BookOpen, Settings } from "lucide-react"
 
-import { useSession } from "next-auth/react"
+import { useSession, signOut } from "next-auth/react"
 import { Separator } from "../ui/separator"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "../ui/dropdown-menu"
-import { useLogout } from "@/hooks/useLogout"
 
 function JobseekerNavbar() {
 
   const pathname = usePathname()
   const session = useSession()
   const [open, setOpen] = useState(false)
-  const logout = useLogout()
 
   const navItems = [
     { href: "/", label: "Home" },
@@ -32,7 +30,8 @@ function JobseekerNavbar() {
 
   return (
 
-    <div className="fixed top-0 left-0 w-full z-30 bg-white pt-6 ">
+
+    <div className="fixed top-0 left-0 w-full z-30 pt-6 bg-transparent ">
       <div className="lg:container w-[90%]  mx-auto">
 
         <NavigationMenu className="w-full bg-white max-w-full! flex justify-between items-center rounded-sm px-3 md:px-6 py-4 shadow-sm border-1 border-gray-300">
@@ -112,10 +111,16 @@ function JobseekerNavbar() {
                   <DropdownMenuTrigger asChild>
                     <button type="button" className="flex items-center gap-2 cursor-pointer focus:outline-none group">
                       <div className="">
-                        <UserCircle className="h-8 w-8 text-neutral-400 group-hover:text-emerald-500 transition-colors" />
+                        <Image
+                          src={ session?.data.user?.image ||"/unknowon.webp"}
+                          alt="user"
+                          width={40}
+                          height={30}
+                          className="rounded-full object-cover ring-2 ring-green-100 group-hover:ring-green-400 transition"
+                        />
                       </div>
                       <span className="hidden md:block text-[14px] font-semibold text-gray-800 max-w-30 truncate">
-                        { "User"}
+                        { session?.data.user?.name || 'User'}
                       </span>
                       <ChevronDown size={20} className="text-gray-700" />
                     </button>
@@ -125,10 +130,10 @@ function JobseekerNavbar() {
                   <DropdownMenuContent className="w-56" align="end">
                     <DropdownMenuLabel>
                       <p className="text-[13px] font-semibold text-gray-800 truncate">
-                        {"User"}
+                        { session?.data.user?.name || 'User'}
                       </p>
                       <p className="text-[11px] text-gray-400 font-normal truncate">
-                        {"mariam232@gmail.com"}
+                        { session?.data.user?.email || "exable123@gmail.com"}
                       </p>
                     </DropdownMenuLabel>
 
@@ -137,7 +142,7 @@ function JobseekerNavbar() {
                     {/* Profile links */}
                     <DropdownMenuGroup>
                       <DropdownMenuItem asChild>
-                        <Link href="/job-seeker/profile" className="flex items-center gap-2 cursor-pointer">
+                        <Link href="/jobSeeker/profiles" className="flex items-center gap-2 cursor-pointer">
                           <User size={15} /> My Profile
                         </Link>
                       </DropdownMenuItem>
@@ -173,10 +178,22 @@ function JobseekerNavbar() {
                     <DropdownMenuSeparator />
 
                     <DropdownMenuItem
-                      onClick={() => logout("/login/job-seeker")}
+                      onClick={() => signOut({ callbackUrl: "/login/generalLogin" })}
                       className="flex items-center gap-2 text-red-500 focus:text-red-500 focus:bg-red-50 cursor-pointer"
                     >
                       <LogOut size={15} /> Logout
+                    </DropdownMenuItem>
+                    
+                    <DropdownMenuItem className="hidden lg:flex">
+                      {!session.data &&(
+                      <div className="hidden lg:flex">
+                        <div className='flex text-lg gap-2 justify-center items-center'>
+                        <div className=" bg-[#02905E] text-white px-3 py-1 rounded-sm cursor-pointer">
+                          < Link href="/register/job-seeker" className='flex gap-0.5 justify-center items-center'> <LogIn size={18}/> <span className=" text-[16px]">Sign Up</span></Link>
+                        </div>
+                      </div>
+                      </div>
+                      )}
                     </DropdownMenuItem>
 
                   </DropdownMenuContent>
@@ -186,24 +203,25 @@ function JobseekerNavbar() {
 
 
               {!session.data &&(
-            <div className='flex text-lg gap-2 justify-center items-center '>
-           
-              <div className=" bg-[#02905E] text-white px-3 py-1 rounded-sm cursor-pointer">
-                < Link href="/register/job-seeker" className='flex gap-0.5 justify-center items-center'> <LogIn size={18}/> <span className=" text-[16px]">Sign Up</span></Link>
-              </div>
-            </div>
-            )}
+                <div className="hidden lg:flex">
+                  <div className='flex text-lg gap-2 justify-center items-center'>
+                  <div className=" bg-[#02905E] text-white px-3 py-1 rounded-sm cursor-pointer">
+                    < Link href="/register/job-seeker" className='flex gap-0.5 justify-center items-center'> <LogIn size={18}/> <span className=" text-[16px]">Sign Up</span></Link>
+                  </div>
+                </div>
+                </div>
+                )}
             </NavigationMenuItem>
 
 
             {/* sheet */}
-            <NavigationMenuItem className="lg:hidden text-lg">
+            <NavigationMenuItem className="lg:hidden text-lg ">
 
               <Sheet open={open} onOpenChange={setOpen}>
 
-                <SheetTrigger>
-                  <div className=" bg-gray-400 rounded-full p-2">
-                    <Menu  size={20} className="text-[#222222]"/>
+                <SheetTrigger className="flex items-center justify-center cursor-pointer ">
+                  <div>
+                    <Menu  size={22} className="text-[#222222]"/>
                   </div>
                 </SheetTrigger>
 
@@ -237,8 +255,19 @@ function JobseekerNavbar() {
                       </Link>
 
                     ))}
+                      {!session.data &&(
+                        <div className="p-2 mt-5 cursor-pointer ">
+                          <div className='flex text-lg gap-2 items-center'>
+                          <div className=" bg-[#02905E] text-white px-3 py-1 rounded-sm cursor-pointer  w-full">
+                            < Link href="/register/job-seeker" className='flex gap-0.5 justify-center items-center'> <LogIn size={18}/> <span className=" text-[16px]">Sign Up</span></Link>
+                          </div>
+                        </div>
+                        </div>
+                        )}
+
 
                   </div>
+
 
                 </SheetContent>
               </Sheet>

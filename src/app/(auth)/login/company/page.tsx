@@ -44,7 +44,6 @@ function CompanyLogin() {
             const res = await signIn('credentials', {
               email: data.email,
               password: data.password,
-              loginType: "Company",  //prevent job seeker login from company login page
               redirect: false,
             })
             setLoading(false)
@@ -54,12 +53,6 @@ function CompanyLogin() {
             }else{
               console.log(res?.error);
               setErrorMsg(res?.error || "Invalid email or password" )
-//               if (res?.error) {
-//                 if (res.error === "CredentialsSignin") {
-//                   setErrorMsg("Invalid email or password")
-//                 } else {
-//                   setErrorMsg(res.error)
-//                 }
               setLoading(false)
             }
           }
