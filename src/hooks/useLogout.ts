@@ -40,5 +40,5 @@ export const useLogout = () => {
     [],
   );
 
-  return { mutate, isPending, isError: false, isPending: isPending };
+  return { mutate, isPending, isError: false };
 };
