@@ -6,7 +6,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { LoaderCircle } from 'lucide-react'
+import { Eye, EyeClosed, LoaderCircle } from 'lucide-react'
 import { getSession, signIn } from 'next-auth/react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -14,6 +14,9 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import * as z from 'zod'
+import { Input } from '@/components/ui/input'
+import { toast } from 'sonner'
+
 
 
 interface Inputs{
@@ -26,7 +29,8 @@ function LoginPage() {
 
         const [loading, setLoading] = useState(false)
         const router = useRouter()
-        const [errorMsg, setErrorMsg] = useState("")
+        // const [errorMsg, setErrorMsg] = useState("")
+        const [showPassword, setShowPassword] = useState(false);
   
         const schema = z.object({
           email: z.string().nonempty("email is required *").email('Invalid email address'),
@@ -38,7 +42,6 @@ function LoginPage() {
         })
   
         async function onSubmit(data: Inputs){
-          console.log(data);
           try{
             setLoading(true)
             const res = await signIn('credentials', {
@@ -49,24 +52,23 @@ function LoginPage() {
             setLoading(false)
             if(res?.ok){
               const session = await getSession()
-              console.log('sessionnn', session)
               if (session?.role === 'Company') {
+                toast.success("Login successful! Redirecting to company home page...", {position: "top-center", duration: 3000})
                 router.push('/company/home')
               } else {
+                toast.success("Login successful! Redirecting to Seeker home page...", {position: "top-center", duration: 3000})
                 router.push('/')
               }
               // window.location.href = "/"
             }else{
-              console.log(res?.error);
-              setErrorMsg(res?.error || "Invalid email or password" )
-
               setLoading(false)
+              toast.error(res?.error || "Login failed. Please check your credentials and try again.", {position: "top-center", duration: 3000})
             }
           }
           catch(error){
-            console.log(error);
-            setErrorMsg("An error occurred. Please try again.")
             setLoading(false)
+            const message = error instanceof Error ? error.message : "An error occurred. Please try again";
+            toast.error(message, {position: "top-center", duration: 3000})
           }   
         }
 
@@ -76,7 +78,7 @@ function LoginPage() {
         <>
     <div className='min-h-screen flex items-center justify-center bg-[#FBFBFB] p-4'>
       <Card className='w-full max-w-md shadow-lg bg-card '>
-        {errorMsg&& <p className='text-red-700 text-center'>{errorMsg}</p> }
+        {/* {errorMsg&& <p className='text-red-700 text-center'>{errorMsg}</p> } */}
         <CardHeader>
           <div className='flex justify-center py-3'>
             <Image src="/darklogo.svg" width={120} height={60} alt='Joplin'/>
@@ -103,17 +105,32 @@ function LoginPage() {
             {errors.email && <p className='text-sm text-red-600 mt-1'>{errors.email.message}</p>}
             </div>
 
-            <div className=''>
-              <InputField
-              {...register("password")}
-              id="password"
-              label="Password"
-              type="password"
-              placeholder="Enter your Password"
-            />
-            {errors.password && <p className='text-sm text-red-600 mt-1'>{errors.password.message}</p>}
+           <div className="w-full flex flex-col">
+                    <div className="relative">
+                <Input
+                  {...register("password")}
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter your Password"
+                  className="h-11 rounded-sm border border-[#A5A5A5] focus-visible:ring-0
+                            focus-visible:border-gray-700 w-full placeholder:text-[#A5A5A5] pr-10 relative
+                            "
+                />
+                <Label htmlFor="password" className="absolute left-3 top-0 -translate-y-1/2 bg-white px-1 text-sm text-gray-600 font-medium gap-1">
+                  Password <span className="text-red-600">*</span>
+                </Label>
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
+                >
+                  {showPassword ? <Eye size={19}/> : <EyeClosed size={19}/> }
+                </button>
+              </div>
 
-            <div className='w-full flex pt-2 justify-between '>
+              {errors.password && <p className='text-sm text-red-600 mt-1'>{errors.password.message}</p>}
+
+              <div className='w-full flex pt-2 justify-between '>
                 <div className='flex items-center '>
                 <Checkbox id='remember-me' />
                 <Label htmlFor='remember-me' className='text-[13px] ms-1 text-[#989898]'>Remember Me</Label>
@@ -124,7 +141,8 @@ function LoginPage() {
                 </Link>
               </span>
               </div>
-            </div>
+          </div>
+
 
             <Button type='submit' className='h-10 rounded-sm mt-1 w-full bg-[#02905E] text-white text-[17px] font-medium hover:bg-[#04a165] cursor-pointer'>
             {loading? <LoaderCircle className='animate-spin mx-auto text-white' size={18}/> : 'Log in'}
