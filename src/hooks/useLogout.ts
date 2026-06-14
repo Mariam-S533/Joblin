@@ -1,5 +1,6 @@
 import { signOut } from "next-auth/react";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
+import { invalidateAuthTokenCache } from "@/lib/apiClient";
 
 /**
  * Logout mutation hook.
@@ -18,7 +19,10 @@ export const useLogout = () => {
 
   return useMutation<void, Error, void>({
     mutationFn: async () => {
-      // 1. Clear React Query cache so no sensitive or stale data remains in UI
+      // 1. Invalidate cached auth token so stale tokens aren't reused
+      invalidateAuthTokenCache();
+
+      // 2. Clear React Query cache so no sensitive or stale data remains in UI
       queryClient.clear();
 
       // 2. Clear localStorage

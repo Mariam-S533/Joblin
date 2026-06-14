@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { memo, useState } from "react";
 
 import {
   NavigationMenu,
@@ -51,9 +51,9 @@ const NAV_ITEMS = [
   { href: "/courses", label: "Courses" },
 ];
 
-function JobseekerNavbar() {
+const JobseekerNavbar = memo(function JobseekerNavbar() {
   const pathname = usePathname();
-  const session = useSession();
+  const { data: session } = useSession({ required: false });
   const [open, setOpen] = useState(false);
   const { mutate: logout } = useLogout();
 
@@ -120,7 +120,7 @@ function JobseekerNavbar() {
                 </span>
               </div>
 
-              {session.data && (
+              {session && (
                 <div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -132,8 +132,8 @@ function JobseekerNavbar() {
                           <UserCircle className="h-8 w-8 text-neutral-400 group-hover:text-emerald-500 transition-colors" />
                         </div>
                         <span className="hidden md:block text-[14px] font-semibold text-gray-800 max-w-30 truncate">
-                          {session.data?.displayName ||
-                            session.data?.user?.name ||
+                          {session?.displayName ||
+                            session?.user?.name ||
                             ""}
                         </span>
                         <ChevronDown size={20} className="text-gray-700" />
@@ -144,13 +144,13 @@ function JobseekerNavbar() {
                     <DropdownMenuContent className="w-56" align="end">
                       <DropdownMenuLabel>
                         <p className="text-[13px] font-semibold text-gray-800 truncate">
-                          {session.data?.displayName ||
-                            session.data?.user?.name ||
+                          {session?.displayName ||
+                            session?.user?.name ||
                             ""}
                         </p>
                         <p className="text-[11px] text-gray-400 font-normal truncate">
-                          {session.data?.email ||
-                            session.data?.user?.email ||
+                          {session?.email ||
+                            session?.user?.email ||
                             ""}
                         </p>
                       </DropdownMenuLabel>
@@ -229,7 +229,7 @@ function JobseekerNavbar() {
                 </div>
               )}
 
-              {!session.data && (
+              {!session && (
                 <div className="flex text-lg gap-2 justify-center items-center ">
                   <div className=" bg-[#02905E] text-white px-3 py-1 rounded-sm cursor-pointer">
                     <Link
@@ -291,6 +291,6 @@ function JobseekerNavbar() {
       </div>
     </div>
   );
-}
+});
 
 export default JobseekerNavbar;

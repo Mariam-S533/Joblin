@@ -2,20 +2,40 @@ import { API_BASE_URL, API_WITH_CREDENTIALS } from "./config";
 import { ApiError } from "./error";
 import type { ApiClientOptions, ApiResponse, HttpMethod } from "./types";
 
-/**
- * Retrieve the current auth token so it can be attached to requests
- * going to the external .NET backend.
- *
- * The token is read on every request so it's always fresh.
- */
+let cachedToken: string | null = null;
+let tokenFetchPromise: Promise<string | null> | null = null;
+const TOKEN_CACHE_MS = 4 * 60 * 1000;
+let tokenCachedAt = 0;
+
 const getAuthToken = async (): Promise<string | null> => {
-  try {
-    const { getSession } = await import("next-auth/react");
-    const session = await getSession();
-    return (session as { accessToken?: string } | null)?.accessToken ?? null;
-  } catch {
-    return null;
+  if (cachedToken && Date.now() - tokenCachedAt < TOKEN_CACHE_MS) {
+    return cachedToken;
   }
+  if (tokenFetchPromise) {
+    return tokenFetchPromise;
+  }
+  tokenFetchPromise = (async () => {
+    try {
+      const { getSession } = await import("next-auth/react");
+      const session = await getSession();
+      const token = (session as { accessToken?: string } | null)?.accessToken ?? null;
+      cachedToken = token;
+      tokenCachedAt = Date.now();
+      return token;
+    } catch {
+      cachedToken = null;
+      tokenCachedAt = 0;
+      return null;
+    } finally {
+      tokenFetchPromise = null;
+    }
+  })();
+  return tokenFetchPromise;
+};
+
+export const invalidateAuthTokenCache = () => {
+  cachedToken = null;
+  tokenCachedAt = 0;
 };
 
 const normalizeBody = (

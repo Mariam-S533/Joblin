@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { memo, useState } from "react";
 
 import {
   NavigationMenu,
@@ -51,9 +51,9 @@ const NAV_ITEMS = [
   { href: "/company/pricing", label: "Pricing" },
 ];
 
-function CompanyNavbar() {
+const CompanyNavbar = memo(function CompanyNavbar() {
   const pathname = usePathname();
-  const { data: session, status } = useSession();
+  const { data: session, status } = useSession({ required: false });
   const isAuthenticated = status === "authenticated";
   const [open, setOpen] = useState(false);
   const { mutate: logout } = useLogout();
@@ -296,6 +296,6 @@ function CompanyNavbar() {
       </div>
     </div>
   );
-}
+});
 
 export default CompanyNavbar;

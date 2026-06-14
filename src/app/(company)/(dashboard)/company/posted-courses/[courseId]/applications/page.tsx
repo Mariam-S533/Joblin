@@ -15,7 +15,6 @@ import {
   MapPin,
   MessageSquare,
   Phone,
-  Star,
   X,
   ChevronDown,
   Search,
@@ -102,7 +101,7 @@ function SummaryCard({
 }) {
   return (
     <div
-      className={`rounded-[8px] border-[0.8px] border-solid px-5 py-3 flex flex-col gap-1 ${className ?? ""}`}
+      className={`rounded-xl border-[0.8px] border-solid px-5 py-3 flex flex-col gap-1 ${className ?? ""}`}
     >
       <span className="text-[12px] font-medium text-muted-foreground">{label}</span>
       <span className="text-[20px] font-semibold">{value}</span>
@@ -116,7 +115,7 @@ function EnrollmentSkeleton() {
       {Array.from({ length: 3 }).map((_, i) => (
         <div
           key={i}
-          className="h-[200px] rounded-[12px] border-[0.8px] border-border-light bg-card animate-pulse"
+          className="h-50 rounded-2xl border-[0.8px] border-border-light bg-card animate-pulse"
         />
       ))}
     </div>
@@ -169,7 +168,7 @@ export default function CourseApplicationsPage() {
 
   if (!courseId) {
     return (
-      <div className="rounded-[12px] border-[0.8px] border-border-light bg-card p-6 text-[14px] text-content-secondary">
+      <div className="rounded-2xl border-[0.8px] border-border-light bg-card p-6 text-[14px] text-content-secondary">
         Course enrollments could not be found.
       </div>
     );
@@ -283,13 +282,13 @@ function CourseEnrollmentsContent({ offeringId }: { offeringId: string }) {
   return (
     <div className="space-y-6">
       {(isError || mutationError) && (
-        <div className="rounded-[12px] border-[0.8px] border-status-rejected-border bg-status-rejected-bg px-5 py-3 text-[13px] text-status-rejected">
+        <div className="rounded-2xl border-[0.8px] border-status-rejected-border bg-status-rejected-bg px-5 py-3 text-[13px] text-status-rejected">
           {mutationError ||
             getErrorMessage(error, "Failed to load enrollments.")}
         </div>
       )}
 
-      <div className="rounded-[16px] border-[0.8px] border-border-light bg-card p-5 space-y-4">
+      <div className="rounded-3xl border-[0.8px] border-border-light bg-card p-5 space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex flex-col gap-1">
             <h2 className="text-[20px] font-semibold text-foreground">
@@ -306,7 +305,7 @@ function CourseEnrollmentsContent({ offeringId }: { offeringId: string }) {
                 placeholder="Search by name or email..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="h-[40px] rounded-[8px] border-[0.8px] border-border bg-card text-[13px] w-[240px] pl-9"
+                className="h-10 rounded-xl border-[0.8px] border-border bg-card text-[13px] w-60 pl-9"
               />
             </div>
           </div>
@@ -341,14 +340,14 @@ function CourseEnrollmentsContent({ offeringId }: { offeringId: string }) {
         </div>
       </div>
 
-      <div className="rounded-[16px] border-[0.8px] border-border-light bg-card p-5 space-y-5">
+      <div className="rounded-3xl border-[0.8px] border-border-light bg-card p-5 space-y-5">
         <div className="flex flex-wrap items-center gap-3 justify-between">
           <div className="flex flex-wrap gap-2">
             {STATUS_TABS.map((tab) => (
               <button
                 key={tab.value}
                 onClick={() => setActiveTab(tab.value)}
-                className={`rounded-[8px] px-4 py-2 text-[14px] font-medium transition-colors ${
+                className={`rounded-xl px-4 py-2 text-[14px] font-medium transition-colors ${
                   activeTab === tab.value
                     ? "bg-brand-primary text-white"
                     : "border-[0.8px] border-border text-content-secondary hover:bg-muted"
@@ -534,7 +533,7 @@ const EnrollmentCard = memo(function EnrollmentCard({
           <div className="flex items-start gap-6 flex-wrap">
             {hasValue(enrollment.experienceYears) && (
               <div className="flex items-center gap-2 h-5">
-                <Briefcase className="h-[14px] w-[14px] text-brand-primary" />
+                <Briefcase className="h-[14px] w-3.5 text-brand-primary" />
                 <span className="text-[12px] text-content-secondary leading-5">
                   {enrollment.experienceYears} years experience
                 </span>
