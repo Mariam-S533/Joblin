@@ -11,6 +11,15 @@ type CheckboxOptionGroupProps<T extends string> = {
   required?: boolean;
   /** Error message displayed below the checkboxes. Also highlights label in red. */
   error?: string;
+  /**
+   * Optional label lookup function.
+   * When provided, the checkbox displays `getLabel(option)` instead of the raw `option` value.
+   * This is used for enum options where the backend value (e.g., "FullTime")
+   * needs a user-friendly display label (e.g., "Full Time").
+   *
+   * Example: `getLabel={getJobTypeLabel}`
+   */
+  getLabel?: (value: T) => string;
 };
 
 export function CheckboxOptionGroup<T extends string>({
@@ -21,6 +30,7 @@ export function CheckboxOptionGroup<T extends string>({
   label,
   required = false,
   error,
+  getLabel,
 }: CheckboxOptionGroupProps<T>) {
   return (
     <div>
@@ -41,6 +51,7 @@ export function CheckboxOptionGroup<T extends string>({
       <div className={className ?? "grid gap-3 sm:grid-cols-2 lg:grid-cols-3"}>
         {options.map((option) => {
           const isChecked = selected.includes(option);
+          const displayLabel = getLabel ? getLabel(option) : option;
           return (
             <label
               key={option}
@@ -52,7 +63,7 @@ export function CheckboxOptionGroup<T extends string>({
                 checked={isChecked}
                 onCheckedChange={() => onToggle(option)}
               />
-              <span>{option}</span>
+              <span>{displayLabel}</span>
             </label>
           );
         })}
@@ -61,3 +72,4 @@ export function CheckboxOptionGroup<T extends string>({
     </div>
   );
 }
+

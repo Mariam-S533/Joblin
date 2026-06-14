@@ -1,21 +1,36 @@
 import { apiClient } from "@/lib/apiClient";
+import {
+  jobApplications as endpoints,
+  APPLICATIONS_BY_JOB_POST,
+  UPDATE_APPLICATION_STATUS,
+} from "@/lib/apiClient/endpoints";
 import type {
   JobApplicationsPageData,
   JobApplicationsQueryParams,
   JobApplicationStatus,
   UpdateApplicationStatusResponse,
+  RawJobApplicationsPageData,
+  RawUpdateApplicationStatusResponse,
+  JobApplicationRecord,
+  RawJobApplicationRecord,
+  UpdateApplicationStatusPayload,
 } from "@/features/job-applications/types";
+import { normalizeJobApplicationStatus } from "@/features/job-applications/types";
 
 /**
- * Endpoint paths for job applications.
- *
- * Adjust the paths below to match your .NET controller routes.
+ * Normalize raw API response data so that all ApplicationStatus values
+ * are PascalCase strings regardless of whether the backend sent them
+ * as numeric integers, stringified integers, or PascalCase strings.
  */
-const endpoints = {
-  list: (jobId: string) => `/PostedJobs/${jobId}/applications`,
-  updateStatus: (jobId: string, applicantId: string) =>
-    `/PostedJobs/${jobId}/applications/${applicantId}/status`,
-};
+const normalizeJobApplicationsPageData = (
+  raw: RawJobApplicationsPageData,
+): JobApplicationsPageData => ({
+  ...raw,
+  applicants: raw.applicants.map((applicant) => ({
+    ...applicant,
+    status: normalizeJobApplicationStatus(applicant.status),
+  })),
+});
 
 export const getJobApplications = async (
   jobId: string,
@@ -41,18 +56,42 @@ export const getJobApplications = async (
   const qs = queryParams.toString();
   const path = qs ? `${endpoints.list(jobId)}?${qs}` : endpoints.list(jobId);
 
-  const response = await apiClient.get<JobApplicationsPageData>(path);
-  return response.data;
+  const response = await apiClient.get<RawJobApplicationsPageData>(path);
+  return normalizeJobApplicationsPageData(response.data);
+};
+
+export const getApplicationsByJobPost = async (
+  jobPostId: string,
+): Promise<JobApplicationRecord[]> => {
+  const response = await apiClient.get<RawJobApplicationRecord[]>(
+    APPLICATIONS_BY_JOB_POST(jobPostId),
+  );
+
+  return response.data.map((record) => ({
+    ...record,
+    applicationStatus: normalizeJobApplicationStatus(record.applicationStatus),
+  }));
 };
 
 export const updateApplicationStatus = async (
-  jobId: string,
-  applicantId: string,
-  status: JobApplicationStatus,
-) => {
-  const response = await apiClient.put<UpdateApplicationStatusResponse>(
-    endpoints.updateStatus(jobId, applicantId),
-    { status },
+  firstArg: string,
+  secondArg: string | UpdateApplicationStatusPayload,
+  thirdArg?: JobApplicationStatus,
+): Promise<UpdateApplicationStatusResponse | void> => {
+  if (typeof secondArg === "object" && secondArg !== null) {
+    await apiClient.patch<void>(
+      UPDATE_APPLICATION_STATUS(firstArg),
+      secondArg,
+    );
+    return;
+  }
+
+  const response = await apiClient.put<RawUpdateApplicationStatusResponse>(
+    endpoints.updateStatus(firstArg, secondArg),
+    { status: thirdArg },
   );
-  return response.data;
+  return {
+    ...response.data,
+    status: normalizeJobApplicationStatus(response.data.status),
+  } satisfies UpdateApplicationStatusResponse;
 };

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { memo,useState ,useCallback} from "react";
+import React, { memo, useState, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -28,7 +28,6 @@ const SCROLLBAR_STYLES = {
   `,
 };
 
-
 type NavItemProps = {
   icon: LucideIcon;
   label: string;
@@ -44,7 +43,14 @@ type DropdownItemProps = {
   href: string;
 };
 
-const NavItem = memo(function NavItem({ icon: Icon, label, href, badge, isActive, isCollapsed }: NavItemProps) {
+const NavItem = memo(function NavItem({
+  icon: Icon,
+  label,
+  href,
+  badge,
+  isActive,
+  isCollapsed,
+}: NavItemProps) {
   const isDashboardOrCourseInJob = label === "Dashboard" && href === undefined; // ignoring the weird artifact
 
   const content = (
@@ -101,7 +107,11 @@ const NavItem = memo(function NavItem({ icon: Icon, label, href, badge, isActive
 });
 NavItem.displayName = "NavItem";
 
-const DropdownItem = memo(function DropdownItem({ icon: Icon, label, href }: DropdownItemProps) {
+const DropdownItem = memo(function DropdownItem({
+  icon: Icon,
+  label,
+  href,
+}: DropdownItemProps) {
   return (
     <Link
       href={href}
@@ -117,27 +127,27 @@ const DropdownItem = memo(function DropdownItem({ icon: Icon, label, href }: Dro
 DropdownItem.displayName = "DropdownItem";
 
 export default function CompanySidebar() {
-  
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const pathname = usePathname();
-  const logout = useLogout();
+  const { mutate: logout } = useLogout();
 
   const toggleSidebar = useCallback(() => {
+    if (!isCollapsed) setOpenDropdown(null);
     setIsCollapsed(!isCollapsed);
-    if (!isCollapsed) {
-      setOpenDropdown(null);
-    }
-  },[isCollapsed])  ;
+  }, [isCollapsed]);
 
-  const toggleDropdown = useCallback((dropdown: string) => {
-    if (isCollapsed) {
-      setIsCollapsed(false);
-      setOpenDropdown(dropdown);
-    } else {
-      setOpenDropdown(openDropdown === dropdown ? null : dropdown);
-    }
-  },[])  ;
+  const toggleDropdown = useCallback(
+    (dropdown: string) => {
+      if (isCollapsed) {
+        setIsCollapsed(false);
+        setOpenDropdown(dropdown);
+      } else {
+        setOpenDropdown(openDropdown === dropdown ? null : dropdown);
+      }
+    },
+    [isCollapsed, openDropdown],
+  );
 
   return (
     <aside
@@ -308,7 +318,6 @@ export default function CompanySidebar() {
           <NavItem
             icon={Bell}
             label="Notification"
-            badge={6}
             href="/company/notifications"
             isCollapsed={isCollapsed}
             isActive={pathname === "/company/notifications"}
@@ -316,7 +325,6 @@ export default function CompanySidebar() {
           <NavItem
             icon={MessageSquare}
             label="Message"
-            badge={24}
             href="/company/messages"
             isCollapsed={isCollapsed}
             isActive={pathname === "/company/messages"}
@@ -343,7 +351,13 @@ export default function CompanySidebar() {
         className={`flex flex-col ${isCollapsed ? "items-center gap-2" : "items-start gap-4 pl-6"} pb-8 mt-auto bg-white pt-4 z-10 w-full`}
       >
         <button
-          onClick={() => logout("/login/company")}
+          onClick={() =>
+            logout(undefined, {
+              onSuccess: () => {
+                window.location.href = "/login/company";
+              },
+            })
+          }
           className={`flex items-center gap-2 ${isCollapsed ? "w-12 h-12 justify-center" : "w-48 h-12 px-5 py-2"} rounded-lg text-red-700 hover:bg-red-50 transition-colors`}
         >
           <div className="w-6 h-6 flex justify-center items-center">

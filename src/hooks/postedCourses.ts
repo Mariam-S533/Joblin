@@ -1,20 +1,31 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getPostedCourses,
+  getPostedCourseById,
   deletePostedCourse,
   toggleCourseStatus,
 } from "@/services/postedCoursesService";
-import type {
-  PostedCoursesQueryParams,
-  PostedCourseStatus,
-} from "@/features/posted-courses/types";
+import type { PostedCourseStatus } from "@/features/posted-courses/types";
 
 import { queryKeys } from "@/lib/queryKeys";
 
-export const usePostedCourses = (params?: PostedCoursesQueryParams) =>
+export const usePostedCourses = (companyId?: string) =>
   useQuery({
-    queryKey: queryKeys.postedCourses.list(params),
-    queryFn: () => getPostedCourses(params),
+    queryKey: queryKeys.postedCourses.list(companyId),
+    queryFn: () => {
+      if (!companyId) {
+        return Promise.resolve([]);
+      }
+      return getPostedCourses(companyId);
+    },
+    enabled: Boolean(companyId),
+  });
+
+export const usePostedCourseById = (courseId: string) =>
+  useQuery({
+    queryKey: queryKeys.postedCourses.detail(courseId),
+    queryFn: () => getPostedCourseById(courseId),
+    enabled: !!courseId,
   });
 
 export const useDeletePostedCourse = () => {

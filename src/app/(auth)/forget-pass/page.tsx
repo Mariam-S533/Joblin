@@ -6,10 +6,9 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { LoaderCircle } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import * as z from 'zod'
-import { useForgotPassword } from '@/hooks/auth'
-import { getErrorMessage } from '@/lib/apiClient/error'
 
 interface Inputs{
   email:string,
@@ -17,7 +16,7 @@ interface Inputs{
 
 function ForgetBass() {
 
-        const forgotMutation = useForgotPassword()
+        const [loading, setLoading] = useState(false)
   
         const schema = z.object({
           email: z.string().nonempty("email is required *").email('Invalid email address'),
@@ -28,7 +27,7 @@ function ForgetBass() {
         })
   
         async function onSubmit(data: Inputs){
-          forgotMutation.mutate(data);
+          console.log(data);
         }
 
   return (
@@ -63,18 +62,11 @@ function ForgetBass() {
             {errors.email && <p className='text-sm text-red-600 mt-1'>{errors.email.message}</p>}
             </div>
 
-            <Button type='submit' disabled={forgotMutation.isPending} className='h-10 rounded-sm mt-1 w-full bg-[#02905E] text-white text-[17px] font-medium hover:bg-[#04a165] cursor-pointer '>
-            {forgotMutation.isPending? <LoaderCircle className='animate-spin mx-auto text-white' size={18}/> : 'Send Link'}
+            <Button type='submit' className='h-10 rounded-sm mt-1 w-full bg-[#02905E] text-white text-[17px] font-medium hover:bg-[#04a165] cursor-pointer '>
+            {loading? <LoaderCircle className='animate-spin mx-auto text-white' size={18}/> : 'Send Link'}
             </Button>
 
           </form>
-
-          {forgotMutation.isSuccess && (
-            <p className='text-emerald-600 text-center text-sm mt-3'>Password reset link sent to your email.</p>
-          )}
-          {forgotMutation.isError && (
-            <p className='text-red-700 text-center text-sm mt-3'>{getErrorMessage(forgotMutation.error, "Failed to send reset link.")}</p>
-          )}
 
         </CardContent>
 

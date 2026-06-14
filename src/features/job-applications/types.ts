@@ -1,11 +1,20 @@
-import type { PaginationMeta } from "@/features/posted-jobs/types";
+import type { PaginationMeta } from "@/features/shared/types";
+import type { ApplicationStatus, EnumOption } from "@/features/enums";
+import {
+  APPLICATION_STATUS_OPTIONS,
+  APPLICATION_STATUS_VALUES,
+  getApplicationStatusLabel,
+  normalizeApplicationStatus,
+} from "@/features/enums";
 
-export type JobApplicationStatus =
-  | "new"
-  | "reviewing"
-  | "rejected"
-  | "accepted"
-  | "interviewed";
+// Re-export for downstream consumers
+export type { ApplicationStatus as JobApplicationStatus, EnumOption };
+export {
+  APPLICATION_STATUS_OPTIONS,
+  APPLICATION_STATUS_VALUES,
+  getApplicationStatusLabel as getJobApplicationStatusLabel,
+  normalizeApplicationStatus as normalizeJobApplicationStatus,
+};
 
 export type JobApplicant = {
   id: string;
@@ -18,7 +27,8 @@ export type JobApplicant = {
   experience: string;
   education: string;
   rating: number;
-  status: JobApplicationStatus;
+  /** Backend ApplicationStatus enum value: "Pending" | "UnderReview" | "Accepted" | "Rejected" | "Withdrawn" */
+  status: ApplicationStatus;
   avatarUrl?: string | null;
   resumeUrl: string;
   skills?: string[];
@@ -26,13 +36,38 @@ export type JobApplicant = {
   resumeFileName?: string;
 };
 
+export interface JobApplicationRecord {
+  applicationId: string;
+  seekerId: string;
+  seekerFirstName: string;
+  seekerLastName: string;
+  seekerProfilePictureUrl: string | null;
+  seekerProfileId: string;
+  seekerProfileName: string;
+  technicalDomain: string;
+  skills: string[];
+  applicationStatus: ApplicationStatus;
+  matchingScore: string;
+  appliedAt: string;
+  updatedAt: string;
+}
+
+export interface RawJobApplicationRecord
+  extends Omit<JobApplicationRecord, "applicationStatus"> {
+  applicationStatus: string | number;
+}
+
+export interface UpdateApplicationStatusPayload {
+  applicationStatus: string;
+}
+
 export type JobApplicationsSummary = {
   total: number;
-  newCount: number;
-  reviewCount: number;
+  pendingCount: number;
+  underReviewCount: number;
   rejectedCount: number;
   acceptedCount: number;
-  interviewedCount: number;
+  withdrawnCount: number;
 };
 
 export type JobApplicationsPageData = {
@@ -44,7 +79,7 @@ export type JobApplicationsPageData = {
 };
 
 export type JobApplicationsQueryParams = {
-  status?: JobApplicationStatus | "all";
+  status?: ApplicationStatus | "all";
   sort?: "newest" | "oldest";
   search?: string;
   page?: number;
@@ -53,6 +88,30 @@ export type JobApplicationsQueryParams = {
 
 export type UpdateApplicationStatusResponse = {
   id: string;
-  status: JobApplicationStatus;
+  status: ApplicationStatus;
   message: string;
+};
+
+// ─── Raw API Response Types (before normalization) ────────────────────
+// The .NET backend may send enum values as numeric integers instead of
+// PascalCase strings. These raw types allow `string | number` for status
+// fields so the service layer can normalize before the UI consumes them.
+
+export type RawJobApplicant = Omit<JobApplicant, "status"> & {
+  /** Backend ApplicationStatus — may arrive as PascalCase string or numeric enum value */
+  status: string | number;
+};
+
+export type RawJobApplicationsPageData = Omit<
+  JobApplicationsPageData,
+  "applicants"
+> & {
+  applicants: RawJobApplicant[];
+};
+
+export type RawUpdateApplicationStatusResponse = Omit<
+  UpdateApplicationStatusResponse,
+  "status"
+> & {
+  status: string | number;
 };

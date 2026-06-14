@@ -1,13 +1,5 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { getCoursePostTemplate, submitCoursePost } from "@/services/coursePostService";
-
-import { queryKeys } from "@/lib/queryKeys";
-
-export const useCoursePostTemplate = () =>
-  useQuery({
-    queryKey: queryKeys.coursePost.template,
-    queryFn: getCoursePostTemplate,
-  });
+import { useMutation } from "@tanstack/react-query";
+import { submitCoursePost } from "@/services/coursePostService";
 
 export const useSubmitCoursePost = () =>
   useMutation({

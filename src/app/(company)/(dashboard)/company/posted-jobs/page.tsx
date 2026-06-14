@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import {
@@ -14,6 +14,7 @@ import {
   Filter,
   FileX2,
   AlertCircle,
+  MapPin,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -28,16 +29,21 @@ import {
   useDeletePostedJob,
   useToggleJobStatus,
 } from "@/hooks/postedJobs";
-import type { PostedJobStatus } from "@/features/posted-jobs/types";
+import { useGetCompanyById } from "@/hooks/companyProfile";
+import type { PostedJobStatus, PostedJob } from "@/features/posted-jobs/types";
+import {
+  JOB_STATUS_OPTIONS,
+  getPostedJobStatusLabel,
+} from "@/features/posted-jobs/types";
 
 // ─── Status filter tabs ─────────────────────────────────────────────
 
 const STATUS_TABS: { label: string; value: PostedJobStatus | "all" }[] = [
   { label: "All", value: "all" },
-  { label: "Active", value: "active" },
-  { label: "Closed", value: "closed" },
-  { label: "Draft", value: "draft" },
-  { label: "Expired", value: "expired" },
+  ...JOB_STATUS_OPTIONS.map((opt) => ({
+    label: opt.label,
+    value: opt.value as PostedJobStatus,
+  })),
 ];
 
 // ─── Helpers ────────────────────────────────────────────────────────
@@ -46,13 +52,11 @@ const statusBadgeVariant = (
   status: PostedJobStatus,
 ): "default" | "secondary" | "destructive" | "outline" => {
   switch (status) {
-    case "active":
+    case "Active":
       return "default";
-    case "closed":
+    case "Closed":
       return "secondary";
-    case "draft":
-      return "outline";
-    case "expired":
+    case "Cancelled":
       return "destructive";
     default:
       return "secondary";
@@ -61,17 +65,23 @@ const statusBadgeVariant = (
 
 const statusBadgeClasses = (status: PostedJobStatus): string => {
   switch (status) {
-    case "active":
+    case "Active":
       return "bg-emerald-50 text-emerald-700 hover:bg-emerald-50 border-emerald-200";
-    case "closed":
+    case "Closed":
       return "bg-neutral-100 text-neutral-600 hover:bg-neutral-100 border-neutral-200";
-    case "draft":
-      return "bg-amber-50 text-amber-700 hover:bg-amber-50 border-amber-200";
-    case "expired":
+    case "Cancelled":
       return "bg-red-50 text-red-700 hover:bg-red-50 border-red-200";
     default:
       return "";
   }
+};
+
+/** Format days remaining for display. null means no deadline set. */
+const formatDaysRemaining = (days: number | null): string => {
+  if (days === null) return "No deadline";
+  if (days < 0) return "Expired";
+  if (days === 0) return "Last day";
+  return `${days} days remaining`;
 };
 
 // ─── Stat Card ──────────────────────────────────────────────────────
@@ -151,10 +161,7 @@ function MutationErrorBanner({
 
 export default function PostedJobsPage() {
   const router = useRouter();
-  const { status: authStatus } = useSession();
-  const [activeTab, setActiveTab] = useState<PostedJobStatus | "all">("all");
-  const [activeDepartment, setActiveDepartment] =
-    useState<string>("All Departments");
+  const { data: session, status: authStatus } = useSession();
 
   useEffect(() => {
     if (authStatus === "unauthenticated") {
@@ -178,14 +185,14 @@ export default function PostedJobsPage() {
     return null;
   }
 
+  // Get companyId from company profile data.
+  // The session has user.id, and GET /api/Company/{userId} returns
+  // CompanyDataResponse which contains the company's id field.
+  const userId = session?.id;
+
   return (
     <div className="space-y-6">
-      <PostedJobsContent
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        activeDepartment={activeDepartment}
-        setActiveDepartment={setActiveDepartment}
-      />
+      <PostedJobsContent userId={userId} />
     </div>
   );
 }
@@ -193,28 +200,27 @@ export default function PostedJobsPage() {
 // ─── Content (separated for query key stability) ────────────────────
 
 type PostedJobsContentProps = {
-  activeTab: PostedJobStatus | "all";
-  setActiveTab: (tab: PostedJobStatus | "all") => void;
-  activeDepartment: string;
-  setActiveDepartment: (dept: string) => void;
+  userId: string | undefined;
 };
 
-function PostedJobsContent({
-  activeTab,
-  setActiveTab,
-  activeDepartment,
-  setActiveDepartment,
-}: PostedJobsContentProps) {
+function PostedJobsContent({ userId }: PostedJobsContentProps) {
   const router = useRouter();
 
-  const queryOptions = useMemo(
-    () => ({ status: activeTab, department: activeDepartment }),
-    [activeTab, activeDepartment]
-  );
-  const { data, isLoading, isError } = usePostedJobs(queryOptions);
+  // ── Fetch company data to get companyId ──────────────────────────
+  const { data: companyData } = useGetCompanyById(userId, {
+    enabled: !!userId,
+  });
+  const companyId = companyData?.id;
+
+  // ── Fetch posted jobs using companyId ────────────────────────────
+  const { data, isLoading, isError } = usePostedJobs(companyId);
 
   const deleteJob = useDeletePostedJob();
   const toggleStatus = useToggleJobStatus();
+
+  // ── Client-side filter state ─────────────────────────────────────
+  const [activeTab, setActiveTab] = useState<PostedJobStatus | "all">("all");
+  const [activeDomain, setActiveDomain] = useState<string>("All Domains");
 
   // Track mutation errors for UI feedback
   const [mutationError, setMutationError] = useState<string | null>(null);
@@ -227,27 +233,52 @@ function PostedJobsContent({
   }, [mutationError]);
 
   const stats = data?.stats;
-  const jobs = data?.jobs ?? [];
-  const departments = data?.departments ?? [];
+  const allJobs = data?.jobs ?? [];
+  const technicalDomains = data?.technicalDomains ?? [];
 
-  const handleDeleteJob = (jobId: string) => {
-    setMutationError(null);
-    deleteJob.mutate(jobId, {
-      onError: (err) =>
-        setMutationError(err.message || "Failed to delete job."),
-    });
-  };
+  // ── Client-side filtering ────────────────────────────────────────
+  const filteredJobs = useMemo(() => {
+    let jobs = allJobs;
 
-  const handleToggleStatus = (jobId: string, newStatus: PostedJobStatus) => {
-    setMutationError(null);
-    toggleStatus.mutate(
-      { jobId, newStatus },
-      {
+    // Filter by status tab
+    if (activeTab !== "all") {
+      jobs = jobs.filter((job) => job.jobStatus === activeTab);
+    }
+
+    // Filter by technical domain
+    if (activeDomain !== "All Domains") {
+      jobs = jobs.filter((job) => job.technicalDomain === activeDomain);
+    }
+
+    return jobs;
+  }, [allJobs, activeTab, activeDomain]);
+
+  const handleDismissError = useCallback(() => setMutationError(null), []);
+
+  const handleDeleteJob = useCallback(
+    (jobId: string) => {
+      setMutationError(null);
+      deleteJob.mutate(jobId, {
         onError: (err) =>
-          setMutationError(err.message || "Failed to update job status."),
-      },
-    );
-  };
+          setMutationError(err.message || "Failed to delete job."),
+      });
+    },
+    [deleteJob],
+  );
+
+  const handleToggleStatus = useCallback(
+    (jobId: string, newStatus: PostedJobStatus) => {
+      setMutationError(null);
+      toggleStatus.mutate(
+        { jobId, newStatus },
+        {
+          onError: (err) =>
+            setMutationError(err.message || "Failed to update job status."),
+        },
+      );
+    },
+    [toggleStatus],
+  );
 
   return (
     <>
@@ -255,7 +286,7 @@ function PostedJobsContent({
       {mutationError && (
         <MutationErrorBanner
           message={mutationError}
-          onDismiss={() => setMutationError(null)}
+          onDismiss={handleDismissError}
         />
       )}
 
@@ -329,26 +360,24 @@ function PostedJobsContent({
           ))}
         </div>
 
-        {/* Department Filter */}
+        {/* Technical Domain Filter */}
         <div className="px-6 pb-4">
           <div className="flex items-center gap-2 mb-3">
             <Filter className="h-4 w-4 text-neutral-400" />
-            <span className="text-sm text-neutral-500">
-              Filter by Department
-            </span>
+            <span className="text-sm text-neutral-500">Filter by Domain</span>
           </div>
           <div className="flex flex-wrap gap-2">
-            {departments.map((dept) => (
+            {technicalDomains.map((domain) => (
               <button
-                key={dept}
-                onClick={() => setActiveDepartment(dept)}
+                key={domain}
+                onClick={() => setActiveDomain(domain)}
                 className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors border ${
-                  activeDepartment === dept
+                  activeDomain === domain
                     ? "border-emerald-600 bg-emerald-50 text-emerald-700"
                     : "border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-50"
                 }`}
               >
-                {dept}
+                {domain}
               </button>
             ))}
           </div>
@@ -364,7 +393,7 @@ function PostedJobsContent({
               Status
             </span>
             <span className="text-xs font-medium uppercase text-neutral-500">
-              Applications
+              Location
             </span>
             <span className="text-xs font-medium uppercase text-neutral-500">
               Salary
@@ -384,7 +413,7 @@ function PostedJobsContent({
           <div className="px-6 py-10 text-center text-sm text-red-600">
             Failed to load jobs. Please try again.
           </div>
-        ) : jobs.length === 0 ? (
+        ) : filteredJobs.length === 0 ? (
           <div className="px-6 py-10 text-center">
             <Briefcase className="mx-auto h-10 w-10 text-neutral-300" />
             <p className="mt-3 text-sm text-neutral-500">
@@ -395,7 +424,7 @@ function PostedJobsContent({
               className="mt-4"
               onClick={() => {
                 setActiveTab("all");
-                setActiveDepartment("All Departments");
+                setActiveDomain("All Domains");
               }}
             >
               Clear Filters
@@ -403,7 +432,7 @@ function PostedJobsContent({
           </div>
         ) : (
           <div className="divide-y divide-neutral-100">
-            {jobs.map((job) => (
+            {filteredJobs.map((job) => (
               <div
                 key={job.id}
                 className="grid grid-cols-[1fr_120px_140px_120px_140px] items-center gap-4 px-6 py-4 hover:bg-neutral-50/50 transition-colors"
@@ -411,40 +440,40 @@ function PostedJobsContent({
                 {/* Job Title */}
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-neutral-800 truncate">
-                    {job.jobTitle}
+                    {job.title}
                   </p>
                   <div className="mt-1 flex items-center gap-1.5 text-xs text-neutral-500">
-                    <span>{job.employmentType}</span>
+                    <span>{job.jobType}</span>
                     <span>•</span>
-                    <span>
-                      {job.daysRemaining > 0
-                        ? `${job.daysRemaining} days remaining`
-                        : "Expired"}
-                    </span>
+                    <span>{job.workMode}</span>
+                    <span>•</span>
+                    <span>{formatDaysRemaining(job.daysRemaining)}</span>
                   </div>
                 </div>
 
                 {/* Status */}
                 <div>
                   <Badge
-                    variant={statusBadgeVariant(job.status)}
-                    className={`text-xs capitalize ${statusBadgeClasses(job.status)}`}
+                    variant={statusBadgeVariant(job.jobStatus)}
+                    className={`text-xs ${statusBadgeClasses(job.jobStatus)}`}
                   >
-                    {job.status}
+                    {getPostedJobStatusLabel(job.jobStatus)}
                   </Badge>
                 </div>
 
-                {/* Applications */}
+                {/* Location */}
                 <div className="flex items-center gap-2 text-sm text-neutral-600">
-                  <UsersRound className="h-4 w-4 text-neutral-400" />
-                  <span>{job.applications} Applications</span>
+                  <MapPin className="h-4 w-4 text-neutral-400" />
+                  <span className="truncate">
+                    {job.city}, {job.country}
+                  </span>
                 </div>
 
                 {/* Salary */}
                 <div className="flex items-center gap-2 text-sm text-neutral-600">
                   <CircleDollarSign className="h-4 w-4 text-neutral-400" />
                   <span>
-                    ${job.salaryMin} - ${job.salaryMax}
+                    {job.minSalary} - {job.maxSalary}
                   </span>
                 </div>
 
@@ -455,7 +484,9 @@ function PostedJobsContent({
                     size="sm"
                     className="h-8 text-xs gap-1.5"
                     onClick={() => {
-                      router.push(`/company/posted-jobs/${job.id}/applications`);
+                      router.push(
+                        `/company/posted-jobs/${job.id}/applications`,
+                      );
                     }}
                   >
                     <Eye className="h-3.5 w-3.5" />
@@ -463,21 +494,28 @@ function PostedJobsContent({
                   </Button>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        disabled={toggleStatus.isPending || deleteJob.isPending}
+                      >
                         <MoreVertical className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-40">
-                      {job.status === "active" && (
+                      {job.jobStatus === "Active" && (
                         <DropdownMenuItem
-                          onClick={() => handleToggleStatus(job.id, "closed")}
+                          onClick={() => handleToggleStatus(job.id, "Closed")}
+                          disabled={toggleStatus.isPending}
                         >
                           Close Job
                         </DropdownMenuItem>
                       )}
-                      {job.status === "closed" && (
+                      {job.jobStatus === "Closed" && (
                         <DropdownMenuItem
-                          onClick={() => handleToggleStatus(job.id, "active")}
+                          onClick={() => handleToggleStatus(job.id, "Active")}
+                          disabled={toggleStatus.isPending}
                         >
                           Reopen Job
                         </DropdownMenuItem>
@@ -485,6 +523,7 @@ function PostedJobsContent({
                       <DropdownMenuItem
                         className="text-red-600 focus:text-red-600"
                         onClick={() => handleDeleteJob(job.id)}
+                        disabled={deleteJob.isPending}
                       >
                         Delete Job
                       </DropdownMenuItem>

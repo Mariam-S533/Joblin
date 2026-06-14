@@ -1,58 +1,45 @@
-import type { PaginationMeta } from "@/features/posted-jobs/types";
+import type { ApplicationStatus, EnumOption } from "@/features/enums";
+import {
+  APPLICATION_STATUS_OPTIONS,
+  APPLICATION_STATUS_VALUES,
+  normalizeApplicationStatus,
+} from "@/features/enums";
 
-export type CourseApplicationStatus =
-  | "new"
-  | "reviewing"
-  | "rejected"
-  | "accepted"
-  | "interviewed";
-
-export type CourseApplicant = {
-  id: string;
-  courseId: string;
-  name: string;
-  email: string;
-  phone: string;
-  location: string;
-  enrolledAt: string;
-  experience: string;
-  education: string;
-  rating: number;
-  status: CourseApplicationStatus;
-  avatarUrl?: string | null;
-  resumeUrl: string;
-  skills?: string[];
-  coverLetter?: string;
-  resumeFileName?: string;
+export type { ApplicationStatus as CourseApplicationStatus, EnumOption };
+export {
+  APPLICATION_STATUS_OPTIONS,
+  APPLICATION_STATUS_VALUES,
+  normalizeApplicationStatus as normalizeCourseApplicationStatus,
 };
 
-export type CourseApplicationsSummary = {
-  total: number;
-  newCount: number;
-  reviewCount: number;
-  rejectedCount: number;
-  acceptedCount: number;
-  interviewedCount: number;
+export type OfferingEnrollment = {
+  enrollmentId: string;
+  seekerId: string;
+  seekerProfileId: string;
+  seekerName: string;
+  profilePictureUrl: string | null;
+  seekerEmail: string;
+  phone: string | null;
+  location: string | null;
+  status: ApplicationStatus;
+  appliedAt: string;
+  latestEducation: string | null;
+  experienceYears: string;
 };
 
-export type CourseApplicationsPageData = {
-  courseId: string;
-  courseTitle: string;
-  summary: CourseApplicationsSummary;
-  applicants: CourseApplicant[];
-  pagination: PaginationMeta;
+export type OfferingEnrollmentDetail = OfferingEnrollment & {
+  skills: string[];
+  resumeUrl: string | null;
 };
 
-export type CourseApplicationsQueryParams = {
-  status?: CourseApplicationStatus | "all";
-  sort?: "newest" | "oldest";
-  search?: string;
-  page?: number;
-  pageSize?: number;
+export type RawOfferingEnrollment = Omit<OfferingEnrollment, "status"> & {
+  status: string | number;
 };
 
-export type UpdateCourseApplicationStatusResponse = {
-  id: string;
-  status: CourseApplicationStatus;
-  message: string;
+export type RawOfferingEnrollmentDetail = Omit<OfferingEnrollmentDetail, "status"> & {
+  status: string | number;
+};
+
+export type UpdateEnrollmentStatusPayload = {
+  status: string;
 };

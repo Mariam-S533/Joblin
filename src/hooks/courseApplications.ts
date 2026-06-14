@@ -1,37 +1,53 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import {
-  getCourseApplications,
-  updateCourseApplicationStatus,
+  getOfferingEnrollments,
+  getOfferingEnrollmentDetails,
+  updateOfferingEnrollmentStatus,
 } from "@/services/courseApplicationsService";
-import type {
-  CourseApplicationsQueryParams,
-  CourseApplicationStatus,
-} from "@/features/course-applications/types";
+import type { CourseApplicationStatus, UpdateEnrollmentStatusPayload } from "@/features/course-applications/types";
 
 import { queryKeys } from "@/lib/queryKeys";
 
-export const useCourseApplications = (
-  courseId: string,
-  params?: CourseApplicationsQueryParams,
-) =>
+export const useOfferingEnrollments = (offeringId: string) =>
   useQuery({
-    queryKey: queryKeys.courseApplications.list(courseId, params),
-    queryFn: () => getCourseApplications(courseId, params),
-    enabled: Boolean(courseId),
+    queryKey: queryKeys.courseApplications.enrollmentsByOffering(offeringId),
+    queryFn: () => getOfferingEnrollments(offeringId),
+    enabled: !!offeringId,
   });
 
-export const useUpdateCourseApplicationStatus = (courseId: string) => {
+export const useOfferingEnrollmentDetails = (
+  enrollmentId: string,
+  enabled?: boolean,
+) =>
+  useQuery({
+    queryKey: queryKeys.courseApplications.enrollmentDetails(enrollmentId),
+    queryFn: () => getOfferingEnrollmentDetails(enrollmentId),
+    enabled: enabled !== false && !!enrollmentId,
+  });
+
+type EnrollmentStatusUpdateVariables = {
+  enrollmentId: string;
+  offeringId: string;
+  payload: UpdateEnrollmentStatusPayload;
+};
+
+export function useUpdateEnrollmentStatus() {
   const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({
-      applicantId,
-      status,
-    }: {
-      applicantId: string;
-      status: CourseApplicationStatus;
-    }) => updateCourseApplicationStatus(courseId, applicantId, status),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.courseApplications.all });
+
+  return useMutation<void, Error, EnrollmentStatusUpdateVariables>({
+    mutationFn: ({ enrollmentId, payload }) =>
+      updateOfferingEnrollmentStatus(enrollmentId, payload),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.courseApplications.enrollmentsByOffering(variables.offeringId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.courseApplications.enrollmentDetails(variables.enrollmentId),
+      });
+    },
+    onError: () => {
+      toast.error("Failed to update enrollment status");
     },
   });
-};
+}

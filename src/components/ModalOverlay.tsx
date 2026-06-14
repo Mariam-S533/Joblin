@@ -1,4 +1,6 @@
-import React, { useEffect } from "react";
+"use client";
+
+import React, { useCallback, useEffect } from "react";
 import { createPortal } from "react-dom";
 
 type ModalOverlayProps = {
@@ -12,6 +14,17 @@ export const ModalOverlay = ({
   onClose,
   children,
 }: ModalOverlayProps) => {
+  const handleBackdropClick = useCallback(() => {
+    onClose();
+  }, [onClose]);
+
+  const handleBackdropKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    },
+    [onClose],
+  );
+
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
@@ -34,12 +47,10 @@ export const ModalOverlay = ({
       {/* Backdrop - Click to close */}
       <div
         className="absolute inset-0 bg-black/50 transition-opacity cursor-pointer"
-        onClick={onClose}
+        onClick={handleBackdropClick}
         role="button"
         tabIndex={0}
-        onKeyDown={(e) => {
-          if (e.key === "Escape") onClose();
-        }}
+        onKeyDown={handleBackdropKeyDown}
         aria-label="Close modal"
       />
 

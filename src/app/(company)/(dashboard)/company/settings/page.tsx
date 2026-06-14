@@ -1,7 +1,7 @@
 "use client";
 import { useSession } from "next-auth/react";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Bell,
   Building2,
@@ -122,7 +122,7 @@ export default function CompanyAccountSettingsPage() {
   const [formData, setFormData] =
     useState<CompanyAccountSettingsFormData>(emptyForm);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [settingsError, setSettingsError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: "",
     newPassword: "",
@@ -148,6 +148,14 @@ export default function CompanyAccountSettingsPage() {
     };
   }, [formData.accountStatus]);
 
+  const settingsError = useMemo(() => {
+    if (settingsQuery.error) {
+      return getErrorMessage(settingsQuery.error, "Failed to load settings.");
+    }
+    return null;
+  }, [settingsQuery.error]);
+
+  /* eslint-disable react-hooks/set-state-in-effect -- intentional: sync server state into editable local state when user is NOT editing */
   useEffect(() => {
     if (!settingsQuery.data || isEditing) {
       return;
@@ -158,38 +166,28 @@ export default function CompanyAccountSettingsPage() {
     setFormData(parsed.formData);
     setLogoUrl(parsed.logoUrl);
   }, [isEditing, settingsQuery.data]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
-  useEffect(() => {
-    if (!settingsQuery.error) {
-      return;
-    }
+  const handleChange = useCallback(
+    (field: keyof CompanyAccountSettingsFormData, value: string | boolean) => {
+      setFormData((prev) => ({
+        ...prev,
+        [field]: value,
+      }));
+      setErrors((prev) => {
+        if (!(field in prev)) return prev;
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      });
+    },
+    [],
+  );
 
-    setSettingsError(
-      getErrorMessage(settingsQuery.error, "Failed to load settings."),
-    );
-  }, [settingsQuery.error]);
-
-  useEffect(() => {
-    if (settingsQuery.isSuccess) {
-      setSettingsError(null);
-    }
-  }, [settingsQuery.isSuccess]);
-
-  const handleChange = (
-    field: keyof CompanyAccountSettingsFormData,
-    value: string | boolean,
-  ) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-    setErrors((prev) => {
-      if (!(field in prev)) return prev;
-      const next = { ...prev };
-      delete next[field];
-      return next;
-    });
-  };
+  const handleStartEditing = useCallback(() => {
+    setIsEditing(true);
+    setErrors({});
+  }, []);
 
   const validate = () => {
     const nextErrors: Record<string, string> = {};
@@ -212,7 +210,7 @@ export default function CompanyAccountSettingsPage() {
   };
 
   const handleSaveSettings = async () => {
-    setSettingsError(null);
+    setActionError(null);
 
     if (!validate()) return;
 
@@ -230,7 +228,7 @@ export default function CompanyAccountSettingsPage() {
       setErrors({});
       setIsEditing(false);
     } catch (error) {
-      setSettingsError(
+      setActionError(
         getErrorMessage(error, "Failed to update account settings."),
       );
     }
@@ -240,13 +238,13 @@ export default function CompanyAccountSettingsPage() {
     const previousLogo = logoUrl;
     const previewUrl = URL.createObjectURL(file);
     setLogoUrl(previewUrl);
-    setSettingsError(null);
+    setActionError(null);
 
     try {
       const response = await uploadLogoMutation.mutateAsync(file);
       setLogoUrl(response.logoUrl || previewUrl);
     } catch (error) {
-      setSettingsError(getErrorMessage(error, "Failed to upload logo."));
+      setActionError(getErrorMessage(error, "Failed to upload logo."));
       setLogoUrl(previousLogo);
     } finally {
       URL.revokeObjectURL(previewUrl);
@@ -313,7 +311,7 @@ export default function CompanyAccountSettingsPage() {
       setLogoUrl(parsed.logoUrl);
       setIsDeactivateOpen(false);
     } catch (error) {
-      setSettingsError(getErrorMessage(error, "Failed to deactivate account."));
+      setActionError(getErrorMessage(error, "Failed to deactivate account."));
     }
   };
 
@@ -335,9 +333,9 @@ export default function CompanyAccountSettingsPage() {
 
   return (
     <div className="w-full px-4 py-4 md:px-6 md:py-6 lg:px-8 lg:py-8 flex flex-col gap-8">
-      {settingsError && (
+      {(settingsError || actionError) && (
         <div className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-4 py-2">
-          {settingsError}
+          {actionError ?? settingsError}
         </div>
       )}
 
@@ -351,10 +349,7 @@ export default function CompanyAccountSettingsPage() {
         isUploadingLogo={isUploadingLogo}
         editLabel="Update settings"
         saveLabel="Save settings"
-        onEdit={() => {
-          setIsEditing(true);
-          setErrors({});
-        }}
+        onEdit={handleStartEditing}
         onSave={() => void handleSaveSettings()}
         onLogoUpload={handleLogoUpload}
       />

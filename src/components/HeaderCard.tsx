@@ -13,8 +13,7 @@ type HeaderCardProps = {
   isUploadingLogo?: boolean;
 };
 
-const FALLBACK_LOGO_URL =
-  "https://upload.wikimedia.org/wikipedia/commons/4/44/BMW.svg";
+const FALLBACK_LOGO_URL = "";
 
 export const HeaderCard = ({
   companyName,

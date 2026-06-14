@@ -1,261 +1,212 @@
 "use client";
 import { useSession } from "next-auth/react";
 
-import React, { useEffect, useRef, useState } from "react";
-import {
-  Upload,
-  Building2,
-  AlignLeft,
-  Image as ImageIcon,
-  Users,
-  Link as LinkIcon,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import AddTeamMemberModal, {
-  type TeamMember,
-} from "@/components/Modal/AddTeamMemberModal";
+import React, { useCallback, useMemo, useState } from "react";
+import { Building2, AlignLeft } from "lucide-react";
 import { FloatingInput } from "@/components/FloatingInputField";
 import { FloatingTextArea } from "@/components/FloatingTextAreaField";
-import { PhotoPlaceholder } from "@/components/PhotoPlaceholder";
-import { TeamMemberCard } from "@/components/TeamMemberCard";
 import { SectionCard } from "@/components/SectionCard";
 import { ProfileUploadingCard } from "@/components/Modal/ProfileUploadingCard";
+import { useGetCompanyById, useUpsertCompany } from "@/hooks/companyProfile";
 import {
-  useAddTeamMember,
-  useCompanyProfile,
-  useRemoveTeamMember,
-  useUpdateCompanyProfile,
-  useUploadCompanyLogo,
-  useUploadCompanyPhotos,
-} from "@/hooks/companyProfile";
-import {
-  parseCompanyProfile,
-  serializeCompanyProfile,
+  mapCompanyDataToEditForm,
+  mapEditFormToUpsertPayload,
 } from "@/features/company-profile/utils";
-import type { CompanyProfileFormData } from "@/features/company-profile/types";
+import type {
+  CompanyEditFormData,
+  AddressResponse,
+} from "@/features/company-profile/types";
+import { ApiError } from "@/lib/apiClient/error";
 import { getErrorMessage } from "@/lib/apiClient/error";
 
-type TeamMemberWithId = TeamMember & { id?: string };
+const FALLBACK_LOGO = "";
+
+const EMPTY_FORM: CompanyEditFormData = {
+  companyName: "",
+  publicContactMail: "",
+  domain: "",
+  companySize: "",
+  description: "",
+};
 
 export default function CompanyProfile() {
-  const FALLBACK_LOGO =
-    "https://upload.wikimedia.org/wikipedia/commons/4/44/BMW.svg";
   const [isEditing, setIsEditing] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [teamMembers, setTeamMembers] = useState<TeamMemberWithId[]>([]);
-  const [profileId, setProfileId] = useState<string | null>(null);
-  const [profileError, setProfileError] = useState<string | null>(null);
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [logoUrl, setLogoUrl] = useState(FALLBACK_LOGO);
-  const [companyPhotos, setCompanyPhotos] = useState<string[]>([]);
-  const companyPhotosInputRef = useRef<HTMLInputElement | null>(null);
-  const companyPhotosInsertIndexRef = useRef<number | null>(null);
-
-  const [formData, setFormData] = useState<CompanyProfileFormData>({
-    companyName: "",
-    industry: "",
-    foundedYear: "",
-    location: "",
-    companySize: "",
-    email: "",
-    phone: "",
-    website: "",
-    description: "",
-    linkedin: "",
-    facebook: "",
-    instagram: "",
-    x: "",
-  });
+  const [editFormData, setEditFormData] =
+    useState<CompanyEditFormData>(EMPTY_FORM);
+  const [validationErrors, setValidationErrors] = useState<
+    Record<string, string>
+  >({});
+  const [logoPreviewUrl, setLogoPreviewUrl] = useState("");
+  const [logoPayloadUrl, setLogoPayloadUrl] = useState<string | null>(null);
+  const [logoError, setLogoError] = useState<string | null>(null);
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
 
   const { data: session } = useSession();
-  const profileQuery = useCompanyProfile({ enabled: !!session });
-  const updateProfileMutation = useUpdateCompanyProfile();
-  const uploadLogoMutation = useUploadCompanyLogo();
-  const uploadPhotosMutation = useUploadCompanyPhotos();
-  const addMemberMutation = useAddTeamMember();
-  const removeMemberMutation = useRemoveTeamMember();
-  const isSaving = updateProfileMutation.isPending;
-  const isUploadingLogo = uploadLogoMutation.isPending;
-  const isUploadingPhotos = uploadPhotosMutation.isPending;
+  const userId = session?.id as string;
 
-  const handleChange = (field: keyof CompanyProfileFormData, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    // Clear validation error for this field when user edits it
-    setErrors((prev) => {
-      if (!(field in prev)) return prev;
-      const next = { ...prev };
-      delete next[field];
-      return next;
-    });
+  // ─── Fetch company data (GET /api/Company/{id}) ──────────────────
+  const profileQuery = useGetCompanyById(userId, {
+    enabled: !!userId,
+  });
+
+  // ─── Upsert company mutation (PUT /api/Company) ──────────────────
+  const upsertMutation = useUpsertCompany();
+  const isSaving = upsertMutation.isPending;
+
+  // ─── Derive display data from query (no useEffect+setState) ───────
+  const companyData = profileQuery.data;
+  const isExpectedLookupError =
+    profileQuery.error instanceof ApiError &&
+    (profileQuery.error.status === 400 || profileQuery.error.status === 404);
+
+  const profileError =
+    profileQuery.error && !isExpectedLookupError
+      ? getErrorMessage(profileQuery.error, "Failed to load company profile")
+      : null;
+
+  const displayFormData = useMemo(
+    () => (companyData ? mapCompanyDataToEditForm(companyData) : EMPTY_FORM),
+    [companyData],
+  );
+
+  const rawLogoUrl = companyData?.logoUrl || "";
+  const displayLogoUrl = rawLogoUrl
+    ? rawLogoUrl.startsWith("http") || rawLogoUrl.startsWith("data:")
+      ? rawLogoUrl
+      : `data:image/jpeg;base64,${rawLogoUrl}`
+    : FALLBACK_LOGO;
+
+  const primaryAddress =
+    companyData?.addresses?.find((a) => a.isHeadQuarters) ??
+    companyData?.addresses?.[0];
+  const displayLocation = primaryAddress
+    ? `${primaryAddress.city ?? ""}, ${primaryAddress.country ?? ""}`
+    : "—";
+
+  // When editing, use local editFormData; when viewing, use derived displayFormData
+  const activeFormData = isEditing ? editFormData : displayFormData;
+  const activeLogoUrl = isEditing
+    ? logoPreviewUrl || displayLogoUrl
+    : displayLogoUrl;
+
+  // Note: logoPreviewUrl is only used while editing. When not editing,
+  // activeLogoUrl will use displayLogoUrl directly, so no effect is needed
+  // to synchronize logoPreviewUrl from displayLogoUrl (avoids setState in effect).
+
+  const handleChange = useCallback(
+    (field: keyof CompanyEditFormData, value: string) => {
+      setEditFormData((prev) => ({ ...prev, [field]: value }));
+      setValidationErrors((prev) => {
+        if (!(field in prev)) return prev;
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      });
+    },
+    [],
+  );
+
+  const handleStartEditing = useCallback(() => {
+    // Initialize edit form with current data from query
+    if (companyData) {
+      setEditFormData(mapCompanyDataToEditForm(companyData));
+    }
+    setLogoPreviewUrl(displayLogoUrl || "");
+    setLogoPayloadUrl(null);
+    setIsEditing(true);
+    setValidationErrors({});
+    setLogoError(null);
+  }, [companyData, displayLogoUrl]);
+
+  const handleLogoUpload = async (file: File) => {
+    const previousPreview = logoPreviewUrl;
+    const previousPayload = logoPayloadUrl;
+
+    setIsUploadingLogo(true);
+    setLogoError(null);
+
+    try {
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          if (typeof reader.result === "string") {
+            resolve(reader.result);
+          } else {
+            reject(new Error("Failed to read logo file."));
+          }
+        };
+        reader.onerror = () => reject(new Error("Failed to read logo file."));
+        reader.readAsDataURL(file);
+      });
+
+      setLogoPreviewUrl(dataUrl);
+      setLogoPayloadUrl(dataUrl);
+    } catch (error) {
+      setLogoError(getErrorMessage(error, "Failed to prepare logo file."));
+      setLogoPreviewUrl(previousPreview);
+      setLogoPayloadUrl(previousPayload ?? null);
+    } finally {
+      setIsUploadingLogo(false);
+    }
   };
 
   // ─── Validation ─────────────────────────────────────────────────────
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.companyName.trim())
+    if (!editFormData.companyName.trim())
       newErrors.companyName = "Company name is required";
-    if (!formData.industry.trim()) newErrors.industry = "Industry is required";
-    if (!formData.email.trim()) newErrors.email = "Email is required";
-    if (!formData.description.trim())
+    if (!editFormData.publicContactMail.trim())
+      newErrors.publicContactMail = "Contact email is required";
+    if (!editFormData.description.trim())
       newErrors.description = "Description is required";
-    if (!formData.facebook.trim())
-      newErrors.facebook = "Facebook link is required";
 
-    setErrors(newErrors);
+    setValidationErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  useEffect(() => {
-    if (!profileQuery.data || isEditing) {
-      return;
-    }
-
-    const parsed = parseCompanyProfile(profileQuery.data);
-    setProfileId(profileQuery.data.id ?? null);
-    setFormData(parsed.formData);
-    setLogoUrl(parsed.logoUrl);
-    setCompanyPhotos(parsed.companyPhotos);
-    setTeamMembers(parsed.teamMembers as TeamMemberWithId[]);
-  }, [profileQuery.data, isEditing]);
-
-  useEffect(() => {
-    if (!profileQuery.error) {
-      return;
-    }
-    setProfileError(
-      getErrorMessage(profileQuery.error, "Failed to load company profile"),
-    );
-  }, [profileQuery.error]);
-
-  useEffect(() => {
-    if (profileQuery.isSuccess) {
-      setProfileError(null);
-    }
-  }, [profileQuery.isSuccess]);
-
-  const handleAddMember = async (member: TeamMember) => {
-    try {
-      const created = await addMemberMutation.mutateAsync(member);
-      const normalizedMember: TeamMemberWithId = {
-        fullName: created.fullName ?? member.fullName,
-        position: created.position ?? member.position,
-        yearsOfExperience:
-          created.yearsOfExperience ?? member.yearsOfExperience,
-        linkedin: created.linkedin ?? member.linkedin,
-        facebook: created.facebook ?? member.facebook,
-        instagram: created.instagram ?? member.instagram,
-        id: created.id,
-      };
-      setTeamMembers((prev) => [...prev, normalizedMember]);
-    } catch (error) {
-      const message = getErrorMessage(error, "Failed to add team member");
-      setProfileError(message);
-    }
-  };
-
-  const handleRemoveMember = async (index: number) => {
-    const member = teamMembers[index];
-    if (!member) {
-      return;
-    }
-    try {
-      if (member.id) {
-        await removeMemberMutation.mutateAsync(member.id);
-      }
-      setTeamMembers((prev) => prev.filter((_, i) => i !== index));
-    } catch (error) {
-      const message = getErrorMessage(error, "Failed to remove team member");
-      setProfileError(message);
-    }
-  };
-
-  const handleLogoUpload = async (file: File) => {
-    const previousLogoUrl = logoUrl;
-    const previewUrl = URL.createObjectURL(file);
-    setLogoUrl(previewUrl);
-    setProfileError(null);
-
-    try {
-      const response = await uploadLogoMutation.mutateAsync(file);
-      setLogoUrl(response.logoUrl || previewUrl);
-    } catch (error) {
-      const message = getErrorMessage(error, "Failed to upload logo");
-      setLogoUrl(previousLogoUrl);
-      setProfileError(message);
-    } finally {
-      URL.revokeObjectURL(previewUrl);
-    }
-  };
-
-  const handleCompanyPhotosUpload = async (files: FileList | null) => {
-    if (!files || files.length === 0) {
-      return;
-    }
-
-    const selectedFiles = Array.from(files);
-    const previews = selectedFiles.map((file) => URL.createObjectURL(file));
-    setCompanyPhotos((prev) => {
-      companyPhotosInsertIndexRef.current = prev.length;
-      return [...prev, ...previews];
-    });
-    setProfileError(null);
-
-    try {
-      const response = await uploadPhotosMutation.mutateAsync(selectedFiles);
-      const uploadedUrls =
-        response.photoUrls && response.photoUrls.length > 0
-          ? response.photoUrls
-          : previews;
-      const insertIndex = companyPhotosInsertIndexRef.current ?? 0;
-      setCompanyPhotos((prev) => {
-        const next = [...prev];
-        next.splice(insertIndex, previews.length, ...uploadedUrls);
-        return next;
-      });
-    } catch (error) {
-      const message = getErrorMessage(error, "Failed to upload photos");
-      setCompanyPhotos((prev) => prev.filter((url) => !previews.includes(url)));
-      setProfileError(message);
-    } finally {
-      previews.forEach((preview) => URL.revokeObjectURL(preview));
-    }
-  };
-
-  const handleCompanyPhotosInputChange = (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    void handleCompanyPhotosUpload(event.target.files);
-    event.target.value = "";
-  };
-
+  // ─── Save profile (PUT /api/Company) ────────────────────────────────
   const handleSaveProfile = async () => {
-    setProfileError(null);
-
     if (!validate()) return;
+    if (!userId) return;
+
+    // Build addresses from the fetched data (preserve existing addresses)
+    const existingAddresses: AddressResponse[] = companyData?.addresses ?? [];
+    const addressesForPayload =
+      existingAddresses.length > 0
+        ? existingAddresses.map((addr) => ({
+            branchName: addr.branchName ?? "",
+            country: addr.country ?? "",
+            city: addr.city ?? "",
+            regionOrState: addr.regionOrState ?? null,
+            postalCode: addr.postalCode ?? null,
+            isHeadQuarters: addr.isHeadQuarters ?? false,
+          }))
+        : [];
+
+    const payloadLogoUrl = logoPayloadUrl ?? (rawLogoUrl ? rawLogoUrl : null);
+    const payload = mapEditFormToUpsertPayload(
+      userId,
+      editFormData,
+      addressesForPayload,
+      payloadLogoUrl,
+    );
 
     try {
-      const payload = serializeCompanyProfile({
-        id: profileId,
-        formData,
-        teamMembers,
-        logoUrl,
-        companyPhotos,
-      });
-      const updatedProfile = await updateProfileMutation.mutateAsync(payload);
-      const parsed = parseCompanyProfile(updatedProfile);
-      setProfileId(updatedProfile.id ?? profileId);
-      setFormData(parsed.formData);
-      setLogoUrl(parsed.logoUrl);
-      setCompanyPhotos(parsed.companyPhotos);
-      setTeamMembers(parsed.teamMembers as TeamMemberWithId[]);
-      setErrors({});
+      await upsertMutation.mutateAsync({ id: userId, payload });
+      setValidationErrors({});
       setIsEditing(false);
     } catch (error) {
-      const message = getErrorMessage(error, "Failed to save company profile");
-      setProfileError(message);
+      // Error is handled by the mutation state; we don't need to set local state
     }
   };
+
+  // ─── Derive mutation error for display ──────────────────────────────
+  const mutationError = upsertMutation.error
+    ? getErrorMessage(upsertMutation.error, "Failed to save company profile")
+    : null;
+
+  const combinedError = profileError || mutationError || logoError;
 
   return (
     <>
@@ -273,26 +224,23 @@ export default function CompanyProfile() {
             </div>
           </div>
         )}
-        {profileError && (
+        {combinedError && (
           <div className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-4 py-2">
-            {profileError}
+            {combinedError}
           </div>
         )}
 
         {/* Profile Uploading Card */}
-        {profileQuery.data && (
+        {companyData && (
           <ProfileUploadingCard
-            companyName={formData.companyName}
-            industry={formData.industry}
-            location={formData.location}
-            logoUrl={logoUrl}
+            companyName={activeFormData.companyName}
+            industry={activeFormData.domain}
+            location={displayLocation}
+            logoUrl={activeLogoUrl}
             isEditing={isEditing}
             isSaving={isSaving}
             isUploadingLogo={isUploadingLogo}
-            onEdit={() => {
-              setIsEditing(true);
-              setErrors({});
-            }}
+            onEdit={handleStartEditing}
             onSave={() => void handleSaveProfile()}
             onLogoUpload={handleLogoUpload}
           />
@@ -305,62 +253,39 @@ export default function CompanyProfile() {
               <FloatingInput
                 id="companyName"
                 label="Company Name"
-                value={formData.companyName}
+                value={editFormData.companyName}
                 onChange={(e) => handleChange("companyName", e.target.value)}
                 placeholder="e.g. BMW"
                 required
-                error={errors.companyName}
+                error={validationErrors.companyName}
               />
               <div className="grid w-full grid-cols-1 gap-6 md:grid-cols-2 md:gap-10">
                 <FloatingInput
-                  id="industry"
-                  label="Industry"
-                  value={formData.industry}
-                  onChange={(e) => handleChange("industry", e.target.value)}
+                  id="domain"
+                  label="Domain / Industry"
+                  value={editFormData.domain}
+                  onChange={(e) => handleChange("domain", e.target.value)}
                   placeholder="e.g. Automotives"
-                  required
-                  error={errors.industry}
                 />
                 <FloatingInput
-                  id="foundedYear"
-                  label="Founded Year"
-                  value={formData.foundedYear}
-                  onChange={(e) => handleChange("foundedYear", e.target.value)}
-                  placeholder="e.g. 1916"
+                  id="companySize"
+                  label="Company Size"
+                  value={editFormData.companySize}
+                  onChange={(e) => handleChange("companySize", e.target.value)}
+                  placeholder="e.g. 1000"
                 />
               </div>
               <FloatingInput
-                id="location"
-                label="Location"
-                value={formData.location}
-                onChange={(e) => handleChange("location", e.target.value)}
-                placeholder="e.g. Germany"
+                id="publicContactMail"
+                label="Public Contact Email"
+                value={editFormData.publicContactMail}
+                onChange={(e) =>
+                  handleChange("publicContactMail", e.target.value)
+                }
+                placeholder="contact@company.com"
+                required
+                error={validationErrors.publicContactMail}
               />
-              <FloatingInput
-                id="companySize"
-                label="Company Size"
-                value={formData.companySize}
-                onChange={(e) => handleChange("companySize", e.target.value)}
-                placeholder="e.g. 1000"
-              />
-              <div className="grid w-full grid-cols-1 gap-6 md:grid-cols-2 md:gap-10">
-                <FloatingInput
-                  id="email"
-                  label="Email"
-                  value={formData.email}
-                  onChange={(e) => handleChange("email", e.target.value)}
-                  placeholder="company@example.com"
-                  required
-                  error={errors.email}
-                />
-                <FloatingInput
-                  id="website"
-                  label="Website"
-                  value={formData.website}
-                  onChange={(e) => handleChange("website", e.target.value)}
-                  placeholder="www.company.com"
-                />
-              </div>
             </div>
           ) : (
             <div className="flex flex-col gap-6">
@@ -369,34 +294,16 @@ export default function CompanyProfile() {
                   Company Name
                 </p>
                 <p className="text-neutral-800 text-base font-medium wrap-break-word">
-                  {formData.companyName || "—"}
+                  {displayFormData.companyName || "—"}
                 </p>
               </div>
               <div className="grid w-full grid-cols-1 gap-6 md:grid-cols-2 md:gap-10">
                 <div className="flex flex-col gap-1">
                   <p className="text-neutral-400 text-sm font-normal">
-                    Industry
+                    Domain / Industry
                   </p>
                   <p className="text-neutral-800 text-base font-medium wrap-break-word">
-                    {formData.industry || "—"}
-                  </p>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <p className="text-neutral-400 text-sm font-normal">
-                    Founded Year
-                  </p>
-                  <p className="text-neutral-800 text-base font-medium wrap-break-word">
-                    {formData.foundedYear || "—"}
-                  </p>
-                </div>
-              </div>
-              <div className="grid w-full grid-cols-1 gap-6 md:grid-cols-2 md:gap-10">
-                <div className="flex flex-col gap-1">
-                  <p className="text-neutral-400 text-sm font-normal">
-                    Location
-                  </p>
-                  <p className="text-neutral-800 text-base font-medium wrap-break-word">
-                    {formData.location || "—"}
+                    {displayFormData.domain || "—"}
                   </p>
                 </div>
                 <div className="flex flex-col gap-1">
@@ -404,26 +311,30 @@ export default function CompanyProfile() {
                     Company Size
                   </p>
                   <p className="text-neutral-800 text-base font-medium wrap-break-word">
-                    {formData.companySize || "—"}
+                    {displayFormData.companySize || "—"}
                   </p>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-10 w-full">
-                <div className="flex flex-col gap-1">
-                  <p className="text-neutral-400 text-sm font-normal">Email</p>
-                  <p className="text-neutral-800 text-base font-medium wrap-break-word">
-                    {formData.email || "—"}
-                  </p>
-                </div>
+              <div className="flex flex-col gap-1">
+                <p className="text-neutral-400 text-sm font-normal">
+                  Public Contact Email
+                </p>
+                <p className="text-neutral-800 text-base font-medium wrap-break-word">
+                  {displayFormData.publicContactMail || "—"}
+                </p>
+              </div>
+              {primaryAddress && (
                 <div className="flex flex-col gap-1">
                   <p className="text-neutral-400 text-sm font-normal">
-                    Website
+                    Headquarters
                   </p>
                   <p className="text-neutral-800 text-base font-medium wrap-break-word">
-                    {formData.website || "—"}
+                    {primaryAddress.branchName
+                      ? `${primaryAddress.branchName} — ${displayLocation}`
+                      : displayLocation}
                   </p>
                 </div>
-              </div>
+              )}
             </div>
           )}
         </SectionCard>
@@ -434,202 +345,20 @@ export default function CompanyProfile() {
             <FloatingTextArea
               id="description"
               label="Description"
-              value={formData.description}
+              value={editFormData.description}
               onChange={(e) => handleChange("description", e.target.value)}
               placeholder="Describe your company, its mission, values, and what makes it unique..."
               maxLength={512}
               required
-              error={errors.description}
+              error={validationErrors.description}
             />
           ) : (
             <div className="text-neutral-600 text-sm font-normal bg-gray-50 p-6 rounded-lg border border-gray-100">
-              {formData.description}
-            </div>
-          )}
-        </SectionCard>
-
-        {/* Company Photos Section */}
-        <SectionCard
-          icon={ImageIcon}
-          title="Company Photos"
-          action={
-            <>
-              <input
-                ref={companyPhotosInputRef}
-                type="file"
-                accept="image/*"
-                multiple
-                className="hidden"
-                onChange={handleCompanyPhotosInputChange}
-              />
-              <Button
-                onClick={() => companyPhotosInputRef.current?.click()}
-                disabled={isUploadingPhotos}
-                className="h-8 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed"
-              >
-                <Upload size={16} className="mr-2" />
-                {isUploadingPhotos ? "Uploading..." : "Upload Photos"}
-              </Button>
-            </>
-          }
-        >
-          {companyPhotos.length === 0 ? (
-            <PhotoPlaceholder text="No photos yet" />
-          ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {companyPhotos.map((photo, index) => (
-                <div
-                  key={`${photo}-${index}`}
-                  className="w-full aspect-square rounded-lg border border-neutral-200 overflow-hidden bg-gray-50"
-                >
-                  <img
-                    src={photo}
-                    alt={`Company photo ${index + 1}`}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              ))}
-            </div>
-          )}
-        </SectionCard>
-
-        {/* Team Members Section */}
-        <SectionCard
-          icon={Users}
-          title="Team Members"
-          action={
-            <Button
-              onClick={() => setIsModalOpen(true)}
-              className="h-8 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium"
-            >
-              <Upload size={16} className="mr-2" />
-              Add Members
-            </Button>
-          }
-        >
-          {teamMembers.length === 0 ? (
-            <PhotoPlaceholder text="No team members yet" />
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {teamMembers.map((member, index) => (
-                <TeamMemberCard
-                  key={index}
-                  member={member}
-                  onRemove={() => handleRemoveMember(index)}
-                />
-              ))}
-            </div>
-          )}
-        </SectionCard>
-
-        {/* Social Media Links Section */}
-        <SectionCard icon={LinkIcon} title="Social media Links">
-          {isEditing ? (
-            <div className="flex flex-col gap-6">
-              <FloatingInput
-                id="linkedin"
-                label="LinkedIn"
-                value={formData.linkedin}
-                onChange={(e) => handleChange("linkedin", e.target.value)}
-                placeholder="https://linkedin.com/company"
-              />
-              <div className="grid w-full grid-cols-1 gap-6 md:grid-cols-2 md:gap-10">
-                <FloatingInput
-                  id="facebook"
-                  label="Facebook"
-                  value={formData.facebook}
-                  onChange={(e) => handleChange("facebook", e.target.value)}
-                  placeholder="https://facebook.com/.."
-                  required
-                  error={errors.facebook}
-                />
-                <FloatingInput
-                  id="instagram"
-                  label="Instagram"
-                  value={formData.instagram}
-                  onChange={(e) => handleChange("instagram", e.target.value)}
-                  placeholder="https://instagram/.."
-                />
-              </div>
-              <FloatingInput
-                id="x"
-                label="X"
-                value={formData.x}
-                onChange={(e) => handleChange("x", e.target.value)}
-                placeholder="https://x.com/.."
-              />
-            </div>
-          ) : (
-            <div className="flex flex-col gap-8">
-              {formData.linkedin && (
-                <div className="flex flex-col gap-1">
-                  <p className="text-neutral-400 text-sm font-normal">
-                    LinkedIn
-                  </p>
-                  <a
-                    href={formData.linkedin}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-neutral-800 text-base font-medium hover:text-emerald-600 transition-colors"
-                  >
-                    {formData.linkedin}
-                  </a>
-                </div>
-              )}
-              {formData.x && (
-                <div className="flex flex-col gap-1">
-                  <p className="text-neutral-400 text-sm font-normal">X</p>
-                  <a
-                    href={formData.x}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-neutral-800 text-base font-medium hover:text-emerald-600 transition-colors"
-                  >
-                    {formData.x}
-                  </a>
-                </div>
-              )}
-              {formData.facebook && (
-                <div className="flex flex-col gap-1">
-                  <p className="text-neutral-400 text-sm font-normal">
-                    Facebook
-                  </p>
-                  <a
-                    href={formData.facebook}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-neutral-800 text-base font-medium hover:text-emerald-600 transition-colors"
-                  >
-                    {formData.facebook}
-                  </a>
-                </div>
-              )}
-              {formData.instagram && (
-                <div className="flex flex-col gap-1">
-                  <p className="text-neutral-400 text-sm font-normal">
-                    Instagram
-                  </p>
-                  <a
-                    href={formData.instagram}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-neutral-800 text-base font-medium hover:text-emerald-600 transition-colors"
-                  >
-                    {formData.instagram}
-                  </a>
-                </div>
-              )}
+              {displayFormData.description || "—"}
             </div>
           )}
         </SectionCard>
       </div>
-
-      {/* Modal for Add Team Member */}
-      <AddTeamMemberModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onAdd={handleAddMember}
-      />
     </>
   );
 }

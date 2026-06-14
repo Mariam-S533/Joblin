@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 import { ImagePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -33,6 +34,7 @@ export const ProfileUploadingCard: React.FC<ProfileUploadingCardProps> = ({
   onSave,
   onLogoUpload,
 }) => {
+  const logoLoader = ({ src }: { src: string }) => src;
   const country = location.split(",").pop()?.trim() || location || "Country";
   const actionLabel = isEditing
     ? isSaving
@@ -47,10 +49,14 @@ export const ProfileUploadingCard: React.FC<ProfileUploadingCardProps> = ({
         <div className="flex items-center gap-4">
           <div className="group relative h-30 w-30 shrink-0 overflow-hidden rounded-2xl border border-dashed border-[#222222] bg-[#F8F8F8]">
             {logoUrl ? (
-              <img
+              <Image
+                loader={logoLoader}
                 src={logoUrl}
                 alt={companyName || "Company logo"}
-                className="h-full w-full object-cover"
+                fill
+                sizes="(max-width: 640px) 96px, 120px"
+                className="object-cover"
+                unoptimized
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center">

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useCallback, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { X, type LucideIcon } from "lucide-react";
 
@@ -25,6 +25,15 @@ export default function ModalOverlay({
   width = "w-[606px]",
   maxHeight = "max-h-[90vh]",
 }: ModalOverlayProps) {
+  const handleBackdropClick = useCallback(
+    (e: React.MouseEvent) => {
+      if (e.target === e.currentTarget) {
+        onClose();
+      }
+    },
+    [onClose],
+  );
+
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
@@ -38,12 +47,6 @@ export default function ModalOverlay({
 
   const portalTarget = typeof document !== "undefined" ? document.body : null;
   if (!portalTarget) return null;
-
-  const handleBackdropClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
-  };
 
   return createPortal(
     <div

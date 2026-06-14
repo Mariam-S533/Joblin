@@ -1,43 +1,52 @@
-import type { Department, PaginationMeta } from "@/features/posted-jobs/types";
+import type { JobStatus, EnumOption } from "@/features/enums";
+import {
+  JOB_STATUS_OPTIONS,
+  JOB_STATUS_VALUES,
+  getJobStatusLabel,
+  normalizeJobStatus,
+} from "@/features/enums";
 
-export type PostedCourseStatus = "active" | "closed" | "draft" | "archived";
+// Re-export for downstream consumers
+export type { JobStatus as PostedCourseStatus, EnumOption };
+export {
+  JOB_STATUS_OPTIONS,
+  JOB_STATUS_VALUES,
+  getJobStatusLabel as getPostedCourseStatusLabel,
+  normalizeJobStatus as normalizePostedCourseStatus,
+};
+
+export type ProvidedSkill = {
+  id: string;
+  name: string;
+};
 
 export type PostedCourse = {
   id: string;
-  title: string;
-  category: string;
-  durationHours: number;
-  status: PostedCourseStatus;
-  enrollments: number;
-  rating: number | null;
-  price: number;
-  department: Department;
+  companyId: string;
+  companyName: string;
+  companyLogoUrl: string | null;
   /** ISO 8601 date string from API */
   createdAt: string;
+  /** ISO 8601 date-time or null */
+  deadline: string | null;
+  title: string;
+  description: string | null;
+  duration: string;
+  startDate: string | null;
+  endDate: string | null;
+  country: string;
+  city: string;
+  street: string | null;
+  price: string;
+  currency: string | null;
+  enrollmentUrl: string;
+  hasCertificate: boolean;
+  outcomeDescription: string | null;
+  technicalDomain: string;
+  deliveryMode: string;
+  difficultyLevel: string;
+  offeringStatus: string | number;
+  providedSkills: ProvidedSkill[];
 };
 
-export type PostedCoursesPageData = {
-  courses: PostedCourse[];
-  /** "All Departments" (UI label) + real departments from API */
-  departments: string[];
-  pagination: PaginationMeta;
-};
-
-export type PostedCoursesQueryParams = {
-  status?: PostedCourseStatus | "all";
-  department?: string;
-  search?: string;
-  page?: number;
-  pageSize?: number;
-};
-
-export type DeleteCourseResponse = {
-  id: string;
-  message: string;
-};
-
-export type ToggleCourseStatusResponse = {
-  id: string;
-  status: PostedCourseStatus;
-  message: string;
-};
+export type PostedCoursesResponse = PostedCourse[];
