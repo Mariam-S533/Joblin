@@ -36,6 +36,7 @@ export const useLogout = () => {
       } finally {
         setIsPending(false);
       }
+      
     },
     [],
   );
