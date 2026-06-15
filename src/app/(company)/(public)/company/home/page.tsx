@@ -87,7 +87,7 @@ export default function ForCompaniesPage() {
 
   const handlePostJob = useCallback(() => {
     if (!isAuthenticated) {
-      router.push("/login/company");
+      router.push("/login/generalLogin");
       return;
     }
     const params = new URLSearchParams({

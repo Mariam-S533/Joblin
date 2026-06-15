@@ -1,45 +1,24 @@
 import { signOut } from "next-auth/react";
-import { useState, useCallback } from "react";
+import { useCallback } from "react";
 import { invalidateAuthTokenCache } from "@/lib/apiClient";
+import { useQueryClient } from "@tanstack/react-query";
 
-import type { QueryClient } from "@tanstack/react-query";
-let _queryClient: QueryClient | null = null;
+export const useLogout = (callbackUrl: string) => {
+  const queryClient = useQueryClient();
 
-export const setLogoutQueryClient = (client: QueryClient) => {
-  _queryClient = client;
-};
+  const logout = useCallback(
+    async () => {
+      invalidateAuthTokenCache();
+      queryClient.clear();
 
-export const useLogout = () => {
-  const [isPending, setIsPending] = useState(false);
-
-  const mutate = useCallback(
-    async (
-      _variables?: unknown,
-      options?: { onSuccess?: () => void; onError?: (err: Error) => void },
-    ) => {
-      setIsPending(true);
-      try {
-        invalidateAuthTokenCache();
-
-        if (_queryClient) {
-          _queryClient.clear();
-        }
-
-        if (typeof window !== "undefined") {
-          localStorage.clear();
-        }
-
-        await signOut({ redirect: false });
-        options?.onSuccess?.();
-      } catch (err) {
-        options?.onError?.(err instanceof Error ? err : new Error(String(err)));
-      } finally {
-        setIsPending(false);
+      if (typeof window !== "undefined") {
+        localStorage.clear();
       }
-      
+
+      await signOut({ callbackUrl });
     },
-    [],
+    [callbackUrl, queryClient],
   );
 
-  return { mutate, isPending, isError: false };
+  return { logout };
 };

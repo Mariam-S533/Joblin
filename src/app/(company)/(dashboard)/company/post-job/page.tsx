@@ -124,7 +124,7 @@ export default function PostJobPage() {
 
   useEffect(() => {
     if (status === "unauthenticated") {
-      router.replace("/login/company");
+      router.replace("/login/generalLogin");
     }
   }, [status, router]);
 

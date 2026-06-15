@@ -86,7 +86,7 @@ export default function PostCoursePage() {
 
   useEffect(() => {
     if (status === "unauthenticated") {
-      router.replace("/login/company");
+      router.replace("/login/generalLogin");
     }
   }, [status, router]);
 

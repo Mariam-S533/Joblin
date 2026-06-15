@@ -123,7 +123,7 @@ export default function PostedCoursesPage() {
 
   useEffect(() => {
     if (authStatus === "unauthenticated") {
-      router.push("/login/company");
+      router.push("/login/generalLogin");
     }
   }, [authStatus, router]);
 

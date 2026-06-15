@@ -56,7 +56,7 @@ const CompanyNavbar = memo(function CompanyNavbar() {
   const { data: session, status } = useSession({ required: false });
   const isAuthenticated = status === "authenticated";
   const [open, setOpen] = useState(false);
-  const { mutate: logout } = useLogout();
+  const { logout } = useLogout("/login/generalLogin");
 
   return (
     <div className="fixed top-0 left-0 w-full z-30 pt-6 ">
@@ -217,13 +217,7 @@ const CompanyNavbar = memo(function CompanyNavbar() {
                       <DropdownMenuSeparator />
 
                       <DropdownMenuItem
-                        onClick={() =>
-                          logout(undefined, {
-                            onSuccess: () => {
-                              window.location.href = "/login/company";
-                            },
-                          })
-                        }
+                        onClick={logout}
                         className="flex items-center gap-2 text-red-500 focus:text-red-500 focus:bg-red-50 cursor-pointer"
                       >
                         <LogOut size={15} /> Logout

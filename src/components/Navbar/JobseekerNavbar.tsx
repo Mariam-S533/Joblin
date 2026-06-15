@@ -55,7 +55,7 @@ const JobseekerNavbar = memo(function JobseekerNavbar() {
   const pathname = usePathname();
   const { data: session } = useSession({ required: false });
   const [open, setOpen] = useState(false);
-  const { mutate: logout } = useLogout();
+  const { logout } = useLogout("/login/generalLogin");
 
   return (
     <div className="fixed top-0 left-0 w-full z-30 bg-white pt-6 ">
@@ -213,13 +213,7 @@ const JobseekerNavbar = memo(function JobseekerNavbar() {
                       <DropdownMenuSeparator />
 
                       <DropdownMenuItem
-                        onClick={() =>
-                          logout(undefined, {
-                            onSuccess: () => {
-                              window.location.href = "/login/job-seeker";
-                            },
-                          })
-                        }
+                        onClick={logout}
                         className="flex items-center gap-2 text-red-500 focus:text-red-500 focus:bg-red-50 cursor-pointer"
                       >
                         <LogOut size={15} /> Logout
