@@ -21,6 +21,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useLogout } from "@/hooks/useLogout";
+
 const SCROLLBAR_STYLES = {
   __html: `
     .custom-scrollbar::-webkit-scrollbar { width: 0px; background: transparent; }
@@ -130,7 +131,7 @@ export default function CompanySidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const pathname = usePathname();
-  const { mutate: logout } = useLogout();
+  const { logout } = useLogout("/login/generalLogin");
 
   const toggleSidebar = useCallback(() => {
     if (!isCollapsed) setOpenDropdown(null);
@@ -351,13 +352,7 @@ export default function CompanySidebar() {
         className={`flex flex-col ${isCollapsed ? "items-center gap-2" : "items-start gap-4 pl-6"} pb-8 mt-auto bg-white pt-4 z-10 w-full`}
       >
         <button
-          onClick={() =>
-            logout(undefined, {
-              onSuccess: () => {
-                window.location.href = "/login/company";
-              },
-            })
-          }
+          onClick={logout}
           className={`flex items-center gap-2 ${isCollapsed ? "w-12 h-12 justify-center" : "w-48 h-12 px-5 py-2"} rounded-lg text-red-700 hover:bg-red-50 transition-colors`}
         >
           <div className="w-6 h-6 flex justify-center items-center">

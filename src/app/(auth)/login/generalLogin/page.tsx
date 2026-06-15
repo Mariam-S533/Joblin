@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Eye, EyeClosed, LoaderCircle } from 'lucide-react'
-import { getSession, signIn } from 'next-auth/react'
+import { signIn } from 'next-auth/react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -29,7 +29,6 @@ function LoginPage() {
 
         const [loading, setLoading] = useState(false)
         const router = useRouter()
-        // const [errorMsg, setErrorMsg] = useState("")
         const [showPassword, setShowPassword] = useState(false);
   
         const schema = z.object({
@@ -44,24 +43,39 @@ function LoginPage() {
         async function onSubmit(data: Inputs){
           try{
             setLoading(true)
+            const baseUrl = process.env.NEXT_PUBLIC_BASE_URL
+            const loginRes = await fetch(`${baseUrl}/api/Authentication/login`, {
+              method: 'POST',
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ email: data.email, password: data.password }),
+            })
+            const loginData = await loginRes.json()
+
+            if (!loginRes.ok) {
+              setLoading(false)
+              toast.error(loginData.title || loginData.message || "Login failed. Please check your credentials.", {position: "top-center", duration: 3000})
+              return
+            }
+
+            const role = loginData.roles?.[0]
+
             const res = await signIn('credentials', {
               email: data.email,
               password: data.password,
               redirect: false,
             })
+
             setLoading(false)
+
             if(res?.ok){
-              const session = await getSession()
-              if (session?.role === 'Company') {
+              if (role === 'Company') {
                 toast.success("Login successful! Redirecting to company home page...", {position: "top-center", duration: 3000})
                 router.push('/company/home')
               } else {
                 toast.success("Login successful! Redirecting to Seeker home page...", {position: "top-center", duration: 3000})
                 router.push('/')
               }
-              // window.location.href = "/"
             }else{
-              setLoading(false)
               toast.error(res?.error || "Login failed. Please check your credentials and try again.", {position: "top-center", duration: 3000})
             }
           }
@@ -77,8 +91,7 @@ function LoginPage() {
   return (
         <>
     <div className='min-h-screen flex items-center justify-center bg-[#FBFBFB] p-4'>
-      <Card className='w-full max-w-md shadow-lg bg-card '>
-        {/* {errorMsg&& <p className='text-red-700 text-center'>{errorMsg}</p> } */}
+        <Card className='w-full max-w-md shadow-lg bg-card '>
         <CardHeader>
           <div className='flex justify-center py-3'>
             <Image src="/darklogo.svg" width={120} height={60} alt='Joplin'/>

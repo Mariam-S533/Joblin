@@ -15,7 +15,7 @@ const authProxy = withAuth(
     // 2. Safely verify token existence BEFORE any role-based access
     if (!token) {
       if (path.startsWith("/company")) {
-        return NextResponse.redirect(new URL("/login/company", req.url));
+        return NextResponse.redirect(new URL("/login/generalLogin", req.url));
       }
       if (path.startsWith("/job-seeker")) {
         return NextResponse.redirect(new URL("/login/job-seeker", req.url));

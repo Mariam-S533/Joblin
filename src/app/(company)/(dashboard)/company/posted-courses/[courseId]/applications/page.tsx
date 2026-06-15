@@ -154,7 +154,7 @@ export default function CourseApplicationsPage() {
 
   useEffect(() => {
     if (authStatus === "unauthenticated") {
-      router.replace("/login/company");
+      router.replace("/login/generalLogin");
     }
   }, [authStatus, router]);
 

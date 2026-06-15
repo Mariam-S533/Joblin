@@ -105,7 +105,7 @@ export default function JobApplicationsPage() {
 
   useEffect(() => {
     if (authStatus === "unauthenticated") {
-      router.replace("/login/company");
+      router.replace("/login/generalLogin");
     }
   }, [authStatus, router]);
 
