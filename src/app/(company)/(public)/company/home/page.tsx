@@ -78,7 +78,7 @@ const TESTIMONIALS = [
 export default function ForCompaniesPage() {
   const [activeIndex, setActiveIndex] = useState(0);
   const router = useRouter();
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const isAuthenticated = status === "authenticated";
 
   const [jobTitle, setJobTitle] = useState("Web Developer");
@@ -201,14 +201,14 @@ export default function ForCompaniesPage() {
 
             <section
               id="search-cv"
-              className="mx-auto flex flex-col w-[92%] max-w-[1200px] justify-start items-center gap-12 py-16 overflow-hidden"
+              className="mx-auto flex flex-col w-[92%] max-w-300 justify-start items-center gap-12 py-16 overflow-hidden"
             >
               <div className="self-stretch flex flex-col justify-start items-center gap-6">
                 <div className="self-stretch flex flex-col items-center gap-3">
                   <h2 className="text-4xl font-semibold text-neutral-800 md:text-5xl text-center">
                     Built for companies of all sizes
                   </h2>
-                  <p className="max-w-[600px] text-neutral-500 text-center text-lg font-normal leading-relaxed">
+                  <p className="max-w-150 text-neutral-500 text-center text-lg font-normal leading-relaxed">
                     {"\"We're the best one platform that connects you straight to the person who knows your job inside out.\""}
                   </p>
                 </div>
@@ -234,7 +234,7 @@ export default function ForCompaniesPage() {
                   )}
                   <Link
                     href="#pricing"
-                    className="w-56 h-12 px-4 py-2 rounded-lg outline outline-1 outline-offset-[-1px] outline-zinc-800 flex justify-center items-center gap-2 text-lg font-medium text-zinc-800 hover:bg-zinc-50 transition"
+                    className="w-56 h-12 px-4 py-2 rounded-lg  outline-1 -outline-offset-1 outline-zinc-800 flex justify-center items-center gap-2 text-lg font-medium text-zinc-800 hover:bg-zinc-50 transition"
                   >
                     See our plans
                     <ArrowRight className="w-5 h-5 ml-1" />
@@ -303,7 +303,7 @@ export default function ForCompaniesPage() {
                 <h2 className="text-4xl font-semibold text-neutral-800 md:text-5xl">
                   Elevate your hiring strategy
                 </h2>
-                <p className="max-w-[500px] mt-2 text-neutral-500 text-base leading-6">
+                <p className="max-w-125 mt-2 text-neutral-500 text-base leading-6">
                   Treamline your recruitment process with innovative solutions
                   for sourcing, job posts, career events, and flexible hiring.
                 </p>
@@ -316,7 +316,7 @@ export default function ForCompaniesPage() {
                     <article
                       key={card.title}
                       onClick={() => setActiveIndex(index)}
-                      className={`group relative flex flex-col justify-between p-8 rounded-2xl h-[540px] cursor-pointer transition-all duration-500 ease-out overflow-hidden ${
+                      className={`group relative flex flex-col justify-between p-8 rounded-2xl h-135 cursor-pointer transition-all duration-500 ease-out overflow-hidden ${
                         isOpen
                           ? "bg-gray-200 lg:flex-[1.7] shadow-sm"
                           : "bg-stone-50 border border-stone-100 hover:bg-stone-100 lg:flex-1"
@@ -329,7 +329,7 @@ export default function ForCompaniesPage() {
                           {card.title}
                         </h3>
                         <p
-                          className={`text-lg leading-7 transition-colors duration-300 ${isOpen ? "text-neutral-600 line-clamp-[11]" : "text-neutral-500 line-clamp-[10]"}`}
+                          className={`text-lg leading-7 transition-colors duration-300 ${isOpen ? "text-neutral-600 line-clamp-11" : "text-neutral-500 line-clamp-10"}`}
                         >
                           {card.text}
                         </p>
@@ -365,7 +365,7 @@ export default function ForCompaniesPage() {
                   <h2 className="text-neutral-800 text-4xl font-semibold">
                     The result are in - Our clients win
                   </h2>
-                  <p className="max-w-[500px] text-neutral-500 text-base font-normal leading-6">
+                  <p className="max-w-125 text-neutral-500 text-base font-normal leading-6">
                     {"The proof is in the partnerships, Here's why companies choose power to fly for building engaged and inclusive workforces."}
                   </p>
                 </div>
@@ -382,7 +382,7 @@ export default function ForCompaniesPage() {
                         &ldquo;
                       </div>
 
-                      <p className="min-h-[100px] text-zinc-800 text-base font-normal leading-6">
+                      <p className="min-h-25 text-zinc-800 text-base font-normal leading-6">
                         {item.text}
                       </p>
 
@@ -433,7 +433,7 @@ export default function ForCompaniesPage() {
               className="relative overflow-hidden bg-zinc-800 py-24 text-white"
             >
               <div className="mx-auto flex w-[92%] max-w-7xl flex-col lg:flex-row items-center justify-between gap-16 lg:gap-24">
-                <div className="flex w-full max-w-[480px] flex-col justify-start items-start gap-11">
+                <div className="flex w-full max-w-120 flex-col justify-start items-start gap-11">
                   <div className="flex flex-col justify-start items-start gap-9">
                     <h2 className="text-5xl font-bold font-['Inter'] leading-tight">
                       Our plans to buy for more features
