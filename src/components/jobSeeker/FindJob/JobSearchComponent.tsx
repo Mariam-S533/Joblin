@@ -1,7 +1,7 @@
 "use client"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
-import {  Funnel, MapPin, Search } from 'lucide-react'
+import {  Funnel, MapPin, Search, X } from 'lucide-react'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger} from "@/components/ui/accordion";
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
@@ -25,6 +25,7 @@ function JobSearchComponent({jobs}: {jobs: JobPost[]}) {
     const endIndex = startIndex + jobsPerPage
 
     const currentJobs = jobs.slice(startIndex, endIndex)
+    const [activeFilters, setActiveFilters] = useState<string[]>([]);
 
 
         const handleCheckboxChange = (checked: boolean | string, label: string) => {
@@ -111,14 +112,14 @@ function JobSearchComponent({jobs}: {jobs: JobPost[]}) {
 
             {showFilters && (
                 <div className="mb-4">
-                    <JobFilters/>
+                    <JobFilters activeFilters={activeFilters} onCheckboxChange={handleCheckboxChange} onRadioChange={handleRadioChange} onRemoveFilter={removeFilter} />
                 </div>
             )}
 
             
             <div className="flex items-start gap-8">
               <div className="hidden lg:block flex-shrink-0 w-64">
-                    <JobFilters/>
+                    <JobFilters activeFilters={activeFilters} onCheckboxChange={handleCheckboxChange} onRadioChange={handleRadioChange} onRemoveFilter={removeFilter}/>
               </div>
 
 
@@ -221,7 +222,7 @@ function JobFilters({ activeFilters, onCheckboxChange, onRadioChange, onRemoveFi
                         activeFilters.map((filter) => (
                             <div key={filter} className="flex items-center gap-1 bg-[#F4F4F5] border border-gray-200 text-gray-700 text-xs font-medium px-2.5 py-1 rounded-md">
                                 <span>{filter}</span>
-                                <button type="button" onClick={() => onRemoveFilter(filter)} className="text-gray-400 hover:text-gray-600 transition-colors">
+                                <button title='remove' type="button" onClick={() => onRemoveFilter(filter)} className="text-gray-400 hover:text-gray-600 transition-colors">
                                     <X size={13} />
                                 </button>
                             </div>

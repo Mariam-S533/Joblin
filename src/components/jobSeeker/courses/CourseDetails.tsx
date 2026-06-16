@@ -6,7 +6,7 @@ import { Bookmark, CalendarClock, Clock, MapPin, CircleCheck, CircleDollarSign, 
 import Image from "next/image"
 import { useProfileContext } from '@/app/context/ProfilesProvider';
 import { useState } from "react"
-import { CourseOffering } from "@/app/Types/courses.action"
+import { CourseOffering } from "@/app/Types/courses"
 import { enrollIntAcourse } from "@/app/actions/courses.action"
 import { toast } from "sonner"
 

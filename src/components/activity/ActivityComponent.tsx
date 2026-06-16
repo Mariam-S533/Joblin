@@ -7,7 +7,7 @@ import { Tabs ,TabsContent, TabsList, TabsTrigger, } from '@/components/ui/tabs'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Briefcase, Equal } from 'lucide-react'
 import { useState } from 'react'
-import { CourseEnrollment } from '@/app/Types/courses.action'
+import { CourseEnrollment } from '@/app/Types/courses'
 import { ApplyAjob } from '@/app/Types/seekerActivity'
 
 const Tabs_Items = [

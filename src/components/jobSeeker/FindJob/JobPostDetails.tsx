@@ -56,6 +56,10 @@ function JobPostDetails({jobPostDetails} : {jobPostDetails : JobPost}) {
 
 
 
+        
+
+
+
   return <>
   
     <div>
@@ -69,7 +73,7 @@ function JobPostDetails({jobPostDetails} : {jobPostDetails : JobPost}) {
                                                     <Image src={ jobPostDetails.companyLogoUrl ||"/icons/comany.png"} alt="company logo" width={80} height={80}/>
                                                 </div>
                                                 <div className="flex flex-col gap-2.5 w-full">
-                                                    <span className="text-[12px] text-[#A5A5A5]">{jobPostDetails.companyName || "fre"}</span>
+                                                    <span className="text-[12px] text-[#A5A5A5]">{jobPostDetails.companyName }</span>
                                                     <div className="flex items-center gap-1.5">
                                                         <h1 className="text-joblin-black text-[14px] lg:text-[18px]">{jobPostDetails.title}</h1>
                                                         <Badge 

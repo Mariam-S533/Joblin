@@ -11,7 +11,7 @@ import { Pagination, PaginationContent, PaginationItem, PaginationLink, Paginati
 import { Badge } from '@/components/ui/badge'
 import Image from 'next/image'
 import Link from 'next/link'
-import { CourseOffering } from '@/app/Types/courses.action';
+import { CourseOffering } from '@/app/Types/courses';
 
 
 function AllCoursesComp({courses}: {courses: CourseOffering[]}) {

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { Calendar } from "lucide-react"
 import Image from "next/image"
-import { CourseEnrollment } from "@/app/Types/courses.action"
+import { CourseEnrollment } from "@/app/Types/courses"
 
 export type ApplicationStatus = "Applied" | "Checked" | "Rejected" | "Accepted" | "Interviewed"
 
