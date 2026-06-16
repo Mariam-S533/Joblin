@@ -242,7 +242,7 @@ export default function CompanyAccountSettingsPage() {
 
     try {
       const response = await uploadLogoMutation.mutateAsync(file);
-      setLogoUrl(response.logoUrl || previewUrl);
+      setLogoUrl(response.imageUrl || previewUrl);
     } catch (error) {
       setActionError(getErrorMessage(error, "Failed to upload logo."));
       setLogoUrl(previousLogo);

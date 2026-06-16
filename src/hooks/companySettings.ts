@@ -33,14 +33,14 @@ export const useUploadCompanySettingsLogo = () => {
 
   return useMutation({
     mutationFn: uploadCompanySettingsLogo,
-    onSuccess: ({ logoUrl }) => {
+    onSuccess: ({ imageUrl }) => {
       queryClient.setQueryData<CompanyAccountSettings | undefined>(
         queryKeys.companySettings.all,
         (current) =>
           current
             ? {
                 ...current,
-                logoUrl,
+                logoUrl: imageUrl,
               }
             : current,
       );

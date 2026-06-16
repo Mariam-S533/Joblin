@@ -112,5 +112,5 @@ export type CompanyPasswordResponse = {
 };
 
 export type CompanyLogoResponse = {
-  logoUrl: string;
+  imageUrl: string;
 };

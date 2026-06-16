@@ -1,5 +1,8 @@
 import { apiClient } from "@/lib/apiClient";
-import { companySettings as endpoints } from "@/lib/apiClient/endpoints";
+import {
+  companyProfile as companyProfileEndpoints,
+  companySettings as endpoints,
+} from "@/lib/apiClient/endpoints";
 import type {
   CompanyAccountSettings,
   CompanyLogoResponse,
@@ -28,7 +31,7 @@ export const uploadCompanySettingsLogo = async (file: File) => {
   const formData = new FormData();
   formData.append("file", file);
   const response = await apiClient.post<CompanyLogoResponse>(
-    endpoints.logo,
+    companyProfileEndpoints.picture,
     formData,
   );
   return response.data;
