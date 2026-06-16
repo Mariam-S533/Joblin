@@ -53,6 +53,22 @@
     --color-joblin-light-gray: var(--joblin-light-gray);
     --color-joblin-light-green: var(--joblin-light-green);
 
+    /* joblin brand & semantic tokens */
+
+    --color-brand-primary: var(--brand-primary);
+    --color-brand-primary-hover: var(--brand-primary-hover);
+    --color-content-secondary: var(--content-secondary);
+    --color-border-light: var(--border-light);
+    --color-status-pending: var(--status-pending);
+    --color-status-pending-bg: var(--status-pending-bg);
+    --color-status-review: var(--status-review);
+    --color-status-review-bg: var(--status-review-bg);
+    --color-status-accepted: var(--status-accepted);
+    --color-status-accepted-bg: var(--status-accepted-bg);
+    --color-status-rejected: var(--status-rejected);
+    --color-status-rejected-bg: var(--status-rejected-bg);
+    --color-status-rejected-border: var(--status-rejected-border);
+
 }
 
 :root {
@@ -97,6 +113,22 @@
   --joblin-dark-gray:  #515151;
   --joblin-light-gray: #757575;
 
+  /* joblin brand & semantic colors */
+
+  --brand-primary: #02905E;
+  --brand-primary-hover: #026E4A;
+  --content-secondary: #515151;
+  --border-light: #e5e5e5;
+  --status-pending: #02905E;
+  --status-pending-bg: #E6F8F1;
+  --status-review: #eab308;
+  --status-review-bg: #fef3c7;
+  --status-accepted: #15803d;
+  --status-accepted-bg: #f0fdf4;
+  --status-rejected: #b91c1c;
+  --status-rejected-bg: #fff1f2;
+  --status-rejected-border: #b91c1c;
+
 }
 
 .dark {
@@ -131,6 +163,22 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+
+  /* joblin brand & semantic colors (dark mode overrides) */
+
+  --brand-primary: #03A86E;
+  --brand-primary-hover: #04BF82;
+  --content-secondary: #a3a3a3;
+  --border-light: oklch(1 0 0 / 12%);
+  --status-pending: #03A86E;
+  --status-pending-bg: oklch(0.35 0.12 160);
+  --status-review: #fbbf24;
+  --status-review-bg: oklch(0.35 0.08 85);
+  --status-accepted: #22c55e;
+  --status-accepted-bg: oklch(0.35 0.12 145);
+  --status-rejected: #ef4444;
+  --status-rejected-bg: oklch(0.35 0.12 25);
+  --status-rejected-border: #ef4444;
 }
 
 @layer base {

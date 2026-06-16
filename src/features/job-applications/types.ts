@@ -115,3 +115,28 @@ export type RawUpdateApplicationStatusResponse = Omit<
 > & {
   status: string | number;
 };
+
+export interface ApplicationDetails {
+  applicationId: string;
+  seekerId: string;
+  seekerFullName: string;
+  seekerProfilePictureUrl: string | null;
+  appliedForJobTitle: string;
+  jobPostId: string;
+  applicationStatus: ApplicationStatus;
+  matchingScore: string;
+  email: string | null;
+  phone: string | null;
+  location: string | null;
+  appliedAt: string;
+  experienceSummary: string | null;
+  educationSummary: string | null;
+  skills: string[];
+  resumeFileName: string | null;
+  resumeUrl: string | null;
+}
+
+export interface RawApplicationDetails
+  extends Omit<ApplicationDetails, "applicationStatus"> {
+  applicationStatus: string | number;
+}

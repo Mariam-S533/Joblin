@@ -2,6 +2,7 @@ import { apiClient } from "@/lib/apiClient";
 import {
   jobApplications as endpoints,
   APPLICATIONS_BY_JOB_POST,
+  APPLICATION_DETAILS,
   UPDATE_APPLICATION_STATUS,
 } from "@/lib/apiClient/endpoints";
 import type {
@@ -14,6 +15,8 @@ import type {
   JobApplicationRecord,
   RawJobApplicationRecord,
   UpdateApplicationStatusPayload,
+  ApplicationDetails,
+  RawApplicationDetails,
 } from "@/features/job-applications/types";
 import { normalizeJobApplicationStatus } from "@/features/job-applications/types";
 
@@ -71,6 +74,20 @@ export const getApplicationsByJobPost = async (
     ...record,
     applicationStatus: normalizeJobApplicationStatus(record.applicationStatus),
   }));
+};
+
+export const getApplicationDetails = async (
+  applicationId: string,
+): Promise<ApplicationDetails> => {
+  const response = await apiClient.get<RawApplicationDetails>(
+    APPLICATION_DETAILS(applicationId),
+  );
+  return {
+    ...response.data,
+    applicationStatus: normalizeJobApplicationStatus(
+      response.data.applicationStatus,
+    ),
+  };
 };
 
 export const updateApplicationStatus = async (

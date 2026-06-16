@@ -8,21 +8,29 @@ import {
   Calendar,
   Clock,
   FileText,
+  Mail,
+  MapPin,
   MessageSquare,
+  Phone,
   Star,
   X,
   ChevronDown,
   Search,
   Target,
+  GraduationCap,
+  Briefcase,
+  Download,
   type LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { getErrorMessage } from "@/lib/apiClient/error";
+
 import {
   useJobApplicationsByPost,
   useUpdateApplicationStatus,
+  useApplicationDetails,
 } from "@/hooks/jobApplications";
 import { useJobPostById } from "@/hooks/postedJobs";
 import type {
@@ -570,173 +578,287 @@ function ApplicantDetailsPanel({
   ) => void;
   isUpdating: boolean;
 }) {
+  const { data: details, isLoading: detailsLoading } = useApplicationDetails(
+    applicant.applicationId,
+  );
+
   const nameFromFields =
     `${applicant.seekerFirstName} ${applicant.seekerLastName}`.trim();
-  const displayName = nameFromFields || applicant.seekerProfileName || "Unknown Applicant";
+  const displayName =
+    details?.seekerFullName ||
+    nameFromFields ||
+    applicant.seekerProfileName ||
+    "Unknown Applicant";
   const status = normalizeJobApplicationStatus(applicant.applicationStatus);
   const statusLabel = statusLabelMap[status];
-  const skills = applicant.skills ?? [];
 
   const canStartReview = status === "Pending";
   const canAcceptOrReject = status === "Pending" || status === "UnderReview";
 
+  const skills = details?.skills ?? applicant.skills ?? [];
+
+  const appliedDate = new Date(
+    details?.appliedAt ?? applicant.appliedAt,
+  ).toLocaleDateString();
+
   return (
-    <div className="rounded-2xl border-[0.8px] border-border-light bg-card p-6 shadow-2xl max-h-[calc(100vh-2rem)] overflow-y-auto space-y-5">
-      <div className="flex items-start justify-between gap-4">
+    <div className="rounded-2xl border-[0.8px] border-border-light bg-card overflow-hidden max-h-[calc(100vh-2rem)] overflow-y-auto">
+      <div className="px-8 py-4 border-b-[0.8px] border-border-light flex justify-between items-center h-20">
         <div className="flex items-center gap-4">
-          <div className="border-[0.8px] border-border rounded-xl overflow-hidden w-16 h-16 flex items-center justify-center bg-muted shrink-0">
+          <div className="border-[0.8px] border-border rounded-xl overflow-hidden size-16 p-[0.8px] flex items-center justify-center bg-muted shrink-0">
             {applicant.seekerProfilePictureUrl ? (
               <img
                 src={applicant.seekerProfilePictureUrl}
                 alt={displayName}
-                className="w-[62px] h-[62px] object-cover"
+                className="size-[62px] object-cover"
               />
             ) : (
-              <span className="text-2xl font-semibold text-content-secondary">
+              <span className="text-[24px] font-semibold text-content-secondary">
                 {displayName.charAt(0)}
               </span>
             )}
           </div>
           <div className="flex flex-col gap-1">
-            <p className="text-xl font-semibold text-foreground">
+            <p className="text-[24px] font-semibold text-foreground leading-9">
               {displayName}
             </p>
-            {applicant.seekerProfileName && applicant.seekerProfileName !== nameFromFields && (
-              <p className="text-sm font-medium text-brand-primary">
-                {applicant.seekerProfileName}
+            {details?.appliedForJobTitle && (
+              <p className="text-[14px] text-brand-primary leading-5">
+                Applied for: {details.appliedForJobTitle}
               </p>
             )}
           </div>
         </div>
-        <Button
+        <button
           type="button"
-          variant="outline"
-          size="icon"
-          className="border-border h-8 w-8"
+          className="size-10 rounded-lg flex justify-center items-center hover:bg-muted transition-colors"
           onClick={onClose}
           aria-label="Close applicant details"
         >
-          <X className="h-4 w-4 text-content-secondary" />
-        </Button>
+          <X className="h-6 w-6 text-foreground" />
+        </button>
       </div>
 
-      <div className="flex items-center gap-3">
-        <Badge
-          className={`rounded px-2 py-1 text-xs border border-solid whitespace-nowrap ${statusBadgeVariantClass(status)}`}
-        >
-          {statusLabel}
-        </Badge>
-        <div className="flex items-center gap-1">
-          <Star className="h-[14px] w-[14px] text-status-review fill-status-review" />
-          <span className="text-[13px] font-semibold text-status-review">
-            Match: {applicant.matchingScore}
-          </span>
-        </div>
-      </div>
-
-      <div className="rounded-xl bg-muted p-4 space-y-4">
-        <h4 className="text-sm font-semibold text-foreground">
-          Applicant Information
-        </h4>
-        <div className="grid gap-3 sm:grid-cols-2">
-          {applicant.technicalDomain && (
-            <DetailInfoItem
-              icon={Target}
-              label="Domain"
-              value={getTechnicalDomainLabel(applicant.technicalDomain as never)}
-            />
-          )}
-          <DetailInfoItem
-            icon={Calendar}
-            label="Applied Date"
-            value={new Date(applicant.appliedAt).toLocaleDateString()}
-          />
-          <DetailInfoItem
-            icon={Calendar}
-            label="Last Updated"
-            value={new Date(applicant.updatedAt).toLocaleDateString()}
-          />
-        </div>
-      </div>
-
-      {skills.length > 0 && (
-        <div className="rounded-xl bg-muted p-4">
-          <h4 className="text-sm font-semibold text-foreground">
-            Skills & Expertise
-          </h4>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {skills.map((skill) => (
-              <Badge
-                key={skill}
-                className="rounded-full border-[0.8px] border-brand-primary bg-status-accepted-bg text-brand-primary text-xs"
-              >
-                {skill}
-              </Badge>
-            ))}
+      <div className="px-8 py-6 flex flex-col gap-6">
+        <div className="flex justify-between items-center h-10">
+          <Badge
+            className={`rounded-lg px-2 py-1 text-[14px] border whitespace-nowrap h-8 flex justify-center items-center ${statusBadgeVariantClass(status)}`}
+          >
+            {statusLabel}
+          </Badge>
+          <div className="flex items-center gap-2">
+            <span className="text-[14px] text-content-secondary leading-5">Match Score:</span>
+            <div className="flex items-center gap-1">
+              <Star className="size-3.5 text-status-review fill-status-review" />
+              <span className="text-[18px] font-semibold text-status-review leading-7">
+                {details?.matchingScore ?? applicant.matchingScore}
+              </span>
+            </div>
           </div>
         </div>
-      )}
 
-      <div className="flex flex-wrap gap-3">
-        {canStartReview && (
+        {detailsLoading ? (
+          <div className="space-y-3 animate-pulse">
+            <div className="h-4 rounded bg-muted w-3/4" />
+            <div className="h-4 rounded bg-muted w-1/2" />
+            <div className="h-4 rounded bg-muted w-2/3" />
+          </div>
+        ) : (
+          <div className="bg-muted px-5 py-5 rounded-xl flex flex-col gap-4">
+            <h4 className="text-[16px] font-semibold text-foreground leading-7">
+              Contact Information
+            </h4>
+            <div className="grid grid-cols-2 gap-x-0 gap-y-4">
+              <DetailInfoItem icon={Mail} label="Email" value={hasValue(details?.email) ? details!.email! : "N/A"} />
+              <DetailInfoItem icon={Phone} label="Phone" value={hasValue(details?.phone) ? details!.phone! : "N/A"} />
+              <DetailInfoItem icon={MapPin} label="Location" value={hasValue(details?.location) ? details!.location! : "N/A"} />
+              <DetailInfoItem
+                icon={Calendar}
+                label="Applied Date"
+                value={appliedDate}
+              />
+            </div>
+          </div>
+        )}
+
+        {!detailsLoading && (
+          <div className="grid grid-cols-2 gap-[18px]">
+            {hasValue(details?.experienceSummary) && (
+              <div className="bg-muted px-5 py-5 rounded-xl flex flex-col gap-3">
+                <div className="flex items-center gap-3 h-6">
+                  <Briefcase className="h-5 w-5 text-brand-primary" />
+                  <span className="text-[14px] font-semibold text-foreground leading-6">Experience</span>
+                </div>
+                <p className="text-[14px] text-content-secondary leading-5">
+                  {details!.experienceSummary}
+                </p>
+              </div>
+            )}
+            {hasValue(details?.educationSummary) && (
+              <div className="bg-muted px-5 py-5 rounded-xl flex flex-col gap-3">
+                <div className="flex items-center gap-3 h-6">
+                  <GraduationCap className="h-5 w-5 text-brand-primary" />
+                  <span className="text-[14px] font-semibold text-foreground leading-6">Education</span>
+                </div>
+                <p className="text-[14px] text-content-secondary leading-5">
+                  {details!.educationSummary}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="bg-muted px-5 py-5 rounded-xl flex flex-col gap-4">
+          <h4 className="text-[16px] font-semibold text-foreground leading-7">
+            Skills &amp; Expertise
+          </h4>
+          {detailsLoading ? (
+            <div className="flex gap-2">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="h-9 w-20 rounded-lg bg-border-light animate-pulse" />
+              ))}
+            </div>
+          ) : skills.length === 0 ? (
+            <p className="text-[14px] text-muted-foreground">
+              No skills listed for this applicant.
+            </p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {skills.map((skill) => (
+                <Badge
+                  key={skill}
+                  className="rounded-lg px-2 py-1 h-9 border border-brand-primary bg-status-accepted-bg text-brand-primary text-[14px] flex justify-center items-center whitespace-nowrap"
+                >
+                  {skill}
+                </Badge>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="bg-muted px-5 py-5 rounded-xl">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <div className="size-12 bg-card rounded-lg flex justify-center items-center">
+                <FileText className="h-6 w-6 text-brand-primary" />
+              </div>
+              <div className="flex flex-col">
+                <p className="text-[16px] font-semibold text-foreground leading-6">
+                  Resume / CV
+                </p>
+                {hasValue(details?.resumeFileName)
+                  ? (
+                    <p className="text-[12px] text-muted-foreground leading-5">
+                      {details!.resumeFileName}
+                    </p>
+                  )
+                  : hasValue(details?.resumeUrl)
+                    ? (
+                      <p className="text-[12px] text-muted-foreground leading-5">
+                        {details!.resumeUrl!.split("/").pop()!}
+                      </p>
+                    )
+                    : (
+                      <p className="text-[12px] text-muted-foreground leading-5">
+                        No resume attached
+                      </p>
+                    )}
+              </div>
+            </div>
+            {hasValue(details?.resumeUrl)
+              ? (
+                <a
+                  href={details!.resumeUrl ?? undefined}
+                  download
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Button
+                    className="bg-brand-primary hover:bg-brand-primary-hover text-white h-10 rounded-lg px-4 gap-2"
+                  >
+                    <Download className="h-5 w-5" />
+                    Download
+                  </Button>
+                </a>
+              )
+              : (
+                <Button
+                  disabled
+                  className="bg-muted text-muted-foreground h-10 rounded-lg px-4 gap-2"
+                >
+                  <Download className="h-5 w-5" />
+                  Download
+                </Button>
+              )}
+          </div>
+        </div>
+      </div>
+
+      <div className="px-8 border-t-[0.8px] border-border-light bg-muted flex flex-wrap justify-between items-center gap-3 h-20">
+        <div className="flex items-center gap-3">
+          {canStartReview && (
+            <Button
+              variant="outline"
+              className="h-10 rounded-lg border-status-review text-status-review gap-2"
+              onClick={() =>
+                onStatusChange(applicant.applicationId, jobId, "UnderReview")
+              }
+              disabled={isUpdating}
+            >
+              <Clock className="h-5 w-5" />
+              Start Review
+            </Button>
+          )}
+          {canAcceptOrReject && (
+            <>
+              <Button
+                variant="outline"
+                className="h-10 rounded-lg border-status-accepted text-status-accepted"
+                onClick={() =>
+                  onStatusChange(applicant.applicationId, jobId, "Accepted")
+                }
+                disabled={isUpdating}
+              >
+                Accept
+              </Button>
+              <Button
+                variant="outline"
+                className="h-10 rounded-lg border-status-rejected text-status-rejected"
+                onClick={() =>
+                  onStatusChange(applicant.applicationId, jobId, "Rejected")
+                }
+                disabled={isUpdating}
+              >
+                Reject
+              </Button>
+            </>
+          )}
+        </div>
+        <div className="flex items-center gap-3">
           <Button
             variant="outline"
-            size="sm"
-            className="border-status-review text-status-review h-8 rounded-lg gap-2"
-            onClick={() =>
-              onStatusChange(applicant.applicationId, jobId, "UnderReview")
-            }
-            disabled={isUpdating}
+            className="h-10 rounded-lg border-foreground text-foreground gap-2"
           >
-            <Clock className="h-4 w-4" />
-            Start Review
+            <MessageSquare className="h-5 w-5" />
+            Send Message
           </Button>
-        )}
-        {canAcceptOrReject && (
-          <>
-            <Button
-              variant="outline"
-              size="sm"
-              className="border-status-accepted text-status-accepted h-8 rounded-lg"
-              onClick={() =>
-                onStatusChange(applicant.applicationId, jobId, "Accepted")
-              }
-              disabled={isUpdating}
-            >
-              Accept
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="border-status-rejected text-status-rejected h-8 rounded-lg"
-              onClick={() =>
-                onStatusChange(applicant.applicationId, jobId, "Rejected")
-              }
-              disabled={isUpdating}
-            >
-              Reject
-            </Button>
-          </>
-        )}
-        <Button
-          variant="outline"
-          size="sm"
-          className="border-foreground text-foreground h-8 rounded-lg gap-2"
-        >
-          <MessageSquare className="h-4 w-4" />
-          Send Message
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          className="border-status-review text-status-review h-8 rounded-lg gap-2"
-        >
-          <Calendar className="h-4 w-4" />
-          Schedule Interview
-        </Button>
+          <Button
+            variant="outline"
+            className="h-10 rounded-lg border-status-review text-status-review gap-2"
+          >
+            <Calendar className="h-5 w-5" />
+            Schedule Interview
+          </Button>
+        </div>
       </div>
     </div>
   );
+}
+
+function hasValue(v: string | number | null | undefined): boolean {
+  if (v == null) return false;
+  const str = String(v).trim();
+  return str !== "" && str !== "0" && str !== "null" && str !== "string";
 }
 
 function InfoItem({
@@ -749,11 +871,11 @@ function InfoItem({
   iconClassName?: string;
 }) {
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 h-5">
       <Icon
-        className={`h-[14px] w-[14px] text-content-secondary ${iconClassName ?? ""}`}
+        className={`h-[14px] w-[14px] text-content-secondary shrink-0 ${iconClassName ?? ""}`}
       />
-      <span className="text-[13px] text-content-secondary leading-[19.5px]">
+      <span className="text-[12px] text-content-secondary leading-5 truncate">
         {text}
       </span>
     </div>
@@ -770,14 +892,15 @@ function DetailInfoItem({
   value: string;
 }) {
   return (
-    <div className="flex items-start gap-3">
-      <div className="w-9 h-9 rounded-lg border-[0.8px] border-border bg-card flex items-center justify-center shrink-0">
-        <Icon className="h-4 w-4 text-content-secondary" />
+    <div className="flex items-center gap-3">
+      <div className="size-10 bg-card rounded-lg flex justify-center items-center shrink-0">
+        <Icon className="h-5 w-5 text-brand-primary" />
       </div>
-      <div>
-        <p className="text-xs text-muted-foreground">{label}</p>
-        <p className="text-[13px] font-medium text-foreground">{value}</p>
+      <div className="flex flex-col">
+        <p className="text-[12px] text-muted-foreground leading-4">{label}</p>
+        <p className="text-[14px] font-medium text-foreground leading-5">{value}</p>
       </div>
     </div>
   );
 }
+
