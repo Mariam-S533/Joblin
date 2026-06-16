@@ -1,3 +1,4 @@
+"use client"
 import {  createContext, useContext, useEffect, useState } from 'react'
 import { getAllSavedJobs, saveAjopPost, unSaveAjopPost } from "../actions/savedJop.action"
 import { SavedJops } from "../Types/savedJobs"
