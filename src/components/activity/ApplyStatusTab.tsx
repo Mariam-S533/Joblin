@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useEffect, useState } from "react"
 import { ChevronDown, MapPin, Calendar } from "lucide-react"
-import { deleteApp, getMyApps } from "@/app/actions/application.action"
+import { deleteApp } from "@/app/actions/application.action"
 import { ApplyAjob } from "@/app/Types/seekerActivity"
 import Image from "next/image"
 
@@ -12,28 +12,18 @@ const FILTER_OPTIONS: (ApplicationStatus | "All")[] = [
   "All", "Applied", "Checked", "Rejected", "Accepted", "Interviewed"
 ]
 
-export default function ApplyStatusTab() {
+export default function ApplyStatusTab({applicationSatus}: {applicationSatus: ApplyAjob[]}) {
+
+
   const [currentSubFilter, setCurrentSubFilter] = useState<string>("All")
   const [sortOrder, setSortOrder] = useState<string>("newest")
-  const [applications, setApplications] = useState<ApplyAjob[]>([])
-  const [loading, setLoading] = useState(true)
+  const [applications, setApplications] = useState<ApplyAjob[]>(applicationSatus)
   
   const [expandedCardId, setExpandedCardId] = useState<string | null>(null)
 
   useEffect(() => {
-    async function fetchApplications() {
-      try {
-        setLoading(true)
-        const data = await getMyApps()
-        setApplications(data)
-      } catch (error) {
-        console.log("Error fetching applications:", error)
-      } finally {
-        setLoading(false)
-      }
-    }
-    fetchApplications()
-  }, [])
+    setApplications(applicationSatus)
+  }, [applicationSatus])
 
   async function handleCancelApp(appId: string) {
     try {
@@ -102,9 +92,7 @@ export default function ApplyStatusTab() {
       </div>
 
       <div className="space-y-4">
-        {loading ? (
-          <div className="text-center py-12 text-sm text-gray-400">Loading applications...</div>
-        ) : visibleApplications .length > 0 ? (
+         {visibleApplications .length > 0 ? (
             visibleApplications .map((job) => {
 
             const isExpanded = expandedCardId === job.id
@@ -149,6 +137,7 @@ export default function ApplyStatusTab() {
 
                   <button 
                     type="button"
+                    title="expande"
                     onClick={() => setExpandedCardId(isExpanded ? null : job.id)}
                     className={`p-2 text-joblin-black hover:text-gray-600 rounded-xl transition-transform duration-200 cursor-pointer ${
                       isExpanded ? "rotate-180" : ""

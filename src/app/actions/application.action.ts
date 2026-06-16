@@ -28,7 +28,6 @@ export async function postApplyJob(seekerProfileId: string ,jobPostId: string){
 }
 
 
-
 export async function getMyApps(){
     const token  = await userToken()
 

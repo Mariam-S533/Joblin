@@ -8,6 +8,7 @@ export function AuthProvider({children}: {children: React.ReactNode}) {
   <SessionProvider>
     {children}
   </SessionProvider>
+
   
   </>
 }
