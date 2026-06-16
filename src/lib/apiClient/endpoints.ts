@@ -62,6 +62,9 @@ export const jobApplications = {
 export const APPLICATIONS_BY_JOB_POST = (jobPostId: string) =>
   `/applications/${jobPostId}/all`;
 
+export const APPLICATION_DETAILS = (applicationId: string) =>
+  `/applications/details/${applicationId}`;
+
 export const UPDATE_APPLICATION_STATUS = (applicationId: string) =>
   `/applications/${applicationId}/status`;
 

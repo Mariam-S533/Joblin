@@ -28,6 +28,15 @@ export function useJobApplicationsByPost(jobPostId: string) {
   });
 }
 
+export function useApplicationDetails(applicationId: string | null) {
+  return useQuery({
+    queryKey: queryKeys.applicationDetail(applicationId ?? ""),
+    queryFn: () =>
+      jobApplicationsService.getApplicationDetails(applicationId!),
+    enabled: !!applicationId,
+  });
+}
+
 type JobApplicationStatusUpdateVariables = {
   applicationId: string;
   jobPostId: string;
@@ -48,6 +57,9 @@ export function useUpdateApplicationStatus() {
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.jobApplicationsByPost(variables.jobPostId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.applicationDetail(variables.applicationId),
       });
     },
     onError: () => {
