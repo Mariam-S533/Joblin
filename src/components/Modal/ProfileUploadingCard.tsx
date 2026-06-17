@@ -64,31 +64,29 @@ export const ProfileUploadingCard: React.FC<ProfileUploadingCardProps> = ({
               </div>
             )}
 
-            {isEditing && (
-              <>
-                <input
-                  id="profile-card-logo-upload"
-                  type="file"
-                  accept="image/*"
-                  disabled={isUploadingLogo}
-                  className="hidden"
-                  onChange={(event) => {
-                    const file = event.target.files?.[0];
-                    if (!file) {
-                      return;
-                    }
-                    onLogoUpload?.(file);
-                    event.target.value = "";
-                  }}
-                />
-                <label
-                  htmlFor="profile-card-logo-upload"
-                  className="absolute inset-0 flex cursor-pointer items-center justify-center bg-black/30 text-xs font-medium text-white opacity-0 transition-opacity group-hover:opacity-100"
-                >
-                  {isUploadingLogo ? "Uploading..." : "Upload"}
-                </label>
-              </>
-            )}
+            <input
+              id="profile-card-logo-upload"
+              type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+              disabled={isUploadingLogo}
+              className="hidden"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (!file) {
+                  return;
+                }
+                onLogoUpload?.(file);
+                event.target.value = "";
+              }}
+            />
+            <label
+              htmlFor="profile-card-logo-upload"
+              className={`absolute inset-0 flex cursor-pointer items-center justify-center bg-black/30 text-xs font-medium text-white opacity-0 transition-opacity group-hover:opacity-100 ${
+                isUploadingLogo ? "pointer-events-none" : ""
+              }`}
+            >
+              {isUploadingLogo ? "Uploading..." : "Upload"}
+            </label>
           </div>
 
           <div className="flex min-w-0 flex-col gap-1">

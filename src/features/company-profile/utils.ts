@@ -23,6 +23,9 @@ export const mapCompanyDataToEditForm = (
 /**
  * Map CompanyEditFormData + userId + addresses back to UpsertCompanyPayload
  * for PUT /api/Company.
+ *
+ * logoUrl is NOT included — profile picture uploads use
+ * POST /api/Company/picture separately.
  */
 export const mapEditFormToUpsertPayload = (
   userId: string,
@@ -35,30 +38,30 @@ export const mapEditFormToUpsertPayload = (
     postalCode?: string | null;
     isHeadQuarters?: boolean;
   }[],
-  logoUrl?: string | null,
-): {
-  userId: string;
-  companyName: string;
-  publicContactMail?: string | null;
-  domain?: string | null;
-  description?: string | null;
-  logoUrl?: string | null;
-  companySize?: number | null;
-  addresses: {
-    branchName: string;
-    country: string;
-    city: string;
-    regionOrState?: string | null;
-    postalCode?: string | null;
-    isHeadQuarters?: boolean;
-  }[];
-} => ({
-  userId,
-  companyName: formData.companyName,
-  publicContactMail: formData.publicContactMail || null,
-  domain: formData.domain || null,
-  description: formData.description || null,
-  logoUrl: logoUrl ?? null,
-  companySize: formData.companySize ? Number(formData.companySize) : null,
-  addresses,
-});
+) => {
+  const payload: {
+    userId: string;
+    companyName: string;
+    publicContactMail?: string | null;
+    domain?: string | null;
+    description?: string | null;
+    companySize?: number | null;
+    addresses: {
+      branchName: string;
+      country: string;
+      city: string;
+      regionOrState?: string | null;
+      postalCode?: string | null;
+      isHeadQuarters?: boolean;
+    }[];
+  } = {
+    userId,
+    companyName: formData.companyName,
+    publicContactMail: formData.publicContactMail || null,
+    domain: formData.domain || null,
+    description: formData.description || null,
+    companySize: formData.companySize ? Number(formData.companySize) : null,
+    addresses,
+  };
+  return payload;
+};

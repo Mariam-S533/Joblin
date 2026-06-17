@@ -85,7 +85,11 @@ const request = async <T>(
 
   const response = await fetch(`${API_BASE_URL}${path}`, {
     method,
-    headers: requestHeaders,
+    headers: normalized.body instanceof FormData
+      ? requestHeaders.get("Authorization")
+        ? { Authorization: requestHeaders.get("Authorization")! }
+        : undefined
+      : requestHeaders,
     body: normalized.body,
     credentials: API_WITH_CREDENTIALS ? "include" : "same-origin",
   });
