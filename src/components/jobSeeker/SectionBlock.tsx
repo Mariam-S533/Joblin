@@ -71,22 +71,19 @@ export default function SectionBlock({
           {title}
         </div>
         
-        {/* Toggle button rules */}
-        {isReviewingParsedCV ?  (
-          isReviewingParsedCV ? (
+        {isReviewingParsedCV ? (
             <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded font-medium animate-pulse">
               Reviewing parsed file
             </span>
-          ) : !shouldShowEdit ? (
-            <button title="edit" type="button" onClick={() => handleSetEditing(true)} className="text-joblin-primary hover:opacity-80 transition">
-              <SquarePen size={20} />
-            </button>
-          ) : (
+          ) : shouldShowEdit ? (
             <button title="cancel" type="button" onClick={() => handleSetEditing(false)} className="text-gray-400 hover:text-gray-600 transition">
               <X size={20} />
             </button>
-          )
-        ): null}
+          ) : (
+            <button title="edit" type="button" onClick={() => handleSetEditing(true)} className="text-joblin-primary hover:opacity-80 transition">
+              <SquarePen size={20} />
+            </button>
+          )}
       </div>
 
       <div className="flex flex-col gap-4">

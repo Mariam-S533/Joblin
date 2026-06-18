@@ -2,6 +2,7 @@
 //PersonalInfo Section
 export interface PersonalInfoSec {
   fullname: string,
+  email: string | null,
   headline: string | null,
   phone: string | null,
   location: {

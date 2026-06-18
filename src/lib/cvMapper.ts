@@ -7,6 +7,7 @@ export function mapParsedCVToFormData(parsedData: any): ProfileFormData {
     return {
         personal_info: {
             fullname: rawPersonalInfo.fullname || rawPersonalInfo.fullName || "",
+            email: rawPersonalInfo.email || "",
             headline: rawPersonalInfo.headline || "",
             phone: rawPersonalInfo.phone || "",
             location: {

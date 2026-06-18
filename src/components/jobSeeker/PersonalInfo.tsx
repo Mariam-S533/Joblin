@@ -1,19 +1,9 @@
-import { useForm } from "react-hook-form"
+import { useFormContext } from "react-hook-form"
 import { Input } from "../ui/input"
 import { Label } from "../ui/label"
 
 export function PersonalInfoEdit() {
-
-
-  interface  Inputs{
-      personalInfofullName: string | "",
-      personalInfoemail: string | "",
-      personalInfomobileNumber: string | "",
-      personalInfocountry: string | "",
-      personalInfocity: string | ""
-  }
-
-  const { register } = useForm<Inputs>()
+  const { register } = useFormContext()
 
   return (
     <div className="">
@@ -26,7 +16,7 @@ export function PersonalInfoEdit() {
                     border-[#A5A5A5] focus-visible:ring-0
                     focus-visible:border-gray-700 w-full placeholder:text-[#A5A5A5]'
                     type="text"
-                    {...register("personalInfofullName")}
+                    {...register("personal_info.fullname")}
           />
           <Label className=' absolute left-3 top-0 -translate-y-1/2 bg-white px-1 text-sm text-joblin-dark-gray font-medium gap-1'>
             Full Name
@@ -42,7 +32,7 @@ export function PersonalInfoEdit() {
                         border-[#A5A5A5] focus-visible:ring-0
                         focus-visible:border-gray-700 w-full placeholder:text-[#A5A5A5]'
                 type="email"
-                {...register("personalInfoemail")}
+                {...register("personal_info.email")}
               />
               <Label className=' absolute left-3 top-0 -translate-y-1/2 bg-white px-1 text-sm text-joblin-dark-gray font-medium gap-1'>
                 Email
@@ -56,7 +46,7 @@ export function PersonalInfoEdit() {
                         border-[#A5A5A5] focus-visible:ring-0
                         focus-visible:border-gray-700 w-full placeholder:text-[#A5A5A5]'
                 type="tel"
-                {...register("personalInfomobileNumber")}
+                {...register("personal_info.phone")}
               />
               <Label className=' absolute left-3 top-0 -translate-y-1/2 bg-white px-1 text-sm text-joblin-dark-gray font-medium gap-1'>
                 Phone
@@ -74,7 +64,7 @@ export function PersonalInfoEdit() {
                         border-[#A5A5A5] focus-visible:ring-0
                         focus-visible:border-gray-700 w-full placeholder:text-[#A5A5A5]'
                 type="text"
-                {...register("personalInfocountry")}
+                {...register("personal_info.location.country")}
               />
               <Label className=' absolute left-3 top-0 -translate-y-1/2 bg-white px-1 text-sm text-joblin-dark-gray font-medium gap-1'>
                 Country
@@ -88,7 +78,7 @@ export function PersonalInfoEdit() {
                         border-[#A5A5A5] focus-visible:ring-0
                         focus-visible:border-gray-700 w-full placeholder:text-[#A5A5A5]'
                 type="text"
-                {...register("personalInfocity")}
+                {...register("personal_info.location.city")}
               />
               <Label className=' absolute left-3 top-0 -translate-y-1/2 bg-white px-1 text-sm text-joblin-dark-gray font-medium gap-1'>
                 City
@@ -101,17 +91,3 @@ export function PersonalInfoEdit() {
     </div>
   )
 }
-
-// export function PersonalInfoRead({ data }: { data: any }) {
-//   if (!data) return null;
-//   return (
-//     <div className="grid grid-cols-2 gap-y-4 gap-x-8 text-sm">
-//       {data.firstName && <div><span className="text-gray-500 block text-xs mb-1">First Name</span><span className="font-medium">{data.firstName}</span></div>}
-//       {data.lastName && <div><span className="text-gray-500 block text-xs mb-1">Last Name</span><span className="font-medium">{data.lastName}</span></div>}
-//       {data.email && <div><span className="text-gray-500 block text-xs mb-1">Email</span><span className="font-medium">{data.email}</span></div>}
-//       {data.mobileNumber && <div><span className="text-gray-500 block text-xs mb-1">Mobile</span><span className="font-medium">{data.mobileNumber}</span></div>}
-//       {data.city && <div><span className="text-gray-500 block text-xs mb-1">City</span><span className="font-medium">{data.city}</span></div>}
-//       {data.maritalStatus && <div><span className="text-gray-500 block text-xs mb-1">Marital Status</span><span className="font-medium">{data.maritalStatus}</span></div>}
-//     </div>
-//   )
-// }

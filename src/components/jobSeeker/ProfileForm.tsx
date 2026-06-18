@@ -13,7 +13,7 @@ import Languages from "./Languages"
 import { useProfileContext } from "@/app/context/ProfilesProvider"
 import WorkExperienceEdit from "./Experience"
 import EducationEdit from "./Education"
-import { getSeekerInfo, getUserCer, getUserEdu, getUserLang, getUserSkills, getWorkExp, postWorkExp } from "@/app/actions/profileSections.action"
+import { getSeekerInfo, getUserCer, getUserEdu, getUserLang, getUserSkills, getWorkExp, postWorkExp, editWorkExp, editSeekerInfo, editUserSkills, postUserEdu, editUserEdu, postUserCer, editUserCer, postUserLang, editUserLang } from "@/app/actions/profileSections.action"
 import { ProfileFormData } from "@/app/Types/profileShared"
 import Link from "next/link"
 import { mapParsedCVToFormData } from "@/lib/cvMapper"
@@ -125,12 +125,63 @@ useEffect(() => {
 
 const onGlobalSave = async (data: ProfileFormData) => {
     try {
-        await handleSaveCV(data, currentProfileName, currentProfileId)
-        await fetchProfiles()
-        await getAllSections()
+        if (parsedData) {
+            await handleSaveCV(data, currentProfileName, currentProfileId)
+            await fetchProfiles()
+            await getAllSections()
+            setHasSaved(true)
+            clearParsedData()
+        } else {
+            const activeId = currentProfileId || profilesList[0]?.id
+            if (!activeId) return
 
-        setHasSaved(true)
-        clearParsedData()
+            const { dirtyFields } = methods.formState
+
+            const savePromises: Promise<any>[] = []
+
+            if (dirtyFields.personal_info) {
+                savePromises.push(editSeekerInfo(data.personal_info))
+            }
+            if (dirtyFields.skills) {
+                savePromises.push(editUserSkills(activeId, data.skills))
+            }
+            if (dirtyFields.work_experience) {
+                savePromises.push(
+                    Promise.all(data.work_experience.map(job =>
+                        job.id ? editWorkExp(activeId, Number(job.id), job) : postWorkExp(activeId, job)
+                    ))
+                )
+            }
+            if (dirtyFields.education) {
+                savePromises.push(
+                    Promise.all(data.education.map(edu =>
+                        edu.id ? editUserEdu(Number(edu.id), edu) : postUserEdu(edu)
+                    ))
+                )
+            }
+            if (dirtyFields.certifications) {
+                savePromises.push(
+                    Promise.all(data.certifications.map(cert =>
+                        cert.id ? editUserCer(activeId, Number(cert.id), cert) : postUserCer(activeId, cert)
+                    ))
+                )
+            }
+            if (dirtyFields.languages) {
+                savePromises.push(
+                    Promise.all(data.languages.map(lang =>
+                        lang.id ? editUserLang(Number(lang.id), lang) : postUserLang(lang)
+                    ))
+                )
+            }
+
+            if (savePromises.length > 0) {
+                await Promise.all(savePromises)
+            }
+
+            await getAllSections()
+            setIsAnySectionEditing(false)
+            setHasSaved(true)
+        }
     } catch (error) {
         console.error("Global save failed", error)
     }
@@ -150,6 +201,66 @@ const onGlobalSave = async (data: ProfileFormData) => {
             setValue("work_experience", freshData, { shouldValidate: true, shouldDirty: false })
         } catch (err) {
             console.error("Failed saving Work Experience block:", err)
+        }
+    }
+
+    const handleSavePersonalInfo = async () => {
+        try {
+            await editSeekerInfo(formData.personal_info)
+            const freshData = await getSeekerInfo()
+            setValue("personal_info", freshData, { shouldValidate: true, shouldDirty: false })
+        } catch (err) {
+            console.error("Failed saving Personal Info:", err)
+        }
+    }
+
+    const handleSaveSkills = async () => {
+        try {
+            const activeId = currentProfileId || profilesList[0]?.id
+            if (!activeId) return
+            await editUserSkills(activeId, formData.skills)
+            const freshData = await getUserSkills(activeId)
+            setValue("skills", freshData, { shouldValidate: true, shouldDirty: false })
+        } catch (err) {
+            console.error("Failed saving Skills:", err)
+        }
+    }
+
+    const handleSaveEducation = async () => {
+        try {
+            await Promise.all(formData.education.map(edu =>
+                edu.id ? editUserEdu(Number(edu.id), edu) : postUserEdu(edu)
+            ))
+            const freshData = await getUserEdu()
+            setValue("education", freshData, { shouldValidate: true, shouldDirty: false })
+        } catch (err) {
+            console.error("Failed saving Education:", err)
+        }
+    }
+
+    const handleSaveCertifications = async () => {
+        try {
+            const activeId = currentProfileId || profilesList[0]?.id
+            if (!activeId) return
+            await Promise.all(formData.certifications.map(cert =>
+                cert.id ? editUserCer(activeId, Number(cert.id), cert) : postUserCer(activeId, cert)
+            ))
+            const freshData = await getUserCer(activeId)
+            setValue("certifications", freshData, { shouldValidate: true, shouldDirty: false })
+        } catch (err) {
+            console.error("Failed saving Certifications:", err)
+        }
+    }
+
+    const handleSaveLanguages = async () => {
+        try {
+            await Promise.all(formData.languages.map(lang =>
+                lang.id ? editUserLang(Number(lang.id), lang) : postUserLang(lang)
+            ))
+            const freshData = await getUserLang()
+            setValue("languages", freshData, { shouldValidate: true, shouldDirty: false })
+        } catch (err) {
+            console.error("Failed saving Languages:", err)
         }
     }
 
@@ -199,6 +310,7 @@ const onGlobalSave = async (data: ProfileFormData) => {
                             }
                             renderEdit={() => <PersonalInfoEdit />}
                             onEditingChange={value => setIsAnySectionEditing(value)}
+                            onSectionSave={handleSavePersonalInfo}
                         />
 
                         {/* 2. WORK EXPERIENCE */}
@@ -217,12 +329,6 @@ const onGlobalSave = async (data: ProfileFormData) => {
                                                 <span>•</span>
                                                 <p>{job.start_date} - {job.current ? "Present" : "Ended"}</p>
                                             </div>
-                                            
-                                            {/* {job.highlights.map((desc, index)=>(
-                                                <div key={index}>
-                                                    <p className="text-[14px] text-gray-600 whitespace-pre-line">{desc}</p>
-                                                </div>
-                                            ))}  */}
 
                                             {job.highlights && job.highlights.length > 0 && (
                                                 <ul className="list-disc pl-5 mt-2 flex flex-col gap-1">
@@ -240,6 +346,7 @@ const onGlobalSave = async (data: ProfileFormData) => {
                             }
                             renderEdit={() => <WorkExperienceEdit />}
                             onEditingChange={value => setIsAnySectionEditing(value)}
+                            onSectionSave={handleSaveExperienceOnly}
                         />
 
                         {/* 3. LINKS */}
@@ -272,6 +379,7 @@ const onGlobalSave = async (data: ProfileFormData) => {
                             }
                             renderEdit={() => <Links />}
                             onEditingChange={value => setIsAnySectionEditing(value)}
+                            onSectionSave={handleSavePersonalInfo}
                         />
 
                         {/* 4. EDUCATION */}
@@ -292,6 +400,7 @@ const onGlobalSave = async (data: ProfileFormData) => {
                             }
                             renderEdit={() => <EducationEdit />}
                             onEditingChange={value => setIsAnySectionEditing(value)}
+                            onSectionSave={handleSaveEducation}
                         />
 
                         {/* 5. SKILLS */}
@@ -339,6 +448,7 @@ const onGlobalSave = async (data: ProfileFormData) => {
                             }
                             renderEdit={() => <SkillsEdit />}
                             onEditingChange={value => setIsAnySectionEditing(value)}
+                            onSectionSave={handleSaveSkills}
                         />
 
                         {/* 6. CERTIFICATIONS */}
@@ -360,6 +470,7 @@ const onGlobalSave = async (data: ProfileFormData) => {
                             }
                             renderEdit={() => <Certifications />}
                             onEditingChange={value => setIsAnySectionEditing(value)}
+                            onSectionSave={handleSaveCertifications}
                         />
 
                         {/* 7. LANGUAGES */}
@@ -380,6 +491,7 @@ const onGlobalSave = async (data: ProfileFormData) => {
                             }
                             renderEdit={() => <Languages />}
                             onEditingChange={value => setIsAnySectionEditing(value)}
+                            onSectionSave={handleSaveLanguages}
                         />
 
                     </div>
@@ -527,7 +639,7 @@ const onGlobalSave = async (data: ProfileFormData) => {
                       <button
                         type="submit"
                         className="w-full bg-[#00B074] text-white py-3.5 rounded-xl font-bold hover:opacity-95 shadow-md shadow-green-500/10 transition disabled:bg-gray-300 disabled:cursor-not-allowed disabled:shadow-none"
-                        disabled={!parsedData || isSubmitting || hasSaved}
+                        disabled={(!parsedData && !isAnySectionEditing) || isSubmitting || hasSaved}
                     >
                         {isSubmitting ? "Processing Modifications..." : hasSaved ? "Saved!" : "Save Profile Details"}
                     </button>

@@ -1,23 +1,12 @@
-import { useForm } from 'react-hook-form'
+import { useFormContext } from 'react-hook-form'
 import { Input } from '../ui/input'
 import { Label } from '../ui/label'
-import {  University } from 'lucide-react'
+import { University } from 'lucide-react'
 
 function EducationEdit() {
-
-        interface inputs{
-        field: string,
-        uniName: string,
-        gradYear: string,
-        gpa: string,
-        degree: string
-    }
-
-      const { register } = useForm<inputs>()
+  const { register } = useFormContext()
 
   return <>
-  
-  
             <div className=' flex flex-col gap-6'>
 
                     <div className='flex gap-3 items-center w-full '>
@@ -28,7 +17,7 @@ function EducationEdit() {
                                 border-[#A5A5A5] focus-visible:ring-0
                                 focus-visible:border-joblin-light-gray w-full placeholder:text-[#A5A5A5]'
                                 type="text"
-                                {...register("field")}
+                                {...register("education.field")}
                         />
                         <Label className=' absolute left-3 top-0 -translate-y-1/2 bg-white px-1 text-sm text-joblin-dark-gray font-medium gap-1'>
                             Field of Study
@@ -42,7 +31,7 @@ function EducationEdit() {
                                 border-[#A5A5A5] focus-visible:ring-0
                                 focus-visible:border-joblin-light-gray w-full placeholder:text-[#A5A5A5]'
                                 type="text"
-                                {...register("uniName")}
+                                {...register("education.institution")}
                         />
                         <Label className=' absolute left-3 top-0 -translate-y-1/2 bg-white px-1 text-sm text-joblin-dark-gray font-medium gap-1'>
                              University Name 
@@ -58,7 +47,7 @@ function EducationEdit() {
                                 border-[#A5A5A5] focus-visible:ring-0
                                 focus-visible:border-joblin-light-gray w-full placeholder:text-[#A5A5A5]'
                                 type="text"
-                                {...register("gradYear")}
+                                {...register("education.graduation_year")}
                         />
                         <Label className=' absolute left-3 top-0 -translate-y-1/2 bg-white px-1 text-sm text-joblin-dark-gray font-medium gap-1'>
                             Graduation Year
@@ -72,7 +61,7 @@ function EducationEdit() {
                                 border-[#A5A5A5] focus-visible:ring-0
                                 focus-visible:border-joblin-light-gray w-full placeholder:text-[#A5A5A5]'
                                 type="text"
-                                {...register("gpa")}
+                                {...register("education.gpa")}
                         />
                         <Label className=' absolute left-3 top-0 -translate-y-1/2 bg-white px-1 text-sm text-joblin-dark-gray font-medium gap-1'>
                             GPA
@@ -92,7 +81,7 @@ function EducationEdit() {
                       id='associate'
                         type="radio"
                         value="associate"
-                        {...register("degree")}
+                        {...register("education.degree")}
                         className=" w-4 h-4 accent-joblin-dark-gray"
                       />
                       <label htmlFor='associate' className='text-[#353535] text-[15px]'>Associate</label>
@@ -103,7 +92,7 @@ function EducationEdit() {
                       id='bachelor'
                         type="radio"
                         value="bachelor"
-                        {...register("degree")}
+                        {...register("education.degree")}
                         className=" w-4 h-4 accent-joblin-dark-gray "
                       />
                       <label htmlFor='bachelor' className='text-[#353535] text-[15px]'>Bachelor&apos;s</label>
@@ -114,7 +103,7 @@ function EducationEdit() {
                       id='master'
                         type="radio"
                         value="master"
-                        {...register("degree")}
+                        {...register("education.degree")}
                         className=" w-4 h-4 accent-joblin-dark-gray "
                       />
                       <label htmlFor='master' className='text-[#353535] text-[15px]'>Master&apos;s</label>
@@ -125,7 +114,7 @@ function EducationEdit() {
                         id='phd'
                         type="radio"
                         value="phd"
-                        {...register("degree")}
+                        {...register("education.degree")}
                         className=" w-4 h-4 accent-joblin-dark-gray "
                       />
                       <label htmlFor='phd' className='text-[#353535] text-[15px]'>PHD and Higher</label>
@@ -141,5 +130,3 @@ function EducationEdit() {
 }
 
 export default EducationEdit
-
-
