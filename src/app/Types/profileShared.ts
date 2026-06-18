@@ -1,7 +1,7 @@
 
 //PersonalInfo Section
 export interface PersonalInfoSec {
-  fullName: string,
+  fullname: string,
   headline: string | null,
   phone: string | null,
   location: {
@@ -16,7 +16,7 @@ export interface PersonalInfoSec {
 
 //skils section
 export interface SkillSec{
-  technical:          string,
+  technical:          string[],
   tools_and_platforms: string[],
   methodologies:      string[],
 }

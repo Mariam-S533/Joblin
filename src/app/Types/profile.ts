@@ -6,10 +6,13 @@ export interface Location {
 }
  
 export interface PersonalInfo {
-  fullName: string | null,
+  fullname: string | null,
   email:     string | null,
   phone:     string | null,
-  location:  Location,
+  location:  {
+      city:    string | null,
+      country: string | null
+  },
   linkedin:  string | null,
   github:    string | null,
   website:   string | null
@@ -18,7 +21,10 @@ export interface PersonalInfo {
 export interface WorkExperience {
   company:    string | null,
   title:      string,
-  location:   Location, //nshof
+  location:   {
+      city:    string | null,
+      country: string | null
+  }, 
   start_date: string | null,
   end_date:   string | null,
   current:    boolean,
@@ -34,7 +40,7 @@ export interface Education {
 }
  
 export interface Skills {
-  technical:          string,
+  technical:          string[],
   tools_and_platforms: string[],
   methodologies:      string[],
 }
