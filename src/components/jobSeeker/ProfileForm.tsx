@@ -298,20 +298,20 @@ const onGlobalSave = async (data: ProfileFormData) => {
                             title="Professional Skills" icon={Medal}
                             formKey="skills"
                             helperText="Add your professional skills" ctaText="Skills"
-                            hasData={!!formData.skills && (formData.skills.technical.length > 0 || formData.skills.tools_and_platforms.length > 0 || formData.skills.methodologies.length > 0)}
+                            hasData={!!formData.skills && (formData.skills?.technical.length > 0 || formData.skills?.tools_and_platforms.length > 0 || formData.skills?.methodologies.length > 0)}
                             readView={
                                     <div className="flex flex-col gap-4">
                                         {/* Technical Skills */}
                                         <div>
                                             <p className="text-[13px] text-joblin-light-gray mb-1">Technical Focus</p>
-                                            <p className="text-joblin-black font-medium text-[14px]">{formData.skills.technical || "No technical focus added"}</p>
+                                            <p className="text-joblin-black font-medium text-[14px]">{formData.skills?.technical || "No technical focus added"}</p>
                                         </div>
                                         
                                         {/* Tools & Platforms (Array) */}
                                         <div>
                                             <p className="text-[13px] text-joblin-light-gray mb-1">Tools & Platforms</p>
                                             <div className="flex flex-wrap gap-2">
-                                                {formData.skills.tools_and_platforms.map((tool, i) => (
+                                                {formData.skills?.tools_and_platforms.map((tool, i) => (
                                                     <span key={i} className="bg-gray-100 px-2 py-1 rounded text-[12px]">{tool}</span>
                                                 ))}
                                             </div>
@@ -321,7 +321,7 @@ const onGlobalSave = async (data: ProfileFormData) => {
                                         <div>
                                             <p className="text-[13px] text-joblin-light-gray mb-1">Methodologies</p>
                                             <div className="flex flex-wrap gap-2">
-                                                {formData.skills.methodologies.map((method, i) => (
+                                                {formData.skills?.methodologies.map((method, i) => (
                                                     <span key={i} className="bg-gray-100 px-2 py-1 rounded text-[12px]">{method}</span>
                                                 ))}
                                             </div>
