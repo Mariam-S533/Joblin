@@ -1,0 +1,13 @@
+{
+  "$schema": "https://app.kilo.ai/config.json",
+  "mcp": {
+    "figma": {
+      "type": "local",
+      "command": ["npx", "-y", "@anthropic/figma-mcp-server"],
+      "environment": {
+        "FIGMA_ACCESS_TOKEN": "figd_gxEia8PXPxPxUtCbtYJpltY4447dxvJ2knjSG_BH",
+      },
+      "enabled": true,
+    },
+  },
+}
