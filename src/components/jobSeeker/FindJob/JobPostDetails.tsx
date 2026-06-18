@@ -9,6 +9,7 @@ import { useProfileContext } from '@/app/context/ProfilesProvider';
 import { postApplyJob } from "@/app/actions/application.action"
 import { toast } from "sonner"
 import { useState } from "react"
+import EnhanceCVDialog from "./EnhanceCVDialog"
 
 
 function getRelativeTimeString(dateString: string): string {
@@ -34,23 +35,25 @@ function getRelativeTimeString(dateString: string): string {
 
 function JobPostDetails({jobPostDetails} : {jobPostDetails : JobPost}) {
 
-        const { currentProfileId } = useProfileContext()
+        const { currentProfileId, currentProfileName } = useProfileContext()
         const [isApplying, setIsApplying] = useState(false)
+        const [showEnhanceDialog, setShowEnhanceDialog] = useState(false)
 
 
-        async function handleApplyJob(jobpostId: string){
-            if(!currentProfileId){
-                toast.error("Please select or log in to a profile before applying", {position: "top-center", duration: 3000})
+        async function handleApplyClick() {
+            if (!currentProfileId) {
+                toast.error("Please select or log in to a profile before applying", { position: "top-center", duration: 3000 })
+                return
             }
+            setShowEnhanceDialog(true)
+        }
+
+        async function handleApplyWithoutEnhance() {
             try {
-                setIsApplying(true)
-                const res = await postApplyJob(currentProfileId, jobpostId)
+                await postApplyJob(currentProfileId, jobPostDetails.id)
                 toast.success("Application submitted successfully!")
-                console.log("Response:", res)
             } catch (error) {
-                toast.error(error instanceof Error ? error.message : "An unexpected failure occurred.")
-            }finally {
-            setIsApplying(false)
+                toast.error(error instanceof Error ? error.message : "Apply failed")
             }
         }
 
@@ -105,10 +108,10 @@ function JobPostDetails({jobPostDetails} : {jobPostDetails : JobPost}) {
                                                     </div>
                                                     <div className="flex items-center gap-2 text-[12px] text-[#353535]">
                                                         <Button type="button" 
-                                                                onClick={() => handleApplyJob(jobPostDetails.id)}
-                                                                disabled={isApplying || jobPostDetails.jobStatus !== 'Active'}
+                                                                onClick={handleApplyClick}
+                                                                disabled={jobPostDetails.jobStatus !== 'Active'}
                                                                 className="bg-joblin-primary text-white hover:bg-joblin-primary/70 px-5">
-                                                        {isApplying ? "Applying..." : "Apply Now"}
+                                                        Apply Now
                                                         </Button>
                                                         <Button type='button' className='bg-white text-joblin-primary border border-joblin-primary hover:bg-joblin-primary hover:text-white px-5'>Message</Button>
                                                     </div>
@@ -245,7 +248,15 @@ function JobPostDetails({jobPostDetails} : {jobPostDetails : JobPost}) {
             </div>
         </div>
     </div>
-  
+   
+  {showEnhanceDialog && (
+      <EnhanceCVDialog
+          jobPostId={jobPostDetails.id}
+          jobTitle={jobPostDetails.title}
+          onApplyWithoutEnhance={handleApplyWithoutEnhance}
+          onCancel={() => setShowEnhanceDialog(false)}
+      />
+  )}
   </>
 }
 

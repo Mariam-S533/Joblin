@@ -1,76 +1,70 @@
-import { ParsedCV } from "@/app/Types/profile";
 import { ProfileFormData } from "@/app/Types/profileShared";
 
+export function mapParsedCVToFormData(parsedData: any): ProfileFormData {
+    const rawPersonalInfo = parsedData?.personal_info || {};
+    const rawSkills = parsedData?.skills || {};
 
-export function mapParsedCVToFormData(parsedData: ParsedCV): ProfileFormData {
     return {
-        // 1. Map Personal Info
         personal_info: {
-            fullname: parsedData.personal_info.fullname || "", 
-            headline: null, // Extra data sent as null
-            phone: parsedData.personal_info.phone,
+            fullname: rawPersonalInfo.fullname || rawPersonalInfo.fullName || "",
+            headline: rawPersonalInfo.headline || "",
+            phone: rawPersonalInfo.phone || "",
             location: {
-                city: parsedData.personal_info.location?.city || null,
-                country: parsedData.personal_info.location?.country || null
+                city: rawPersonalInfo.location?.city || "",
+                country: rawPersonalInfo.location?.country || ""
             },
-            profilePictureUrl: null, // Extra data sent as null
-            linkedin: parsedData.personal_info.linkedin,
-            github: parsedData.personal_info.github,
-            website: parsedData.personal_info.website
+            profilePictureUrl: rawPersonalInfo.profilePictureUrl || "",
+            linkedin: rawPersonalInfo.linkedin || "",
+            github: rawPersonalInfo.github || "",
+            website: rawPersonalInfo.website || ""
         },
 
-        // 2. Map Work Experience
-        work_experience: parsedData.work_experience.map(job => ({
-            id: "", 
+        work_experience: (parsedData?.work_experience || []).map((job: any) => ({
+            id: job.id || "",
             company: job.company || "",
-            title: job.title,
+            title: job.title || "",
             location: {
-                city: job.location?.city || null,
-                country: job.location?.country || null
+                city: job.location?.city || "",
+                country: job.location?.country || ""
             },
-            start_date: job.start_date,
-            end_date: job.end_date,
-            current: job.current,
+            start_date: job.start_date || "",
+            end_date: job.end_date || "",
+            current: job.current ?? false,
             highlights: job.highlights || [],
-            jobType: "" // Form requires a string, so we send an empty string instead of null
+            jobType: job.jobType || ""
         })),
 
-        // 3. Map Education
-        education: parsedData.education.map(edu => ({
-            id: "",
+        education: (parsedData?.education || []).map((edu: any) => ({
+            id: edu.id || "",
             institution: edu.institution || "",
-            degree: edu.degree,
-            field: edu.field,
-            graduation_year: edu.graduation_year,
-            gpa: edu.gpa,
-            isStillStudying: false, // Form requires boolean, defaulting to false
-            description: null // Extra data sent as null
+            degree: edu.degree || "",
+            field: edu.field || "",
+            graduation_year: edu.graduation_year || "",
+            gpa: edu.gpa || "",
+            isStillStudying: edu.isStillStudying ?? false,
+            description: edu.description || ""
         })),
 
-        // 4. Map Certifications
-        certifications: parsedData.certifications.map(cert => ({
-            id: "",
-            name: cert.name,
-            issuer: cert.issuer,
-            issued_date: cert.issued_date,
-            expiry_date: cert.expiry_date ? String(cert.expiry_date) : null,
-            fileUrl: null, // Extra data sent as null
-            credentialUrl: null // Extra data sent as null
+        certifications: (parsedData?.certifications || []).map((cert: any) => ({
+            id: cert.id || "",
+            name: cert.name || "",
+            issuer: cert.issuer || "",
+            issued_date: cert.issued_date || "",
+            expiry_date: cert.expiry_date ? String(cert.expiry_date) : "",
+            fileUrl: cert.fileUrl || "",
+            credentialUrl: cert.credentialUrl || ""
         })),
 
-        // 5. Map Languages
-        languages: parsedData.languages.map(lang => ({
-            id: "",
-            language: lang.language,
-            proficiency: lang.proficiency
+        languages: (parsedData?.languages || []).map((lang: any) => ({
+            id: lang.id || "",
+            language: lang.language || "",
+            proficiency: lang.proficiency || ""
         })),
 
-        // 6. Map Skills
         skills: {
-            technical: parsedData.skills.technical || [],
-            tools_and_platforms: parsedData.skills.tools_and_platforms || [],
-            methodologies: parsedData.skills.methodologies || [],
+            technical: Array.isArray(rawSkills.technical) ? rawSkills.technical : [],
+            tools_and_platforms: Array.isArray(rawSkills.tools_and_platforms) ? rawSkills.tools_and_platforms : [],
+            methodologies: Array.isArray(rawSkills.methodologies) ? rawSkills.methodologies : [],
         }
-
     };
 }
