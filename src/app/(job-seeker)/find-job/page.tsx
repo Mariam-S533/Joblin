@@ -1,17 +1,17 @@
-// import JobSearchComponent from "@/components/jobSeeker/FindJob/JobSearchComponent"
-// import { getJobPosts } from '@/app/actions/searchjobs.action'
+import JobSearchComponent from "@/components/jobSeeker/FindJob/JobSearchComponent"
+import { getJobPosts } from '@/app/actions/searchjobs.action'
 
 
-// async function page() {
+async function page() {
 
-//   const jobs = await getJobPosts()
+  const data  = await getJobPosts(1, 10)
 
-//   return <>
+  return <>
   
-//     <JobSearchComponent jobs={jobs || []}/>
-//   </>
-// }
+    <JobSearchComponent initialData={data }/>
+  </>
+}
 
-// export default page
+export default page
 
 

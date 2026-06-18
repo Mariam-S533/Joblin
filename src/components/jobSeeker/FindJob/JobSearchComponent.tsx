@@ -10,22 +10,53 @@ import {  useState } from 'react'
 import { JobPost } from '@/app/Types/seekerActivity'
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationPrevious, PaginationNext,} from "@/components/ui/pagination"
 import JobPostCard from './JobPostCard';
+import { toast } from 'sonner';
+import { getJobPosts } from '@/app/actions/searchjobs.action';
 
 
-function JobSearchComponent({jobs}: {jobs: JobPost[]}) {
+interface JobPostsResponse {
+    data: JobPost[],
+    totalPages: number,
+    page: number
+}
+
+function JobSearchComponent({initialData}: {initialData: JobPostsResponse}) {
 
     const [showFilters, setShowFilters] = useState(false);
-    const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
-    const [currentPage, setCurrentPage] = useState(1)
-    const jobsPerPage = 12
-
-    const totalPages = Math.ceil(jobs.length / jobsPerPage)
-    const startIndex = (currentPage - 1) * jobsPerPage
-    const endIndex = startIndex + jobsPerPage
-
-    const currentJobs = jobs.slice(startIndex, endIndex)
     const [activeFilters, setActiveFilters] = useState<string[]>([]);
+
+    const [jobs, setJobs] = useState<JobPost[]>(initialData?.data || []);
+    const [currentPage, setCurrentPage] = useState<number>(initialData?.page || 1)
+    const [totalPages, setTotalPages] = useState<number>(initialData?.totalPages || 1);
+    const [loading, setLoading] = useState<boolean>(false)
+
+    const jobsPerPage = 10 
+    const hasPreviousPage = currentPage > 1
+    const hasNextPage = currentPage < totalPages
+
+    async function changePage(page: number) {
+    // if (page < 1 || page > totalPages) return;
+    if (loading) return;
+    if (page < 1 || page > totalPages) return; 
+
+        setLoading(true);
+        setError(null);
+
+        try {
+            // Enforce that the server action response matches our interface
+            const result: JobPostsResponse = await getJobPosts(page, jobsPerPage);
+            setJobs(result?.data || []);
+            setCurrentPage(result?.page || page);
+            setTotalPages(result?.totalPages || 1);
+        } catch (error) {
+                        const message = error instanceof Error ? error.message : "Failed to load jobs. Please try again";
+                        setError(message);
+                        toast.error(message, {position: "top-center", duration: 3000})
+        } finally {
+            setLoading(false);
+        }
+    }
 
 
         const handleCheckboxChange = (checked: boolean | string, label: string) => {
@@ -97,7 +128,7 @@ function JobSearchComponent({jobs}: {jobs: JobPost[]}) {
             </div>
           </div>
 
-          {/* mean content */}
+          {/* main content */}
           <div className="">
             {/* filter button in mobile screen */}
             <div className="lg:hidden mb-4">
@@ -122,15 +153,32 @@ function JobSearchComponent({jobs}: {jobs: JobPost[]}) {
                     <JobFilters activeFilters={activeFilters} onCheckboxChange={handleCheckboxChange} onRadioChange={handleRadioChange} onRemoveFilter={removeFilter}/>
               </div>
 
-
+{/* 
               <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
                 {currentJobs.map((job)=> <JobPostCard key={job.id} jobPost={job}/>)}
-              </div>
+              </div> */}
+
+              <div className="flex-1">
+                                {loading ? (
+                                    <div className="text-center py-12 text-gray-500">Loading jobs...</div>
+                                ) : error ? (
+                                    <div className="text-center py-12 text-red-500">{error}</div>
+                                ) : jobs.length === 0 ? (
+                                    <div className="text-center py-12 text-gray-400">No jobs found.</div>
+                                ) : (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {jobs.map((job) => (
+                                            <JobPostCard key={job.id} jobPost={job}/>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
             
 
             </div>
 
-            {totalPages > 1 && (
+            { !loading && !error && jobs.length > 0 && totalPages > 1 && (
             <div className="mt-8 flex justify-center">
             <Pagination>
                 <PaginationContent>
@@ -138,41 +186,30 @@ function JobSearchComponent({jobs}: {jobs: JobPost[]}) {
                 <PaginationItem>
                     <PaginationPrevious
                     href="#"
+                    className={loading || !hasPreviousPage ? "pointer-events-none opacity-50" : ""}
                     onClick={(e) => {
                         e.preventDefault()
-                        if (currentPage > 1) {
-                        setCurrentPage(currentPage - 1)
-                        }
+                        changePage(currentPage - 1)
                     }}
                     />
                 </PaginationItem>
-
-                {Array.from({ length: totalPages }, (_, i) => (
-                    <PaginationItem key={i}>
-                    <PaginationLink
-                        href="#"
-                        isActive={currentPage === i + 1}
-                        onClick={(e) => {
-                        e.preventDefault()
-                        setCurrentPage(i + 1)
-                        }}
-                    >
-                        {i + 1}
-                    </PaginationLink>
-                    </PaginationItem>
-                ))}
 
                 <PaginationItem>
-                    <PaginationNext
-                    href="#"
-                    onClick={(e) => {
-                        e.preventDefault()
-                        if (currentPage < totalPages) {
-                        setCurrentPage(currentPage + 1)
-                        }
-                    }}
-                    />
+                    <PaginationLink href="#" isActive={true}>
+                        {currentPage}
+                    </PaginationLink>
                 </PaginationItem>
+
+                <PaginationItem>
+                        <PaginationNext
+                        href="#"
+                        className={loading || !hasNextPage ? "pointer-events-none opacity-50" : ""}
+                        onClick={(e) => {
+                        e.preventDefault();
+                        changePage(currentPage + 1);
+                        }}
+                        />
+                       </PaginationItem>
                 </PaginationContent>
             </Pagination>
             </div>
@@ -181,7 +218,6 @@ function JobSearchComponent({jobs}: {jobs: JobPost[]}) {
 
       </div>
      </div>
-    </div>
 
   
   </>
