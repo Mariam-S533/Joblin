@@ -66,7 +66,11 @@ export function mapParsedCVToFormData(parsedData: ParsedCV): ProfileFormData {
         })),
 
         // 6. Map Skills
-        // Since ParsedCV doesn't have skills, we satisfy the form by sending an empty array
-        skills: [] 
+        skills: {
+            technical: parsedData.skills.technical || "",
+            tools_and_platforms: parsedData.skills.tools_and_platforms || [],
+            methodologies: parsedData.skills.methodologies || [],
+        }
+
     };
 }

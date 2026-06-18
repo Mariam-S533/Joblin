@@ -76,7 +76,7 @@ export interface ProfileFormData{
   personal_info: PersonalInfoSec,
   work_experience: WorkExpSec[],
   certifications: CertificatSec[] ,
-  skills: SkillSec [],
+  skills: SkillSec ,
   languages: LanguageSec[] ,
   education: EducationSec[] ,
 } 

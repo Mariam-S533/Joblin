@@ -59,7 +59,9 @@ const handleCopyLink = () => {
             if (formData.personal_info?.fullName) completedSections++ 
             if (formData.work_experience && formData.work_experience.length > 0) completedSections++
             if (formData.education && formData.education.length > 0) completedSections++
-            if (formData.skills && formData.skills.length > 0) completedSections++
+            if (formData.skills && (formData.skills.technical?.trim().length > 0 || 
+                        formData.skills.tools_and_platforms?.length > 0 || 
+                         formData.skills.methodologies?.length > 0)) {completedSections++}            
             if (formData.certifications && formData.certifications.length > 0) completedSections++
             if (formData.languages && formData.languages.length > 0) completedSections++
             
@@ -296,16 +298,35 @@ const onGlobalSave = async (data: ProfileFormData) => {
                             title="Professional Skills" icon={Medal}
                             formKey="skills"
                             helperText="Add your professional skills" ctaText="Skills"
-                            hasData={!!formData.skills && formData.skills.length > 0}
+                            hasData={!!formData.skills && (formData.skills.technical.length > 0 || formData.skills.tools_and_platforms.length > 0 || formData.skills.methodologies.length > 0)}
                             readView={
-                                <div className="flex flex-col gap-4">
-                                    {formData.skills?.map((skill, i) => (
-                                        <div key={i}>
-                                            <p className="text-[13px] text-joblin-light-gray mb-1">Skills Domain Group</p>
-                                            <p className="text-joblin-black font-medium text-[14px]">{skill.technical}</p>
+                                    <div className="flex flex-col gap-4">
+                                        {/* Technical Skills */}
+                                        <div>
+                                            <p className="text-[13px] text-joblin-light-gray mb-1">Technical Focus</p>
+                                            <p className="text-joblin-black font-medium text-[14px]">{formData.skills.technical || "No technical focus added"}</p>
                                         </div>
-                                    ))}
-                                </div>
+                                        
+                                        {/* Tools & Platforms (Array) */}
+                                        <div>
+                                            <p className="text-[13px] text-joblin-light-gray mb-1">Tools & Platforms</p>
+                                            <div className="flex flex-wrap gap-2">
+                                                {formData.skills.tools_and_platforms.map((tool, i) => (
+                                                    <span key={i} className="bg-gray-100 px-2 py-1 rounded text-[12px]">{tool}</span>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        {/* Methodologies (Array) */}
+                                        <div>
+                                            <p className="text-[13px] text-joblin-light-gray mb-1">Methodologies</p>
+                                            <div className="flex flex-wrap gap-2">
+                                                {formData.skills.methodologies.map((method, i) => (
+                                                    <span key={i} className="bg-gray-100 px-2 py-1 rounded text-[12px]">{method}</span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
                             }
                             renderEdit={() => <SkillsEdit />}
                             onEditingChange={value => setIsAnySectionEditing(value)}
@@ -397,7 +418,15 @@ const onGlobalSave = async (data: ProfileFormData) => {
                                 <p>Work Background</p>
                             </div>
                             <div className="flex items-center gap-1.5">
-                                <span className={`w-1.5 h-1.5 rounded-full ${formData.skills?.length ? 'bg-green-500' : 'bg-gray-300'}`} />
+                                <span 
+                                    className={`w-1.5 h-1.5 rounded-full ${
+                                        (formData.skills?.technical || 
+                                        formData.skills?.tools_and_platforms?.length > 0 || 
+                                        formData.skills?.methodologies?.length > 0) 
+                                        ? 'bg-green-500' 
+                                        : 'bg-gray-300'
+                                    }`} 
+                                />
                                 <p>Skill Core Capabilities</p>
                             </div>
                         </div>

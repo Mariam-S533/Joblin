@@ -53,6 +53,7 @@ export interface Language {
  
 export interface ParsedCV {
   personal_info:   PersonalInfo,
+  skills: Skills,
   work_experience: WorkExperience[],
   education:       Education[], 
   certifications:  Certification[],

@@ -46,7 +46,9 @@ export async function parseCV(formData: FormData) {
     })
 
     if (!res.ok) {
-        throw new Error(`Upload failed: ${res.statusText}`);
+         const detail = await res.text();
+  console.error("parse-cv failed", res.status, detail);
+  throw new Error(`Upload failed (${res.status}): ${detail}`);
     }
 
     const payload = await res.json()
