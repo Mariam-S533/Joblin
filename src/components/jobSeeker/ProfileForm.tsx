@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from "react"
 import Image from "next/image"
 import { useForm, FormProvider } from "react-hook-form"
-import { User, Medal, Building2, Link as LinkIcon, Globe, Lightbulb, GraduationCap, UploadCloud, Trash2, FileText, Copy, Check, FolderGit2  } from "lucide-react"
+import { User, Medal, Building2, Link as LinkIcon, Globe, Lightbulb, GraduationCap, UploadCloud, Trash2, FileText, Copy, Check  } from "lucide-react"
 import SectionBlock from "./SectionBlock"
 import { PersonalInfoEdit } from "./PersonalInfo"
 import Links from "./Links"
@@ -56,12 +56,13 @@ const handleCopyLink = () => {
         const calculateResumeQuality = (): { percentage: number; count: number; label: string } => {
             let completedSections = 0
             // Changed to fullName
-            if (formData.personal_info?.fullName) completedSections++ 
+            if (formData.personal_info?.fullname) completedSections++ 
             if (formData.work_experience && formData.work_experience.length > 0) completedSections++
             if (formData.education && formData.education.length > 0) completedSections++
-            if (formData.skills && (formData.skills.technical?.trim().length > 0 || 
-                        formData.skills.tools_and_platforms?.length > 0 || 
-                         formData.skills.methodologies?.length > 0)) {completedSections++}            
+            if (formData.skills && (
+            (Array.isArray(formData.skills.technical) && formData.skills.technical.length > 0) ||
+            formData.skills.tools_and_platforms?.length > 0 ||
+            formData.skills.methodologies?.length > 0)) {completedSections++ }
             if (formData.certifications && formData.certifications.length > 0) completedSections++
             if (formData.languages && formData.languages.length > 0) completedSections++
             
@@ -167,7 +168,7 @@ const onGlobalSave = async (data: ProfileFormData) => {
                                 <Image src="/avater.jpg" alt="profile" width={80} height={80} className="object-cover" />
                             </div>
                             <div className="flex flex-col gap-1">
-                                <h2 className="text-joblin-primary font-bold text-xl">{formData.personal_info?.fullName || "Name"}</h2>
+                                <h2 className="text-joblin-primary font-bold text-xl">{formData.personal_info?.fullname || "Name"}</h2>
                                 <p className="text-joblin-dark-gray text-sm">{formData.personal_info?.phone || "No phone linked"}</p>
                             </div>
                         </div>
@@ -179,12 +180,12 @@ const onGlobalSave = async (data: ProfileFormData) => {
                             title="Personal Information" icon={User}
                             formKey="personal_info"
                             helperText="Add your personal information" ctaText="Personal Information"
-                            hasData={!!formData.personal_info?.fullName}
+                            hasData={!!formData.personal_info?.fullname}
                             readView={
                                 <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
                                     <div>
                                         <p className='mb-1 text-joblin-light-gray text-[14px]'>Full Name</p>
-                                        <p className='text-joblin-black text-[16px] font-medium'>{formData.personal_info?.fullName || "N/A"}</p>
+                                        <p className='text-joblin-black text-[16px] font-medium'>{formData.personal_info?.fullname || "N/A"}</p>
                                     </div>
                                     <div>
                                         <p className='mb-1 text-joblin-light-gray text-[14px]'>Country</p>
@@ -302,10 +303,18 @@ const onGlobalSave = async (data: ProfileFormData) => {
                             readView={
                                     <div className="flex flex-col gap-4">
                                         {/* Technical Skills */}
-                                        <div>
-                                            <p className="text-[13px] text-joblin-light-gray mb-1">Technical Focus</p>
-                                            <p className="text-joblin-black font-medium text-[14px]">{formData.skills?.technical || "No technical focus added"}</p>
-                                        </div>
+                                            <div>
+                                                <p className="text-[13px] text-joblin-light-gray mb-1">Technical Focus</p>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {formData.skills?.technical?.length > 0 ? (
+                                                        formData.skills.technical.map((tech, i) => (
+                                                            <span key={i} className="bg-amber-100 text-amber-800 px-2 py-1 rounded text-[12px] font-medium">{tech}</span>
+                                                        ))
+                                                    ) : (
+                                                        <p className="text-joblin-black font-medium text-[14px]">No technical focus added</p>
+                                                    )}
+                                                </div>
+                                            </div>
                                         
                                         {/* Tools & Platforms (Array) */}
                                         <div>
@@ -410,7 +419,7 @@ const onGlobalSave = async (data: ProfileFormData) => {
                         {/* Breakdown sub-items */}
                         <div className="w-full text-left bg-gray-50 p-3 rounded-lg border border-gray-100 space-y-2 text-[11px] text-gray-500">
                             <div className="flex items-center gap-1.5">
-                                <span className={`w-1.5 h-1.5 rounded-full ${formData.personal_info?.fullName ? 'bg-green-500' : 'bg-gray-300'}`} />
+                                <span className={`w-1.5 h-1.5 rounded-full ${formData.personal_info?.fullname ? 'bg-green-500' : 'bg-gray-300'}`} />
                                 <p>Personal Details</p>
                             </div>
                             <div className="flex items-center gap-1.5">
@@ -532,3 +541,7 @@ const onGlobalSave = async (data: ProfileFormData) => {
         </FormProvider>
     )
 }
+
+
+
+
