@@ -370,7 +370,7 @@ const onGlobalSave = async (data: ProfileFormData) => {
                             hasData={!!formData.languages && formData.languages.length > 0}
                             readView={
                                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                                    {formData.languages?.map((lang, i) => (
+                                    {[...new Map(formData.languages?.map(l => [l.language + "|" + l.proficiency, l])).values()].map((lang, i) => (
                                         <div key={i} className="flex flex-col">
                                             <p className="font-medium text-joblin-black">{lang.language}</p>
                                             <p className="text-joblin-light-gray text-[13px]">{lang.proficiency || "--"}</p>
