@@ -57,10 +57,8 @@ export type CompanyJobPostResponse = {
   city: string;
   street: string | null;
   reqExpYears: string;
-  minSalary: string;
-  maxSalary: string;
+  avgSalary: string;
   salaryCurrency: string | null;
-  visaSponsorship: boolean;
   contactMail: string | null;
   createdAt: string;
   deadline: string | null;
@@ -68,8 +66,6 @@ export type CompanyJobPostResponse = {
   jobType: string;
   workMode: string;
   experienceLevel: string;
-  /** Backend JobStatus — may arrive as PascalCase string ("Active","Closed","Cancelled")
-   *  or as numeric enum value (1=Active, 2=Closed, 3=Cancelled). */
   jobStatus: string | number;
   requiredSkills: RequiredSkillResponse[];
 };
@@ -98,15 +94,11 @@ export type PostedJob = {
   jobType: string;
   workMode: string;
   technicalDomain: string;
-  /** Computed from deadline. null means no deadline was set. */
   daysRemaining: number | null;
-  /** Normalized to PostedJobStatus (JobStatus) enum values: "Active" | "Closed" | "Cancelled" */
   jobStatus: JobStatus;
-  minSalary: string;
-  maxSalary: string;
+  avgSalary: string;
   country: string;
   city: string;
-  /** ISO 8601 date string from API */
   createdAt: string;
   deadline: string | null;
   experienceLevel: string;
@@ -124,8 +116,8 @@ export type PostedJob = {
 export type PostedJobsPageData = {
   stats: PostedJobStats;
   jobs: PostedJob[];
-  /** "All Domains" (UI label) + unique technicalDomain values from API */
   technicalDomains: string[];
+  pagination?: PaginationMeta;
 };
 // ─── API Payloads (for delete/toggle — paths need backend confirmation) ──
 export type DeleteJobResponse = {

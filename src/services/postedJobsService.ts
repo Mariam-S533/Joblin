@@ -9,31 +9,36 @@ import type {
 } from "@/features/posted-jobs/types";
 import { transformCompanyJobPosts } from "@/features/posted-jobs/utils";
 import { normalizePostedJobStatus } from "@/features/posted-jobs/types";
+import type { PagedResultResponse } from "@/features/shared/types";
 
-/**
- * Fetch all job posts for a given company.
- *
- * GET /api/job-posts/company/{companyId}
- *
- * The backend returns a flat JSON array of CompanyJobPostResponse objects.
- * The apiClient auto-wraps the response into ApiResponse<CompanyJobPostResponse[]>,
- * so we access response.data to get the raw array.
- *
- * We then transform the raw array into PostedJobsPageData for UI consumption:
- *   - Normalize jobStatus strings to PostedJobStatus enum values
- *   - Compute daysRemaining from deadline
- *   - Compute stats (total, active, closed counts)
- *   - Extract unique technicalDomain values for the filter UI
- */
+export type GetPostedJobsParams = {
+  page?: number;
+  pageSize?: number;
+};
+
 export const getPostedJobs = async (
   companyId: string,
+  params?: GetPostedJobsParams,
 ): Promise<PostedJobsPageData> => {
-  const response = await apiClient.get<CompanyJobPostResponse[]>(
-    `${endpoints.listByCompany}/${companyId}`,
-  );
+  const page = params?.page ?? 1;
+  const pageSize = params?.pageSize ?? 10;
+  const url = `${endpoints.listByCompany}/${companyId}?Page=${page}&PageSize=${pageSize}`;
 
-  const rawJobs = response.data;
-  return transformCompanyJobPosts(rawJobs);
+  const response = await apiClient.get<PagedResultResponse<CompanyJobPostResponse>>(url);
+  const pagedResult = response.data;
+  const rawJobs = pagedResult.data;
+
+  return {
+    ...transformCompanyJobPosts(rawJobs, pagedResult.totalCount),
+    pagination: {
+      page: pagedResult.page,
+      pageSize: pagedResult.pageSize,
+      totalCount: pagedResult.totalCount,
+      totalPages: pagedResult.totalPages,
+      hasNextPage: pagedResult.hasNextPage,
+      hasPreviousPage: pagedResult.hasPreviousPage,
+    },
+  };
 };
 
 export const getJobPostById = async (

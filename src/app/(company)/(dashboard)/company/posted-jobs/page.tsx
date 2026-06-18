@@ -15,6 +15,8 @@ import {
   FileX2,
   AlertCircle,
   MapPin,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -212,8 +214,17 @@ function PostedJobsContent({ userId }: PostedJobsContentProps) {
   });
   const companyId = companyData?.id;
 
+  // ── Pagination state ─────────────────────────────────────────────
+  const [page, setPage] = useState(1);
+  const [pageSize] = useState(10);
+
+  // Reset page when companyId changes
+  useEffect(() => {
+    setPage(1);
+  }, [companyId]);
+
   // ── Fetch posted jobs using companyId ────────────────────────────
-  const { data, isLoading, isError } = usePostedJobs(companyId);
+  const { data, isLoading, isError } = usePostedJobs(companyId, { page, pageSize });
 
   const deleteJob = useDeletePostedJob();
   const toggleStatus = useToggleJobStatus();
@@ -473,7 +484,7 @@ function PostedJobsContent({ userId }: PostedJobsContentProps) {
                 <div className="flex items-center gap-2 text-sm text-neutral-600">
                   <CircleDollarSign className="h-4 w-4 text-neutral-400" />
                   <span>
-                    {job.minSalary} - {job.maxSalary}
+                    {job.avgSalary}
                   </span>
                 </div>
 
@@ -532,6 +543,37 @@ function PostedJobsContent({ userId }: PostedJobsContentProps) {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Pagination */}
+        {data?.pagination && data.pagination.totalPages > 1 && (
+          <div className="flex items-center justify-between border-t border-neutral-200 px-6 py-4">
+            <span className="text-sm text-neutral-500">
+              Page {data.pagination.page} of {data.pagination.totalPages} ({data.pagination.totalCount} total)
+            </span>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 gap-1"
+                disabled={!data.pagination.hasPreviousPage}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 gap-1"
+                disabled={!data.pagination.hasNextPage}
+                onClick={() => setPage((p) => p + 1)}
+              >
+                Next
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         )}
       </div>

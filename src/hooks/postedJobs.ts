@@ -26,10 +26,17 @@ import { queryKeys } from "@/lib/queryKeys";
  * page component, not via query params, because the backend endpoint
  * returns all jobs for the company without filtering support.
  */
-export const usePostedJobs = (companyId: string | undefined) =>
+import type {
+  GetPostedJobsParams,
+} from "@/services/postedJobsService";
+
+export const usePostedJobs = (
+  companyId: string | undefined,
+  params?: GetPostedJobsParams,
+) =>
   useQuery({
-    queryKey: queryKeys.postedJobs.list(companyId),
-    queryFn: () => getPostedJobs(companyId!),
+    queryKey: queryKeys.postedJobs.list(companyId, params?.page, params?.pageSize),
+    queryFn: () => getPostedJobs(companyId!, params),
     enabled: !!companyId,
   });
 
