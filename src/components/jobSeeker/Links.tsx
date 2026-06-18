@@ -20,7 +20,7 @@ function Links() {
                                 {...register("personalInfo.fullName")}
                         />
                         <Label className=' absolute left-3 top-0 -translate-y-1/2 bg-white px-1 text-sm text-joblin-dark-gray font-medium gap-1'>
-                            Your Sills
+                            Your socialLink
                         </Label>
                     </div>
 
