@@ -5,11 +5,22 @@ import type {
   PostedCourseStatus,
   PostedCourse,
 } from "@/features/posted-courses/types";
+import type { PagedResultResponse } from "@/features/shared/types";
 
-export const getPostedCourses = async (companyId: string) => {
-  const response = await apiClient.get<PostedCoursesResponse>(
-    endpoints.listByCompany(companyId),
-  );
+export type GetPostedCoursesParams = {
+  page?: number;
+  pageSize?: number;
+};
+
+export const getPostedCourses = async (
+  companyId: string,
+  params?: GetPostedCoursesParams,
+): Promise<PostedCoursesResponse> => {
+  const page = params?.page ?? 1;
+  const pageSize = params?.pageSize ?? 10;
+  const url = `${endpoints.listByCompany(companyId)}?Page=${page}&PageSize=${pageSize}`;
+
+  const response = await apiClient.get<PagedResultResponse<PostedCourse>>(url);
   return response.data;
 };
 

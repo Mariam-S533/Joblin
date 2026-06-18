@@ -5,18 +5,32 @@ import {
   deletePostedCourse,
   toggleCourseStatus,
 } from "@/services/postedCoursesService";
-import type { PostedCourseStatus } from "@/features/posted-courses/types";
+import type { PostedCourseStatus, PostedCoursesResponse } from "@/features/posted-courses/types";
+import type { GetPostedCoursesParams } from "@/services/postedCoursesService";
 
 import { queryKeys } from "@/lib/queryKeys";
 
-export const usePostedCourses = (companyId?: string) =>
+const EMPTY_PAGED_RESULT: PostedCoursesResponse = {
+  data: [],
+  totalCount: 0,
+  page: 1,
+  pageSize: 10,
+  totalPages: 0,
+  hasNextPage: false,
+  hasPreviousPage: false,
+};
+
+export const usePostedCourses = (
+  companyId?: string,
+  params?: GetPostedCoursesParams,
+) =>
   useQuery({
-    queryKey: queryKeys.postedCourses.list(companyId),
+    queryKey: queryKeys.postedCourses.list(companyId, params?.page, params?.pageSize),
     queryFn: () => {
       if (!companyId) {
-        return Promise.resolve([]);
+        return Promise.resolve(EMPTY_PAGED_RESULT);
       }
-      return getPostedCourses(companyId);
+      return getPostedCourses(companyId, params);
     },
     enabled: Boolean(companyId),
   });

@@ -23,8 +23,8 @@ export const queryKeys = {
   },
   postedCourses: {
     all: ["posted-courses"] as const,
-    list: (companyId?: string) =>
-      ["posted-courses", "list", companyId] as const,
+    list: (companyId?: string, page?: number, pageSize?: number) =>
+      ["posted-courses", "list", companyId, page, pageSize] as const,
     detail: (courseId: string) =>
       ["posted-courses", "detail", courseId] as const,
   },

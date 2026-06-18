@@ -5,6 +5,7 @@ import {
   getJobStatusLabel,
   normalizeJobStatus,
 } from "@/features/enums";
+import type { PagedResultResponse } from "@/features/shared/types";
 
 // Re-export for downstream consumers
 export type { JobStatus as PostedCourseStatus, EnumOption };
@@ -49,4 +50,4 @@ export type PostedCourse = {
   providedSkills: ProvidedSkill[];
 };
 
-export type PostedCoursesResponse = PostedCourse[];
+export type PostedCoursesResponse = PagedResultResponse<PostedCourse>;
