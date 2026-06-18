@@ -333,7 +333,7 @@ export default function CompanySidebar() {
                   className="w-10 h-10 rounded-lg object-cover border border-gray-200"
                   />
                   <div className="flex flex-col">
-                    <span className="text-sm font-semibold text-gray-800 "> Mariam </span>
+                    <span className="text-sm font-semibold text-gray-800 "> {profile.profileName} </span>
                     <span className="text-xs text-gray-500">{profile.technicalDomain}</span>
                   </div>
                 </div>

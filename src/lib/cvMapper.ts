@@ -6,7 +6,7 @@ export function mapParsedCVToFormData(parsedData: ParsedCV): ProfileFormData {
     return {
         // 1. Map Personal Info
         personal_info: {
-            fullName: parsedData.personal_info.fullName || "", 
+            fullname: parsedData.personal_info.fullname || "", 
             headline: null, // Extra data sent as null
             phone: parsedData.personal_info.phone,
             location: {
@@ -67,7 +67,7 @@ export function mapParsedCVToFormData(parsedData: ParsedCV): ProfileFormData {
 
         // 6. Map Skills
         skills: {
-            technical: parsedData.skills.technical || "",
+            technical: parsedData.skills.technical || [],
             tools_and_platforms: parsedData.skills.tools_and_platforms || [],
             methodologies: parsedData.skills.methodologies || [],
         }
