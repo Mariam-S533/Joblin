@@ -431,7 +431,6 @@ export async function postUserPicture(file: File){
     const res = await fetch(`${baseUrl}/api/Profile/picture`,{
         method:'POST',
         headers:{
-            'Content-Type': 'application/json',
             "Authorization": `Bearer ${token}`,
             "X-Tunnel-Skip-AntiPhishing-Page": "true"
         },
