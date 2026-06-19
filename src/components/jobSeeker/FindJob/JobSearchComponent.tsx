@@ -6,12 +6,13 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger} from "@/c
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import {  useState } from 'react'
+import {  useMemo, useState } from 'react'
 import { JobPost } from '@/app/Types/seekerActivity'
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationPrevious, PaginationNext,} from "@/components/ui/pagination"
 import JobPostCard from './JobPostCard';
 import { toast } from 'sonner';
 import { getJobPosts } from '@/app/actions/searchjobs.action';
+import { getSearchResult } from '@/app/actions/search.action';
 
 
 interface JobPostsResponse {
@@ -26,6 +27,10 @@ function JobSearchComponent({initialData}: {initialData: JobPostsResponse}) {
     const [error, setError] = useState<string | null>(null)
     const [activeFilters, setActiveFilters] = useState<string[]>([]);
 
+    // State for input and managing unpaginated search view
+    const [searchQuery, setSearchQuery] = useState<string>(""); 
+    const [isSearching, setIsSearching] = useState<boolean>(false);
+
     const [jobs, setJobs] = useState<JobPost[]>(initialData?.data || []);
     const [currentPage, setCurrentPage] = useState<number>(initialData?.page || 1)
     const [totalPages, setTotalPages] = useState<number>(initialData?.totalPages || 1);
@@ -34,6 +39,77 @@ function JobSearchComponent({initialData}: {initialData: JobPostsResponse}) {
     const jobsPerPage = 10 
     const hasPreviousPage = currentPage > 1
     const hasNextPage = currentPage < totalPages
+
+
+
+        // Client-side execution layer to actually slice data based on selected items
+    const filteredJobs = useMemo(() => {
+        if (activeFilters.length === 0) return jobs;
+        return jobs.filter((job) => {
+            // Check matching properties (assuming typical keys based on your UI filters)
+            const matchesWorkMood = activeFilters.some(f => 
+                job.workMode?.toLowerCase() === f.toLowerCase() || 
+                job.workMode?.toLowerCase() === f.toLowerCase()
+            );
+            const matchesJobType = activeFilters.some(f => 
+                job.jobType?.toLowerCase() === f.toLowerCase().replace(" ", "")
+            );
+            const matchesExperience = activeFilters.some(f => 
+                job.experienceLevel?.toLowerCase() === f.toLowerCase()
+            );
+            
+            // Fallback match configuration if fields differ slightly
+            if (activeFilters.includes("Remote") || activeFilters.includes("Hybrid") || activeFilters.includes("OnSite")) {
+                if (!matchesWorkMood) return false;
+            }
+            if (activeFilters.includes("Full Time") || activeFilters.includes("Part Time") || activeFilters.includes("Internship")) {
+                if (!matchesJobType) return false;
+            }
+            if (activeFilters.includes("Entry level") || activeFilters.includes("Mid-Senior level") || activeFilters.includes("Executive")) {
+                if (!matchesExperience) return false;
+            }
+            
+            return true;
+        });
+    }, [jobs, activeFilters]);
+
+
+    // Updated Search trigger logic
+    async function handleSearch() {
+        if (loading) return;
+        
+        // If the user clears the search bar, instantly restore the initial paginated server data
+        if (!searchQuery.trim()) {
+            setIsSearching(false);
+            setJobs(initialData?.data || []);
+            setTotalPages(initialData?.totalPages || 1);
+            setCurrentPage(initialData?.page || 1);
+            setError(null);
+            return;
+        }
+
+        setLoading(true);
+        setError(null);
+
+        try {
+            const result = await getSearchResult(searchQuery, jobsPerPage);
+            
+            // Handle incoming data as a clean array response
+            setJobs(result || []);
+            setIsSearching(true); 
+            setCurrentPage(1);
+            setTotalPages(1); // Set to 1 so the unpaginated pagination layout hides cleanly
+        } catch (error) {
+            const message = error instanceof Error ? error.message : "Search failed. Please try again.";
+            setError(message);
+            toast.error(message, {position: "top-center", duration: 3000});
+        } finally {
+            setLoading(false);
+        }
+    }
+
+
+
 
     async function changePage(page: number) {
     // if (page < 1 || page > totalPages) return;
@@ -97,6 +173,9 @@ function JobSearchComponent({initialData}: {initialData: JobPostsResponse}) {
                 <input
                 type="text"
                 placeholder="Job title or keywords"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                 className="border-0 p-1 outline-0 text-sm w-full "
                 />
               </div>
@@ -122,8 +201,11 @@ function JobSearchComponent({initialData}: {initialData: JobPostsResponse}) {
               </Select>
               </div>
             
-                <button type="button" className=" w-full md:w-auto bg-joblin-primary text-white px-6 py-3 text-sm font-medium flex items-center justify-center gap-2">
-                <Search size={15}/> <span>Search</span>
+                <button type="button"
+                        onClick={handleSearch}
+                        disabled={loading}
+                        className=" w-full md:w-auto bg-joblin-primary text-white px-6 py-3 text-sm font-medium flex items-center justify-center gap-2">
+                <Search size={15}/> <span>{loading ? "Searching..." : "Search"}</span>
               </button>     
             </div>
           </div>
@@ -163,11 +245,11 @@ function JobSearchComponent({initialData}: {initialData: JobPostsResponse}) {
                                     <div className="text-center py-12 text-gray-500">Loading jobs...</div>
                                 ) : error ? (
                                     <div className="text-center py-12 text-red-500">{error}</div>
-                                ) : jobs.length === 0 ? (
+                                ) : filteredJobs.length === 0 ? (
                                     <div className="text-center py-12 text-gray-400">No jobs found.</div>
                                 ) : (
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        {jobs.map((job) => (
+                                        {filteredJobs.map((job) => (
                                             <JobPostCard key={job.id} jobPost={job}/>
                                         ))}
                                     </div>
@@ -178,7 +260,7 @@ function JobSearchComponent({initialData}: {initialData: JobPostsResponse}) {
 
             </div>
 
-            { !loading && !error && jobs.length > 0 && totalPages > 1 && (
+            { !loading && !error && !isSearching && jobs.length > 0 && totalPages > 1 && (
             <div className="mt-8 flex justify-center">
             <Pagination>
                 <PaginationContent>
@@ -243,6 +325,9 @@ interface JobFiltersProps {
 
 
 function JobFilters({ activeFilters, onCheckboxChange, onRadioChange, onRemoveFilter }: JobFiltersProps) {
+
+    const currentRadioValue = Object.keys(dateOptions).find(key => activeFilters.includes(dateOptions[key])) || "";
+
     return (
         <div className="border border-[#EDEDED] rounded-lg bg-white shadow-sm">
             <div className="p-4 border-b">
@@ -291,7 +376,7 @@ function JobFilters({ activeFilters, onCheckboxChange, onRadioChange, onRemoveFi
                     <AccordionTrigger className="px-4 text-sm">Publication Date</AccordionTrigger>
                     <AccordionContent className="px-4 pb-4">
                         <RadioGroup 
-                            value={Object.keys(dateOptions).find(key => activeFilters.includes(dateOptions[key])) || ""}
+                            value={currentRadioValue}
                             onValueChange={(val) => onRadioChange(val, dateOptions)}
                         >
                             <div className="flex items-center gap-3">
