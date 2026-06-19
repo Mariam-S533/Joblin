@@ -6,7 +6,7 @@ import { enhanceCV, enhanceAndSaveCV } from "@/app/actions/ai.action"
 import { useProfileContext } from "@/app/context/ProfilesProvider"
 import { toast } from "sonner"
 import { Pencil, Eye, UploadCloud, X, FileText, Sparkles, Check } from "lucide-react"
-import jsPDF from "jspdf"
+import { jsPDF } from "jspdf"
 
 type Step = "confirm" | "upload" | "editor"
 
