@@ -24,8 +24,13 @@ export default function SaveJobsContextProvider({children}: {children: React.Rea
 
         
     async function getSavedDetails(){
-        const details = await getAllSavedJobs()
-        setAllSavedJobs(details ?? [])
+        try {
+            const details = await getAllSavedJobs()
+            setAllSavedJobs(details ?? [])
+        } catch (error) {
+            console.error("Failed to fetch saved jobs:", error)
+            setAllSavedJobs([])
+        }
     }
 
     async function addToSavedJobs(jobPostId: string, seekerProfileId: string){

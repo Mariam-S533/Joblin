@@ -4,23 +4,34 @@ import { userToken } from "@/lib/userToken"
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL
 
 
+// TODO: Uncomment when backend /api/saved-jobs endpoint is fixed
+// export async function getAllSavedJobs(){
+//     const token  = await userToken()
+
+//     const res = await fetch(`${baseUrl}/api/saved-jobs`,{
+//         method:'GET',
+//         headers:{
+//             "Authorization": `Bearer ${token}`,
+//             "X-Tunnel-Skip-AntiPhishing-Page": "true"
+//         }
+//        })
+
+//         if (!res.ok) {
+//             let backendError = ''
+//             try {
+//                 const errorBody = await res.text()
+//                 backendError = ` - Backend: ${errorBody}`
+//             } catch {}
+//             throw new Error(`Failed to get saved jobs: ${res.status} ${res.statusText}${backendError}`)
+//         }
+
+//     const payload = await res.json()
+//     return payload
+// }
+
+// Temporary stub until backend is fixed
 export async function getAllSavedJobs(){
-    const token  = await userToken()
-
-    const res = await fetch(`${baseUrl}/api/saved-jobs`,{
-        method:'GET',
-        headers:{
-            "Authorization": `Bearer ${token}`,
-            "X-Tunnel-Skip-AntiPhishing-Page": "true"
-        }
-       })
-
-        if (!res.ok) {
-            throw new Error(`Failed to get post: ${res.statusText}`)
-        }
-        
-    const payload = await res.json()
-    return payload
+    return []
 }
 
 
@@ -40,7 +51,7 @@ export async function saveAjopPost(jobPostId: string, seekerProfileId: string) {
     })
 
      if (!res.ok) {
-            throw new Error(`Failed to inrole in a course: ${res.statusText}`)
+            throw new Error(`Failed to save job post: ${res.status} ${res.statusText}`)
         }
 
         //be sure
@@ -51,7 +62,7 @@ export async function saveAjopPost(jobPostId: string, seekerProfileId: string) {
 
 
 export async function unSaveAjopPost(jobPostId: string) {
-    
+
     const token = await userToken()
 
     const res = await fetch(`${baseUrl}/api/saved-jobs/${jobPostId}`,{
@@ -64,7 +75,7 @@ export async function unSaveAjopPost(jobPostId: string) {
     })
 
      if (!res.ok) {
-            throw new Error(`Failed to inrole in a course: ${res.statusText}`)
+            throw new Error(`Failed to unsave job post: ${res.status} ${res.statusText}`)
         }
 
         //be sure

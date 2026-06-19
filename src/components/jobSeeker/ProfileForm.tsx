@@ -14,7 +14,8 @@ import { useProfileContext } from "@/app/context/ProfilesProvider"
 import WorkExperienceEdit from "./Experience"
 import EducationEdit from "./Education"
 import { getSeekerInfo, getUserCer, getUserEdu, getUserLang, getUserSkills, getWorkExp, postWorkExp, editWorkExp, editSeekerInfo, editUserSkills, postUserEdu, editUserEdu, postUserCer, editUserCer, postUserLang, editUserLang } from "@/app/actions/profileSections.action"
-import { ProfileFormData } from "@/app/Types/profileShared"
+import { getProfiles } from "@/app/actions/profile.action"
+import { ProfileFormData, SkillSec } from "@/app/Types/profileShared"
 import Link from "next/link"
 import { mapParsedCVToFormData } from "@/lib/cvMapper"
 
@@ -53,24 +54,33 @@ const handleCopyLink = () => {
     setTimeout(() => setCopied(false), 2000)
 }
 
+	// Normalize a skills field to an array — handles both backend arrays
+	// and form-input comma-separated strings
+	const toSkillArray = (val: unknown): string[] => {
+	    if (Array.isArray(val)) return val
+	    if (typeof val === "string") return val.split(",").map(s => s.trim()).filter(Boolean)
+	    return []
+	}
+
+	const technicalSkills = toSkillArray(formData.skills?.technical)
+	const toolsPlatforms = toSkillArray(formData.skills?.tools_and_platforms)
+	const methodologies = toSkillArray(formData.skills?.methodologies)
+
         const calculateResumeQuality = (): { percentage: number; count: number; label: string } => {
             let completedSections = 0
             // Changed to fullName
-            if (formData.personal_info?.fullname) completedSections++ 
+            if (formData.personal_info?.fullname) completedSections++
             if (formData.work_experience && formData.work_experience.length > 0) completedSections++
             if (formData.education && formData.education.length > 0) completedSections++
-            if (formData.skills && (
-            (Array.isArray(formData.skills.technical) && formData.skills.technical.length > 0) ||
-            formData.skills.tools_and_platforms?.length > 0 ||
-            formData.skills.methodologies?.length > 0)) {completedSections++ }
+            if (technicalSkills.length > 0 || toolsPlatforms.length > 0 || methodologies.length > 0) {completedSections++ }
             if (formData.certifications && formData.certifications.length > 0) completedSections++
             if (formData.languages && formData.languages.length > 0) completedSections++
-            
+
             // Changed to check individual link fields instead of a socialLinks array
             if (formData.personal_info?.linkedin || formData.personal_info?.github || formData.personal_info?.website) completedSections++
 
             const percentage = Math.round((completedSections / 7) * 100)
-            
+
             let label = "Needs Improvements"
             if (percentage >= 50 && percentage < 80) label = "Good Progress"
             if (percentage >= 80) label = "Excellent Match"
@@ -124,9 +134,29 @@ useEffect(() => {
 
 
 const onGlobalSave = async (data: ProfileFormData) => {
+    // Normalize skills before saving — form inputs store comma-separated
+    // strings but the backend expects string[]
+    const skillsPayload: SkillSec = {
+        technical: toSkillArray(data.skills?.technical),
+        tools_and_platforms: toSkillArray(data.skills?.tools_and_platforms),
+        methodologies: toSkillArray(data.skills?.methodologies),
+    }
+
     try {
         if (parsedData) {
-            await handleSaveCV(data, currentProfileName, currentProfileId)
+            await handleSaveCV({ ...data, skills: skillsPayload }, currentProfileName, currentProfileId)
+            // Fetch fresh profile list to get the (potentially new) profile ID
+            const freshProfiles = await getProfiles()
+            const savedProfileId = currentProfileId || (freshProfiles && freshProfiles.length > 0 ? freshProfiles[0].id : null)
+            // Explicitly save skills via the dedicated endpoint in case
+            // /save-cv does not persist them. Don't let this fail the whole save.
+            if (savedProfileId) {
+                try {
+                    await editUserSkills(savedProfileId, skillsPayload)
+                } catch (skillErr) {
+                    console.warn("Skills may already be saved via /save-cv, dedicated endpoint failed:", skillErr)
+                }
+            }
             await fetchProfiles()
             await getAllSections()
             setHasSaved(true)
@@ -143,7 +173,7 @@ const onGlobalSave = async (data: ProfileFormData) => {
                 savePromises.push(editSeekerInfo(data.personal_info))
             }
             if (dirtyFields.skills) {
-                savePromises.push(editUserSkills(activeId, data.skills))
+                savePromises.push(editUserSkills(activeId, skillsPayload))
             }
             if (dirtyFields.work_experience) {
                 savePromises.push(
@@ -218,7 +248,13 @@ const onGlobalSave = async (data: ProfileFormData) => {
         try {
             const activeId = currentProfileId || profilesList[0]?.id
             if (!activeId) return
-            await editUserSkills(activeId, formData.skills)
+            // Convert comma-separated strings from form inputs to arrays
+            const skillsPayload: SkillSec = {
+                technical: toSkillArray(formData.skills?.technical),
+                tools_and_platforms: toSkillArray(formData.skills?.tools_and_platforms),
+                methodologies: toSkillArray(formData.skills?.methodologies),
+            }
+            await editUserSkills(activeId, skillsPayload)
             const freshData = await getUserSkills(activeId)
             setValue("skills", freshData, { shouldValidate: true, shouldDirty: false })
         } catch (err) {
@@ -408,15 +444,15 @@ const onGlobalSave = async (data: ProfileFormData) => {
                             title="Professional Skills" icon={Medal}
                             formKey="skills"
                             helperText="Add your professional skills" ctaText="Skills"
-                            hasData={!!formData.skills && (formData.skills?.technical.length > 0 || formData.skills?.tools_and_platforms.length > 0 || formData.skills?.methodologies.length > 0)}
+                            hasData={technicalSkills.length > 0 || toolsPlatforms.length > 0 || methodologies.length > 0}
                             readView={
                                     <div className="flex flex-col gap-4">
                                         {/* Technical Skills */}
                                             <div>
                                                 <p className="text-[13px] text-joblin-light-gray mb-1">Technical Focus</p>
                                                 <div className="flex flex-wrap gap-2">
-                                                    {formData.skills?.technical?.length > 0 ? (
-                                                        formData.skills.technical.map((tech, i) => (
+                                                    {technicalSkills.length > 0 ? (
+                                                        technicalSkills.map((tech, i) => (
                                                             <span key={i} className="bg-amber-100 text-amber-800 px-2 py-1 rounded text-[12px] font-medium">{tech}</span>
                                                         ))
                                                     ) : (
@@ -424,12 +460,12 @@ const onGlobalSave = async (data: ProfileFormData) => {
                                                     )}
                                                 </div>
                                             </div>
-                                        
+
                                         {/* Tools & Platforms (Array) */}
                                         <div>
                                             <p className="text-[13px] text-joblin-light-gray mb-1">Tools & Platforms</p>
                                             <div className="flex flex-wrap gap-2">
-                                                {formData.skills?.tools_and_platforms.map((tool, i) => (
+                                                {toolsPlatforms.map((tool, i) => (
                                                     <span key={i} className="bg-gray-100 px-2 py-1 rounded text-[12px]">{tool}</span>
                                                 ))}
                                             </div>
@@ -439,7 +475,7 @@ const onGlobalSave = async (data: ProfileFormData) => {
                                         <div>
                                             <p className="text-[13px] text-joblin-light-gray mb-1">Methodologies</p>
                                             <div className="flex flex-wrap gap-2">
-                                                {formData.skills?.methodologies.map((method, i) => (
+                                                {methodologies.map((method, i) => (
                                                     <span key={i} className="bg-gray-100 px-2 py-1 rounded text-[12px]">{method}</span>
                                                 ))}
                                             </div>
@@ -539,14 +575,14 @@ const onGlobalSave = async (data: ProfileFormData) => {
                                 <p>Work Background</p>
                             </div>
                             <div className="flex items-center gap-1.5">
-                                <span 
+                                <span
                                     className={`w-1.5 h-1.5 rounded-full ${
-                                        (formData.skills?.technical || 
-                                        formData.skills?.tools_and_platforms?.length > 0 || 
-                                        formData.skills?.methodologies?.length > 0) 
-                                        ? 'bg-green-500' 
+                                        (technicalSkills.length > 0 ||
+                                        toolsPlatforms.length > 0 ||
+                                        methodologies.length > 0)
+                                        ? 'bg-green-500'
                                         : 'bg-gray-300'
-                                    }`} 
+                                    }`}
                                 />
                                 <p>Skill Core Capabilities</p>
                             </div>

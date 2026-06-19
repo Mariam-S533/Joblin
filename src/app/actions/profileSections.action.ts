@@ -165,11 +165,14 @@ export async function editUserSkills(profileId: string, SkillData: SkillSec){
     })
 
      if (!res.ok) {
-            throw new Error(`Failed to save profile: ${res.statusText}`)
+            const detail = await res.text().catch(() => "")
+            throw new Error(`Failed to save skills: ${res.status} ${res.statusText} - ${detail}`)
         }
 
-    const payload = await res.json()
-    return payload
+    // Backend may return 200 with an empty body, so handle that safely
+    const text = await res.text()
+    if (!text) return SkillData // Return the data we just sent as confirmation
+    return JSON.parse(text)
 }
 
 //Education

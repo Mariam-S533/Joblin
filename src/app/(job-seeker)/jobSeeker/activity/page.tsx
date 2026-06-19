@@ -6,13 +6,19 @@ import ActivityComponent from "@/components/activity/ActivityComponent"
 
 async function page() {
 
-  const myEnrollments = await getAllenrollments()
-  const applicationSatus = await getMyApps()
-  const allSavedJobs = await getAllSavedJobs()
+  const [myEnrollments, applicationSatus, allSavedJobs] = await Promise.allSettled([
+    getAllenrollments(),
+    getMyApps(),
+    getAllSavedJobs(),
+  ])
+
+  const enrollments = myEnrollments.status === "fulfilled" ? myEnrollments.value : []
+  const applications = applicationSatus.status === "fulfilled" ? applicationSatus.value : []
+  const savedJobs = allSavedJobs.status === "fulfilled" ? allSavedJobs.value : []
 
   return <>
-  
-  <ActivityComponent myEnrollments={myEnrollments} applicationSatus={applicationSatus} allSavedJobs={allSavedJobs}/>
+
+  <ActivityComponent myEnrollments={enrollments} applicationSatus={applications} />
 
   </>
 }

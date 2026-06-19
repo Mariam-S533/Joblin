@@ -91,13 +91,16 @@ function ProfilesContextProvider({children}: {children: React.ReactNode}) {
         // if (!parsedData) return  //will handeled in btn
 
         try {
-            const msg = await saveParsedData(returnedData, profileName, profileId || undefined)
-            setSavedMsg(msg)
+            const result = await saveParsedData(returnedData, profileName, profileId || undefined)
+            setSavedMsg(result.message || result)
             await fetchProfiles()
+            // Return the saved profile so callers can access the new profile ID
+            return result
         } catch (error) {
             console.error("Save error:", error)
+            throw error // Re-throw so callers know the save failed
         }
-        
+
     }
 
 
