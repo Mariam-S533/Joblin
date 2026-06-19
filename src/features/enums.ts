@@ -211,13 +211,12 @@ export const getDifficultyLevelLabel = (value: DifficultyLevel): string =>
 // Backend: public enum DeliveryMode
 //   Online = 1, InPerson = 2, Hybrid = 3, SelfPaced = 4
 
-export type DeliveryMode = "Online" | "In Person" | "Hybrid" | "Self-Paced";
+export type DeliveryMode = "Onsite" | "Hybrid" | "Remote";
 
 export const DELIVERY_MODE_OPTIONS: EnumOption[] = [
-  { label: "Online", value: "Online" },
-  { label: "In Person", value: "In Person" },
+  { label: "Onsite", value: "Onsite" },
   { label: "Hybrid", value: "Hybrid" },
-  { label: "Self-Paced", value: "Self-Paced" },
+  { label: "Remote", value: "Remote" },
 ];
 
 export const DELIVERY_MODE_VALUES: DeliveryMode[] = DELIVERY_MODE_OPTIONS.map(
@@ -225,8 +224,14 @@ export const DELIVERY_MODE_VALUES: DeliveryMode[] = DELIVERY_MODE_OPTIONS.map(
 );
 
 /** Lookup a user-friendly label for a backend DeliveryMode value. */
-export const getDeliveryModeLabel = (value: DeliveryMode): string =>
-  DELIVERY_MODE_OPTIONS.find((o) => o.value === value)?.label ?? value;
+export const getDeliveryModeLabel = (value: DeliveryMode): string => {
+  const labels: Record<DeliveryMode, string> = {
+    Onsite: "In Person",
+    Hybrid: "Hybrid",
+    Remote: "Online",
+  };
+  return labels[value] ?? value;
+};
 
 // ─── Enum Normalization Helpers ──────────────────────────────────────
 //

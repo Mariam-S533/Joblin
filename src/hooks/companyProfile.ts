@@ -21,7 +21,6 @@ import { queryKeys } from "@/lib/queryKeys";
 export type UpsertCompanyInput = {
   id: string;
   payload: UpsertCompanyPayload;
-  logoFile?: File;
 };
 
 /**

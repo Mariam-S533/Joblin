@@ -38,6 +38,10 @@ async function proxyRequest(request: NextRequest, method: string) {
   if (authorization) {
     headers.set("Authorization", authorization);
   }
+  const contentLength = request.headers.get("content-length");
+  if (contentLength) {
+    headers.set("Content-Length", contentLength);
+  }
 
   // Forward request body for non-GET methods
   let body: BodyInit | null = null;

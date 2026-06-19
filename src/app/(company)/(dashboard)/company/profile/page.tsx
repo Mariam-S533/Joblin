@@ -3,11 +3,13 @@ import { useSession } from "next-auth/react";
 
 import React, { useCallback, useMemo, useState } from "react";
 import { Building2, AlignLeft } from "lucide-react";
+import { toast } from "sonner";
 import { FloatingInput } from "@/components/FloatingInputField";
 import { FloatingTextArea } from "@/components/FloatingTextAreaField";
 import { SectionCard } from "@/components/SectionCard";
 import { ProfileUploadingCard } from "@/components/Modal/ProfileUploadingCard";
 import { useGetCompanyById, useUpsertCompany } from "@/hooks/companyProfile";
+import { uploadCompanySettingsLogo } from "@/services/companySettingsService";
 import {
   mapCompanyDataToEditForm,
   mapEditFormToUpsertPayload,
@@ -37,23 +39,19 @@ export default function CompanyProfile() {
     Record<string, string>
   >({});
   const [logoPreviewUrl, setLogoPreviewUrl] = useState("");
-  const [logoPayloadUrl, setLogoPayloadUrl] = useState<string | null>(null);
   const [logoError, setLogoError] = useState<string | null>(null);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
 
   const { data: session } = useSession();
   const userId = session?.id as string;
 
-  // ─── Fetch company data (GET /api/Company/{id}) ──────────────────
   const profileQuery = useGetCompanyById(userId, {
     enabled: !!userId,
   });
 
-  // ─── Upsert company mutation (PUT /api/Company) ──────────────────
   const upsertMutation = useUpsertCompany();
   const isSaving = upsertMutation.isPending;
 
-  // ─── Derive display data from query (no useEffect+setState) ───────
   const companyData = profileQuery.data;
   const isExpectedLookupError =
     profileQuery.error instanceof ApiError &&
@@ -83,15 +81,8 @@ export default function CompanyProfile() {
     ? `${primaryAddress.city ?? ""}, ${primaryAddress.country ?? ""}`
     : "—";
 
-  // When editing, use local editFormData; when viewing, use derived displayFormData
   const activeFormData = isEditing ? editFormData : displayFormData;
-  const activeLogoUrl = isEditing
-    ? logoPreviewUrl || displayLogoUrl
-    : displayLogoUrl;
-
-  // Note: logoPreviewUrl is only used while editing. When not editing,
-  // activeLogoUrl will use displayLogoUrl directly, so no effect is needed
-  // to synchronize logoPreviewUrl from displayLogoUrl (avoids setState in effect).
+  const activeLogoUrl = logoPreviewUrl || displayLogoUrl;
 
   const handleChange = useCallback(
     (field: keyof CompanyEditFormData, value: string) => {
@@ -107,50 +98,50 @@ export default function CompanyProfile() {
   );
 
   const handleStartEditing = useCallback(() => {
-    // Initialize edit form with current data from query
     if (companyData) {
       setEditFormData(mapCompanyDataToEditForm(companyData));
     }
-    setLogoPreviewUrl(displayLogoUrl || "");
-    setLogoPayloadUrl(null);
     setIsEditing(true);
     setValidationErrors({});
     setLogoError(null);
-  }, [companyData, displayLogoUrl]);
+  }, [companyData]);
+
+  const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+  const MAX_FILE_SIZE_MB = 5;
 
   const handleLogoUpload = async (file: File) => {
-    const previousPreview = logoPreviewUrl;
-    const previousPayload = logoPayloadUrl;
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      toast.error("Only JPEG, PNG, WEBP, or GIF images are allowed.");
+      return;
+    }
+    if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+      toast.error(`File size must be under ${MAX_FILE_SIZE_MB}MB.`);
+      return;
+    }
 
+    const previousPreview = logoPreviewUrl;
     setIsUploadingLogo(true);
     setLogoError(null);
 
-    try {
-      const dataUrl = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          if (typeof reader.result === "string") {
-            resolve(reader.result);
-          } else {
-            reject(new Error("Failed to read logo file."));
-          }
-        };
-        reader.onerror = () => reject(new Error("Failed to read logo file."));
-        reader.readAsDataURL(file);
-      });
+    const previewUrl = URL.createObjectURL(file);
+    setLogoPreviewUrl(previewUrl);
 
-      setLogoPreviewUrl(dataUrl);
-      setLogoPayloadUrl(dataUrl);
+    try {
+      const response = await uploadCompanySettingsLogo(file);
+      setLogoPreviewUrl(response.imageUrl);
+      URL.revokeObjectURL(previewUrl);
+      toast.success("Profile picture uploaded successfully.");
+      profileQuery.refetch();
     } catch (error) {
-      setLogoError(getErrorMessage(error, "Failed to prepare logo file."));
+      setLogoError(getErrorMessage(error, "Failed to upload profile picture."));
       setLogoPreviewUrl(previousPreview);
-      setLogoPayloadUrl(previousPayload ?? null);
+      URL.revokeObjectURL(previewUrl);
+      toast.error("Failed to upload profile picture.");
     } finally {
       setIsUploadingLogo(false);
     }
   };
 
-  // ─── Validation ─────────────────────────────────────────────────────
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
 
@@ -160,48 +151,45 @@ export default function CompanyProfile() {
       newErrors.publicContactMail = "Contact email is required";
     if (!editFormData.description.trim())
       newErrors.description = "Description is required";
+    if (editFormData.companySize && Number.isNaN(Number(editFormData.companySize)))
+      newErrors.companySize = "Company size must be a number";
 
     setValidationErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  // ─── Save profile (PUT /api/Company) ────────────────────────────────
   const handleSaveProfile = async () => {
     if (!validate()) return;
     if (!userId) return;
 
-    // Build addresses from the fetched data (preserve existing addresses)
     const existingAddresses: AddressResponse[] = companyData?.addresses ?? [];
-    const addressesForPayload =
-      existingAddresses.length > 0
-        ? existingAddresses.map((addr) => ({
-            branchName: addr.branchName ?? "",
-            country: addr.country ?? "",
-            city: addr.city ?? "",
-            regionOrState: addr.regionOrState ?? null,
-            postalCode: addr.postalCode ?? null,
-            isHeadQuarters: addr.isHeadQuarters ?? false,
-          }))
-        : [];
+    const addressesForPayload = existingAddresses.length > 0
+      ? existingAddresses.map((addr) => ({
+          branchName: addr.branchName ?? "",
+          country: addr.country ?? "",
+          city: addr.city ?? "",
+          regionOrState: addr.regionOrState ?? null,
+          postalCode: addr.postalCode ?? null,
+          isHeadQuarters: addr.isHeadQuarters ?? false,
+        }))
+      : [];
 
-    const payloadLogoUrl = logoPayloadUrl ?? (rawLogoUrl ? rawLogoUrl : null);
     const payload = mapEditFormToUpsertPayload(
       userId,
       editFormData,
       addressesForPayload,
-      payloadLogoUrl,
     );
 
     try {
       await upsertMutation.mutateAsync({ id: userId, payload });
       setValidationErrors({});
       setIsEditing(false);
-    } catch (error) {
-      // Error is handled by the mutation state; we don't need to set local state
+      toast.success("Profile updated successfully.");
+    } catch {
+      toast.error("Failed to update profile.");
     }
   };
 
-  // ─── Derive mutation error for display ──────────────────────────────
   const mutationError = upsertMutation.error
     ? getErrorMessage(upsertMutation.error, "Failed to save company profile")
     : null;
@@ -210,7 +198,6 @@ export default function CompanyProfile() {
 
   return (
     <>
-      {/* Main Content */}
       <div className="w-full px-4 py-4 md:px-6 md:py-6 lg:px-8 lg:py-8 flex flex-col gap-8">
         {profileQuery.isLoading && (
           <div className="rounded-2xl border border-[#EDEDED] bg-white p-4">
@@ -230,7 +217,6 @@ export default function CompanyProfile() {
           </div>
         )}
 
-        {/* Profile Uploading Card */}
         {companyData && (
           <ProfileUploadingCard
             companyName={activeFormData.companyName}
@@ -246,7 +232,6 @@ export default function CompanyProfile() {
           />
         )}
 
-        {/* Company Information Section */}
         <SectionCard icon={Building2} title="Company Information">
           {isEditing ? (
             <div className="flex flex-col gap-6">
@@ -339,7 +324,6 @@ export default function CompanyProfile() {
           )}
         </SectionCard>
 
-        {/* Company Description Section */}
         <SectionCard icon={AlignLeft} title="Company Description">
           {isEditing ? (
             <FloatingTextArea

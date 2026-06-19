@@ -26,9 +26,11 @@ export type AddressPayload = {
  * userId comes from the authenticated session (not from user input).
  *
  * Required fields: userId, companyName
- * Optional/nullable fields: publicContactMail, domain, description, logoUrl, companySize
+ * Optional/nullable fields: publicContactMail, domain, description, companySize
  * addresses must contain at least one entry with required address fields.
  *
+ * Note: logoUrl is NOT part of this payload — profile picture uploads
+ * use POST /api/Company/picture separately.
  * Note: companySize is a NUMBER in the API contract (not a string).
  */
 export type UpsertCompanyPayload = {
@@ -37,7 +39,6 @@ export type UpsertCompanyPayload = {
   publicContactMail?: string | null;
   domain?: string | null;
   description?: string | null;
-  logoUrl?: string | null;
   companySize?: number | null;
   addresses: AddressPayload[];
 };

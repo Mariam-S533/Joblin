@@ -26,10 +26,17 @@ import { queryKeys } from "@/lib/queryKeys";
  * page component, not via query params, because the backend endpoint
  * returns all jobs for the company without filtering support.
  */
-export const usePostedJobs = (companyId: string | undefined) =>
+import type {
+  GetPostedJobsParams,
+} from "@/services/postedJobsService";
+
+export const usePostedJobs = (
+  companyId: string | undefined,
+  params?: GetPostedJobsParams,
+) =>
   useQuery({
-    queryKey: queryKeys.postedJobs.list(companyId),
-    queryFn: () => getPostedJobs(companyId!),
+    queryKey: queryKeys.postedJobs.list(companyId, params?.page, params?.pageSize),
+    queryFn: () => getPostedJobs(companyId!, params),
     enabled: !!companyId,
   });
 
@@ -66,19 +73,16 @@ export const useToggleJobStatus = () => {
 
     // ── Optimistic update: apply new status to cache BEFORE API call ──
     onMutate: async ({ jobId, newStatus }) => {
-      // Cancel any outgoing refetches so they don't overwrite our optimistic update
       await queryClient.cancelQueries({ queryKey: queryKeys.postedJobs.all });
 
-      // Snapshot the previous cache data for rollback on error
       const previousData = queryClient.getQueriesData<PostedJobsPageData>({
         queryKey: queryKeys.postedJobs.all,
       });
 
-      // Optimistically update the job status in all matching queries
       queryClient.setQueriesData<PostedJobsPageData>(
-        { queryKey: queryKeys.postedJobs.all },
+        { queryKey: queryKeys.postedJobs.all, exact: false, type: "active" },
         (current) => {
-          if (!current) return current;
+          if (!current || !Array.isArray(current.jobs)) return current;
 
           const jobs = current.jobs.map((job) =>
             job.id === jobId ? { ...job, jobStatus: newStatus } : job,
@@ -98,7 +102,6 @@ export const useToggleJobStatus = () => {
         },
       );
 
-      // Return snapshot context for onError rollback
       return { previousData };
     },
 

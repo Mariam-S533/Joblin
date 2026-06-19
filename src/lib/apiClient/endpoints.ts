@@ -26,11 +26,11 @@ export const companyHome = {
 
 export const companyProfile = {
   company: "/Company",
+  picture: "/Company/picture",
 };
 
 export const companySettings = {
   settings: "/CompanySettings",
-  logo: "/CompanySettings/logo",
   password: "/CompanySettings/password",
 };
 

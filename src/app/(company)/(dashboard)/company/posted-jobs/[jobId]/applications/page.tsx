@@ -25,6 +25,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/apiClient/error";
 
 import {
@@ -194,6 +195,12 @@ function JobApplicationsContent({ jobId }: { jobId: string }) {
 
   const updateStatus = useUpdateApplicationStatus();
   const [mutationError, setMutationError] = useState<string | null>(null);
+  const [pendingStatusChange, setPendingStatusChange] = useState<{
+    applicationId: string;
+    jobPostId: string;
+    newStatus: JobApplicationStatus;
+    applicantName: string;
+  } | null>(null);
 
   useEffect(() => {
     if (!mutationError) return;
@@ -252,26 +259,59 @@ function JobApplicationsContent({ jobId }: { jobId: string }) {
 
   const summary = useMemo(() => computeSummary(applicants), [applicants]);
 
+  const confirmStatusLabels: Record<JobApplicationStatus, string> = {
+    Pending: "New",
+    UnderReview: "Under Review",
+    Accepted: "Accepted",
+    Rejected: "Rejected",
+    Withdrawn: "Withdrawn",
+  };
+
   const handleStatusChange = useCallback(
     (
       applicationId: string,
       jobPostId: string,
       newStatus: JobApplicationStatus,
+      applicantName?: string,
     ) => {
+      setPendingStatusChange({
+        applicationId,
+        jobPostId,
+        newStatus,
+        applicantName: applicantName ?? "this applicant",
+      });
+    },
+    [],
+  );
+
+  const executeStatusChange = useCallback(
+    () => {
+      if (!pendingStatusChange) return;
       setMutationError(null);
+      const { applicationId, jobPostId, newStatus, applicantName } = pendingStatusChange;
+      const label = confirmStatusLabels[newStatus];
       const payload: UpdateApplicationStatusPayload = {
         applicationStatus: newStatus,
       };
-      setSelectedApplicantId(applicationId);
       updateStatus.mutate(
         { applicationId, jobPostId, payload },
         {
-          onError: (err) =>
-            setMutationError(getErrorMessage(err, "Failed to update status.")),
+          onSuccess: () => {
+            setPendingStatusChange(null);
+            toast.success(
+              `${applicantName}'s application has been changed to ${label}.`,
+            );
+          },
+          onError: (err) => {
+            setPendingStatusChange(null);
+            const msg = getErrorMessage(err, "Failed to update status.");
+            setMutationError(msg);
+            toast.error(msg);
+          },
         },
       );
     },
-    [updateStatus],
+    [pendingStatusChange, updateStatus, confirmStatusLabels],
   );
 
   const jobTitle = jobPost?.title ?? "";
@@ -282,6 +322,34 @@ function JobApplicationsContent({ jobId }: { jobId: string }) {
         <div className="rounded-xl border-[0.8px] border-status-rejected-border bg-status-rejected-bg px-5 py-3 text-[13px] text-status-rejected">
           {mutationError ||
             getErrorMessage(error, "Failed to load applications.")}
+        </div>
+      )}
+
+      {pendingStatusChange && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => !updateStatus.isPending && setPendingStatusChange(null)}>
+          <div className="bg-card rounded-2xl border-[0.8px] border-border-light shadow-lg w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold text-foreground">Confirm Status Change</h3>
+            <p className="mt-2 text-sm text-content-secondary">
+              Are you sure you want to change <strong>{pendingStatusChange.applicantName}</strong>&apos;s status to <strong>{confirmStatusLabels[pendingStatusChange.newStatus]}</strong>?
+            </p>
+            <div className="mt-6 flex justify-end gap-3">
+              <Button
+                variant="outline"
+                className="border-border text-content-secondary h-9 rounded-lg"
+                onClick={() => setPendingStatusChange(null)}
+                disabled={updateStatus.isPending}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="bg-brand-primary text-white hover:bg-brand-primary-hover h-9 rounded-lg"
+                onClick={executeStatusChange}
+                disabled={updateStatus.isPending}
+              >
+                {updateStatus.isPending ? "Updating..." : "Confirm"}
+              </Button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -434,6 +502,7 @@ const ApplicationCard = memo(function ApplicationCard({
     applicationId: string,
     jobPostId: string,
     status: JobApplicationStatus,
+    applicantName?: string,
   ) => void;
   isUpdating: boolean;
 }) {
@@ -521,13 +590,13 @@ const ApplicationCard = memo(function ApplicationCard({
             variant="outline"
             size="sm"
             className="border-status-review text-status-review h-8 rounded-lg px-4 gap-2"
-            onClick={() =>
-              onStatusChange(applicant.applicationId, jobId, "UnderReview")
-            }
-            disabled={isUpdating}
-          >
-            <Clock className="h-4 w-4" />
-            Start Review
+              onClick={() =>
+                onStatusChange(applicant.applicationId, jobId, "UnderReview", displayName)
+              }
+              disabled={isUpdating}
+            >
+              <Clock className="h-4 w-4" />
+              Start Review
           </Button>
         )}
         {canAcceptOrReject && (
@@ -537,7 +606,7 @@ const ApplicationCard = memo(function ApplicationCard({
               size="sm"
               className="border-status-accepted text-status-accepted h-8 rounded-lg px-4"
               onClick={() =>
-                onStatusChange(applicant.applicationId, jobId, "Accepted")
+                onStatusChange(applicant.applicationId, jobId, "Accepted", displayName)
               }
               disabled={isUpdating}
             >
@@ -548,7 +617,7 @@ const ApplicationCard = memo(function ApplicationCard({
               size="sm"
               className="border-status-rejected text-status-rejected h-8 rounded-lg px-4"
               onClick={() =>
-                onStatusChange(applicant.applicationId, jobId, "Rejected")
+                onStatusChange(applicant.applicationId, jobId, "Rejected", displayName)
               }
               disabled={isUpdating}
             >
@@ -575,6 +644,7 @@ function ApplicantDetailsPanel({
     applicationId: string,
     jobPostId: string,
     status: JobApplicationStatus,
+    applicantName?: string,
   ) => void;
   isUpdating: boolean;
 }) {
@@ -801,7 +871,7 @@ function ApplicantDetailsPanel({
               variant="outline"
               className="h-10 rounded-lg border-status-review text-status-review gap-2"
               onClick={() =>
-                onStatusChange(applicant.applicationId, jobId, "UnderReview")
+                onStatusChange(applicant.applicationId, jobId, "UnderReview", displayName)
               }
               disabled={isUpdating}
             >
@@ -815,7 +885,7 @@ function ApplicantDetailsPanel({
                 variant="outline"
                 className="h-10 rounded-lg border-status-accepted text-status-accepted"
                 onClick={() =>
-                  onStatusChange(applicant.applicationId, jobId, "Accepted")
+                  onStatusChange(applicant.applicationId, jobId, "Accepted", displayName)
                 }
                 disabled={isUpdating}
               >
@@ -825,7 +895,7 @@ function ApplicantDetailsPanel({
                 variant="outline"
                 className="h-10 rounded-lg border-status-rejected text-status-rejected"
                 onClick={() =>
-                  onStatusChange(applicant.applicationId, jobId, "Rejected")
+                  onStatusChange(applicant.applicationId, jobId, "Rejected", displayName)
                 }
                 disabled={isUpdating}
               >

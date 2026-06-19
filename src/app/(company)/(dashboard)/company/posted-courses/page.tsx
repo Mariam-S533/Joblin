@@ -7,6 +7,8 @@ import {
   BookOpen,
   CalendarClock,
   CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
   Clock,
   FileX2,
   MoreVertical,
@@ -37,6 +39,7 @@ import {
 } from "@/hooks/postedCourses";
 import type { PostedCourseStatus } from "@/features/posted-courses/types";
 import {
+  JOB_STATUS_OPTIONS,
   getPostedCourseStatusLabel,
   normalizePostedCourseStatus,
 } from "@/features/posted-courses/types";
@@ -119,6 +122,8 @@ export default function PostedCoursesPage() {
   const router = useRouter();
   const { data: session, status: authStatus } = useSession();
   const [activeTab, setActiveTab] = useState<PostedCourseStatus | "all">("all");
+  const [page, setPage] = useState(1);
+  const [pageSize] = useState(10);
   const companyId = session?.id as string | undefined;
 
   useEffect(() => {
@@ -126,6 +131,10 @@ export default function PostedCoursesPage() {
       router.push("/login/generalLogin");
     }
   }, [authStatus, router]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [companyId]);
 
   if (authStatus === "loading") {
     return (
@@ -147,6 +156,9 @@ export default function PostedCoursesPage() {
       activeTab={activeTab}
       setActiveTab={setActiveTab}
       companyId={companyId}
+      page={page}
+      setPage={setPage}
+      pageSize={pageSize}
     />
   );
 }
@@ -155,15 +167,21 @@ type PostedCoursesContentProps = {
   activeTab: PostedCourseStatus | "all";
   setActiveTab: (tab: PostedCourseStatus | "all") => void;
   companyId?: string;
+  page: number;
+  setPage: React.Dispatch<React.SetStateAction<number>>;
+  pageSize: number;
 };
 
 function PostedCoursesContent({
   activeTab,
   setActiveTab,
   companyId,
+  page,
+  setPage,
+  pageSize,
 }: PostedCoursesContentProps) {
   const router = useRouter();
-  const { data, isLoading, isError } = usePostedCourses(companyId);
+  const { data, isLoading, isError } = usePostedCourses(companyId, { page, pageSize });
 
   const deleteMutation = useDeletePostedCourse();
   const toggleMutation = useToggleCourseStatus();
@@ -192,7 +210,8 @@ function PostedCoursesContent({
     [toggleMutation],
   );
 
-  const courses = useMemo(() => data ?? [], [data]);
+  const courses = useMemo(() => data?.data ?? [], [data]);
+  const totalCount = data?.totalCount ?? 0;
   const stats = useMemo(() => {
     const normalizedStatuses = courses.map((course) =>
       normalizePostedCourseStatus(course.offeringStatus),
@@ -211,31 +230,22 @@ function PostedCoursesContent({
     }).length;
 
     return {
-      totalCourses: courses.length,
+      totalCourses: totalCount,
       activeCourses: normalizedStatuses.filter((s) => s === "Active").length,
       closedCourses: normalizedStatuses.filter((s) => s === "Closed").length,
       upcomingStartDates,
     };
-  }, [courses]);
+  }, [courses, totalCount]);
 
   const statusTabs = useMemo<
     { label: string; value: PostedCourseStatus | "all" }[]
-  >(() => {
-    const values = Array.from(
-      new Set(
-        courses
-          .map((course) => normalizePostedCourseStatus(course.offeringStatus))
-          .filter(Boolean),
-      ),
-    );
-    return [
-      { label: "All Courses", value: "all" },
-      ...values.map((value) => ({
-        label: getPostedCourseStatusLabel(value),
-        value,
-      })),
-    ];
-  }, [courses]);
+  >(() => [
+    { label: "All Courses", value: "all" },
+    ...JOB_STATUS_OPTIONS.map((opt) => ({
+      label: opt.label,
+      value: opt.value as PostedCourseStatus,
+    })),
+  ], []);
 
   const filteredCourses =
     activeTab === "all"
@@ -463,6 +473,36 @@ function PostedCoursesContent({
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {data && data.totalPages > 1 && (
+          <div className="flex items-center justify-between border-t border-neutral-200 px-6 py-4">
+            <span className="text-sm text-neutral-500">
+              Page {data.page} of {data.totalPages} ({data.totalCount} total)
+            </span>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 gap-1"
+                disabled={!data.hasPreviousPage}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 gap-1"
+                disabled={!data.hasNextPage}
+                onClick={() => setPage((p) => p + 1)}
+              >
+                Next
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         )}
       </div>

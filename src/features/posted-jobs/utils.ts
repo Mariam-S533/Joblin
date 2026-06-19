@@ -50,11 +50,12 @@ export const computeDaysRemaining = (
  */
 export const computeStats = (
   jobs: CompanyJobPostResponse[],
+  totalCount?: number,
 ): PostedJobStats => {
   const normalizedStatuses = jobs.map((j) => normalizeJobStatus(j.jobStatus));
 
   return {
-    totalJobs: jobs.length,
+    totalJobs: totalCount ?? jobs.length,
     activeJobs: normalizedStatuses.filter((s) => s === "Active").length,
     closedJobs: normalizedStatuses.filter((s) => s === "Closed").length,
     applications: 0,
@@ -90,6 +91,7 @@ export const extractTechnicalDomains = (
  */
 export const transformCompanyJobPosts = (
   rawJobs: CompanyJobPostResponse[],
+  totalCount?: number,
 ): PostedJobsPageData => {
   const jobs: PostedJob[] = rawJobs.map((raw) => ({
     id: raw.id,
@@ -99,8 +101,7 @@ export const transformCompanyJobPosts = (
     technicalDomain: raw.technicalDomain,
     daysRemaining: computeDaysRemaining(raw.deadline),
     jobStatus: normalizeJobStatus(raw.jobStatus),
-    minSalary: raw.minSalary,
-    maxSalary: raw.maxSalary,
+    avgSalary: raw.avgSalary,
     country: raw.country,
     city: raw.city,
     createdAt: raw.createdAt,
@@ -110,7 +111,7 @@ export const transformCompanyJobPosts = (
   }));
 
   return {
-    stats: computeStats(rawJobs),
+    stats: computeStats(rawJobs, totalCount),
     jobs,
     technicalDomains: extractTechnicalDomains(rawJobs),
   };
