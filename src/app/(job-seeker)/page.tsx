@@ -305,11 +305,57 @@ export default async function Home() {
                       <div className="p-6  rounded-md border border-[#EDEDED]">
                           <div className="flex items-start justify-between gap-4">
                                 <div className="w-12 h-12 rounded-md overflow-hidden flex items-center justify-center">
-                                    <Image src="/icons/comany.png" alt="company logo" width={40} height={40}/>
+                                    <Image src="/mac.png" alt="company logo" width={40} height={40}/>
                                 </div>
                                 <div className="flex flex-col gap-2 w-full">
                                     <h3 className="text-[12px] text-[#A5A5A5]">McDonaldS</h3>
                                     <p className="text-joblin-black text-[14px] lg:text-[18px]">Web Designer</p>
+                                    <div className="flex items-center gap-1 ">
+                                        <Badge variant="outline" className="text-joblin-primary bg-[#E6F8F1]" >Full Time</Badge>
+                                        <Badge variant="outline" className="text-joblin-primary bg-[#E6F8F1]" >Onsite</Badge>
+                                    </div>
+                                    <div className="flex items-center gap-0.5 text-[12px] text-[#353535]">
+                                      <MapPin size={10} />
+                                      <span>London</span>
+                                    </div>
+                                    <div className="flex items-center justify-between font-medium ">
+                                      <p className="text-joblin-primary text-[12px] lg:text-[14px]">255$ / Month</p>
+                                      <span className="text-joblin-light-gray text-[10px]">1 hour ago</span>
+                                    </div>
+                                </div>
+                          </div>
+                      </div>
+                      <div className="p-6  rounded-md border border-[#EDEDED]">
+                          <div className="flex items-start justify-between gap-4">
+                                <div className="w-12 h-12 rounded-md overflow-hidden flex items-center justify-center">
+                                    <Image src="/google.jpg" alt="company logo" width={40} height={40}/>
+                                </div>
+                                <div className="flex flex-col gap-2 w-full">
+                                    <h3 className="text-[12px] text-[#A5A5A5]">Google</h3>
+                                    <p className="text-joblin-black text-[14px] lg:text-[18px]">Backend Developer</p>
+                                    <div className="flex items-center gap-1 ">
+                                        <Badge variant="outline" className="text-joblin-primary bg-[#E6F8F1]" >Part Time</Badge>
+                                        <Badge variant="outline" className="text-joblin-primary bg-[#E6F8F1]" >Remote</Badge>
+                                    </div>
+                                    <div className="flex items-center gap-0.5 text-[12px] text-[#353535]">
+                                      <MapPin size={10} />
+                                      <span>London</span>
+                                    </div>
+                                    <div className="flex items-center justify-between font-medium ">
+                                      <p className="text-joblin-primary text-[12px] lg:text-[14px]">1150$ / Month</p>
+                                      <span className="text-joblin-light-gray text-[10px]">3 days ago</span>
+                                    </div>
+                                </div>
+                          </div>
+                      </div>
+                      <div className="p-6  rounded-md border border-[#EDEDED]">
+                          <div className="flex items-start justify-between gap-4">
+                                <div className="w-12 h-12 rounded-md overflow-hidden flex items-center justify-center">
+                                    <Image src="/micro.png" alt="company logo" width={40} height={40}/>
+                                </div>
+                                <div className="flex flex-col gap-2 w-full">
+                                    <h3 className="text-[12px] text-[#A5A5A5]">Microsoft</h3>
+                                    <p className="text-joblin-black text-[14px] lg:text-[18px]">Quality Asuranc</p>
                                     <div className="flex items-center gap-1 ">
                                         <Badge variant="outline" className="text-joblin-primary bg-[#E6F8F1]" >Full Time</Badge>
                                         <Badge variant="outline" className="text-joblin-primary bg-[#E6F8F1]" >Onsite</Badge>
@@ -349,6 +395,34 @@ export default async function Home() {
                               <p className="text-[14px] text-joblin-light-gray">Start your journey today. Nulla facilisi. Aenean et tortor at elit luctus.</p>
                             </div>
                           </div>
+                          <div className=" relative p-3 rounded-md border border-[#EDEDED]">
+                            <div className="absolute -top-6 left-6 w-10 h-10 bg-joblin-light-green flex items-center justify-center rounded-md text-joblin-primary text-[20px]">
+                              2
+                            </div>
+                            <div className="flex flex-col gap-2 mt-4">
+                              <h3 className="text-[14px] text-joblin-black font-semibold">Upload CV / Resume</h3>
+                              <p className="text-[14px] text-joblin-light-gray">Easily upload your resume. Donec euismod velit at tempor, ut cursus.</p>
+                            </div>
+                          </div>
+                          <div className=" relative p-3 rounded-md border border-[#EDEDED]">
+                            <div className="absolute -top-6 left-6 w-10 h-10 bg-joblin-light-green flex items-center justify-center rounded-md text-joblin-primary text-[20px]">
+                              3
+                            </div>
+                            <div className="flex flex-col gap-2 mt-4">
+                              <h3 className="text-[14px] text-joblin-black font-semibold">Find suitable job</h3>
+                              <p className="text-[14px] text-joblin-light-gray">Discover jobs for you. In hac habitasse platea dictumst. Morbi imperdiet.</p>
+                            </div>
+                          </div>
+                          <div className=" relative p-3 rounded-md border border-[#EDEDED]">
+                            <div className="absolute -top-6 left-6 w-10 h-10 bg-joblin-light-green flex items-center justify-center rounded-md text-joblin-primary text-[20px]">
+                              4
+                            </div>
+                            <div className="flex flex-col gap-2 mt-4">
+                              <h3 className="text-[14px] text-joblin-black font-semibold">Apply job</h3>
+                              <p className="text-[14px] text-joblin-light-gray">Apply in just a click. Sed luctus, lorem id pharetra dapibus, velit nisi</p>
+                            </div>
+                          </div>
+
 
                       </div>
                     </div>
@@ -385,7 +459,67 @@ export default async function Home() {
                                     <h4 className="text-[12px] text-[#A5A5A5]">Bergen</h4>
                                     </div>
                                     <div className="flex items-center gap-1 text-[12px]">
+                                      <StarIcon size={15} className="text-yellow-300 " /> <span> 3.5</span>
+                                    </div>
+                                  </div>
+                                    <div className="flex items-center gap-1 ">
+                                        <Badge variant="outline" className="text-joblin-primary bg-[#E6F8F1]" >Full Time</Badge>
+                                        <Badge variant="outline" className="text-joblin-primary bg-[#E6F8F1]" >Onsite</Badge>
+                                    </div>
+                                    <p className="text-[12px] text-joblin-black">
+                                      Sandro is a French fashion brand known for its chic, contemporary collections, offering men.
+                                    </p>
+                                    <div className="flex items-center flex-wrap lg:flex-nowrap justify-between text-[12px] text-joblin-dark-gray">
+                                      <span>50 Jobs</span>
+                                      <span>103.98K Reviews</span>
+                                      <span>30.1K Salaries</span>
+                                    </div>
+                                </div>
+                          </div>
+                      </div>
+                      <div className="p-6  rounded-md border border-[#EDEDED]">
+                          <div className="flex items-start justify-between gap-4">
+                                <div className="w-12 h-12 rounded-md overflow-hidden flex items-center justify-center">
+                                    <Image src="/icons/comany.png" alt="company logo" width={40} height={40}/>
+                                </div>
+                                <div className="flex flex-col gap-2 w-full">
+                                  <div className="flex justify-between items-center">
+                                    <div className="flex flex-col gap-2">
+                                    <h3 className="text-joblin-black text-[14px] lg:text-[18px]">Lenovo</h3>
+                                    <h4 className="text-[12px] text-[#A5A5A5]">Bergen</h4>
+                                    </div>
+                                    <div className="flex items-center gap-1 text-[12px]">
                                       <StarIcon size={15} className="text-yellow-300 " /> <span> 4.5</span>
+                                    </div>
+                                  </div>
+                                    <div className="flex items-center gap-1 ">
+                                        <Badge variant="outline" className="text-joblin-primary bg-[#E6F8F1]" >Full Time</Badge>
+                                        <Badge variant="outline" className="text-joblin-primary bg-[#E6F8F1]" >Onsite</Badge>
+                                    </div>
+                                    <p className="text-[12px] text-joblin-black">
+                                      Sandro is a French fashion brand known for its chic, contemporary collections, offering men.
+                                    </p>
+                                    <div className="flex items-center flex-wrap lg:flex-nowrap justify-between text-[12px] text-joblin-dark-gray">
+                                      <span>50 Jobs</span>
+                                      <span>103.98K Reviews</span>
+                                      <span>30.1K Salaries</span>
+                                    </div>
+                                </div>
+                          </div>
+                      </div>
+                      <div className="p-6  rounded-md border border-[#EDEDED]">
+                          <div className="flex items-start justify-between gap-4">
+                                <div className="w-12 h-12 rounded-md overflow-hidden flex items-center justify-center">
+                                    <Image src="/icons/comany.png" alt="company logo" width={40} height={40}/>
+                                </div>
+                                <div className="flex flex-col gap-2 w-full">
+                                  <div className="flex justify-between items-center">
+                                    <div className="flex flex-col gap-2">
+                                    <h3 className="text-joblin-black text-[14px] lg:text-[18px]">Meta</h3>
+                                    <h4 className="text-[12px] text-[#A5A5A5]">Bergen</h4>
+                                    </div>
+                                    <div className="flex items-center gap-1 text-[12px]">
+                                      <StarIcon size={15} className="text-yellow-300 " /> <span> 5</span>
                                     </div>
                                   </div>
                                     <div className="flex items-center gap-1 ">
@@ -421,6 +555,39 @@ export default async function Home() {
                   </div>
                   <div className=" ">
                     <div className=" grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div className="p-3 rounded-md border border-[#EDEDED]">
+                              <div className="flex items-start gap-3">
+                                <div className="w-11 h-11 shrink-0 rounded-md overflow-hidden flex items-center justify-center bg-joblin-light-green">
+                                    <Image src="/icons/user-check.svg" alt="company logo" width={20} height={20}/>
+                                </div>
+                                <div className="flex flex-col gap-1 w-full">
+                                      <h4 className="text-joblin-black text-[16px]">300+</h4>
+                                      <p className="text-joblin-light-gray text-[14px]">Profile Post</p>
+                                </div>
+                               </div> 
+                          </div>
+                          <div className="p-3 rounded-md border border-[#EDEDED]">
+                              <div className="flex items-start gap-3">
+                                <div className="w-11 h-11 shrink-0 rounded-md overflow-hidden flex items-center justify-center bg-joblin-light-green">
+                                    <Image src="/icons/user-check.svg" alt="company logo" width={20} height={20}/>
+                                </div>
+                                <div className="flex flex-col gap-1 w-full">
+                                      <h4 className="text-joblin-black text-[16px]">400+</h4>
+                                      <p className="text-joblin-light-gray text-[14px]">Interviews</p>
+                                </div>
+                               </div> 
+                          </div>
+                          <div className="p-3 rounded-md border border-[#EDEDED]">
+                              <div className="flex items-start gap-3">
+                                <div className="w-11 h-11 shrink-0 rounded-md overflow-hidden flex items-center justify-center bg-joblin-light-green">
+                                    <Image src="/icons/user-check.svg" alt="company logo" width={20} height={20}/>
+                                </div>
+                                <div className="flex flex-col gap-1 w-full">
+                                      <h4 className="text-joblin-black text-[16px]">990+</h4>
+                                      <p className="text-joblin-light-gray text-[14px]"> Post Application</p>
+                                </div>
+                               </div> 
+                          </div>
                           <div className="p-3 rounded-md border border-[#EDEDED]">
                               <div className="flex items-start gap-3">
                                 <div className="w-11 h-11 shrink-0 rounded-md overflow-hidden flex items-center justify-center bg-joblin-light-green">
