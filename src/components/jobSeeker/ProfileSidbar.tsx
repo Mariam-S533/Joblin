@@ -329,16 +329,28 @@ export default function CompanySidebar() {
                 return(
                 <div key={profile.id} className="rounded-lg bg-gray-50 border border-gray-200 w-48 px-2 py-3 flex flex-col gap-2 ">
                 <div className=" flex items-center gap-2 ">
-                  <Image src="/avater.jpg" alt="jnjjkj" sizes=""   width={50} height={50}
-                  className="w-10 h-10 rounded-lg object-cover border border-gray-200"
-                  />
-                  <div className="flex flex-col">
-                    <span className="text-sm font-semibold text-gray-800 "> {profile.profileName} </span>
-                    <span className="text-xs text-gray-500">{profile.technicalDomain}</span>
+                  {profile.profilePictureUrl ? (
+                    <Image
+                      src={profile.profilePictureUrl}
+                      alt={profile.profileName}
+                      width={40}
+                      height={40}
+                      className="w-10 h-10 rounded-lg object-cover border border-gray-200 shrink-0"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-lg bg-joblin-primary/10 flex items-center justify-center border border-joblin-primary/20 shrink-0">
+                      <span className="text-joblin-primary font-bold text-sm">
+                        {(profile.profileName || "P").charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-sm font-semibold text-gray-800 truncate"> {profile.profileName} </span>
+                    <span className="text-xs text-gray-500 truncate">{profile.technicalDomain || "No domain set"}</span>
                   </div>
                 </div>
-                    <Link className={`flex w-full items-center gap-2 px-1 border border-joblin-primary rounded justify-center cursor-pointer 
-                        hover:bg-joblin-primary hover:text-white ${isActive? "bg-joblin-primary text-white": "text-joblin-primary bg-white"}`}     
+                    <Link className={`flex w-full items-center gap-2 px-1 border border-joblin-primary rounded justify-center cursor-pointer
+                        hover:bg-joblin-primary hover:text-white ${isActive? "bg-joblin-primary text-white": "text-joblin-primary bg-white"}`}
                     type="button"
                     href={`/jobSeeker/profiles/${profile.id}`}
                     onClick={() => setCurrentProfileId(profile.id)}

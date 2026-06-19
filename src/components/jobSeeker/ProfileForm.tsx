@@ -13,7 +13,7 @@ import Languages from "./Languages"
 import { useProfileContext } from "@/app/context/ProfilesProvider"
 import WorkExperienceEdit from "./Experience"
 import EducationEdit from "./Education"
-import { getSeekerInfo, getUserCer, getUserEdu, getUserLang, getUserSkills, getWorkExp, postWorkExp, editWorkExp, editSeekerInfo, editUserSkills, postUserEdu, editUserEdu, postUserCer, editUserCer, postUserLang, editUserLang } from "@/app/actions/profileSections.action"
+import { getSeekerInfo, getUserCer, getUserEdu, getUserLang, getUserSkills, getWorkExp, postWorkExp, editWorkExp, editSeekerInfo, editUserSkills, postUserEdu, editUserEdu, postUserCer, editUserCer, postUserLang, editUserLang, postUserPicture } from "@/app/actions/profileSections.action"
 import { getProfiles } from "@/app/actions/profile.action"
 import { ProfileFormData, SkillSec } from "@/app/Types/profileShared"
 import Link from "next/link"
@@ -40,6 +40,29 @@ const handleUploadResume = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!file) return
     setUploadedFileName(file.name)
     await handelParseCV(file)
+}
+
+const [profilePicUrl, setProfilePicUrl] = useState<string | null>(null)
+const [isUploadingPic, setIsUploadingPic] = useState(false)
+const picInputRef = useRef<HTMLInputElement>(null)
+
+const handleProfilePicUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    try {
+        setIsUploadingPic(true)
+        const result = await postUserPicture(file)
+        // The backend returns the uploaded image URL
+        const url = result?.imageUrl || result?.profilePictureUrl || result?.url
+        if (url) {
+            setProfilePicUrl(url)
+            setValue("personal_info.profilePictureUrl", url, { shouldDirty: true })
+        }
+    } catch (err) {
+        console.error("Failed to upload profile picture:", err)
+    } finally {
+        setIsUploadingPic(false)
+    }
 }
 
 const handleRemoveFile = () => {
@@ -114,6 +137,10 @@ const getAllSections = useCallback(async () => {
             certifications: userCer,
             languages: userLang
         })
+        // Sync local profile pic state with backend data on load/refresh
+        if (seekerInfo?.profilePictureUrl) {
+            setProfilePicUrl(seekerInfo.profilePictureUrl)
+        }
     } catch (error) {
         console.error("Failed fetching profile sections:", error)
     }
@@ -311,11 +338,35 @@ const onGlobalSave = async (data: ProfileFormData) => {
                 <div className="lg:col-span-2 flex flex-col gap-4 p-5 rounded-lg border border-gray-2 00 shadow-sm">
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-5">
-                            <div className="flex justify-center items-center rounded-md w-20 h-20 overflow-hidden bg-amber-200">
-                                <Image src="/avater.jpg" alt="profile" width={80} height={80} className="object-cover" />
-                            </div>
+                            <input
+                                type="file"
+                                accept="image/*"
+                                ref={picInputRef}
+                                onChange={handleProfilePicUpload}
+                                className="hidden"
+                            />
+                            <button
+                                type="button"
+                                title="Upload profile picture"
+                                onClick={() => picInputRef.current?.click()}
+                                disabled={isUploadingPic}
+                                className="flex justify-center items-center rounded-md w-20 h-20 overflow-hidden bg-amber-200 hover:opacity-80 transition cursor-pointer disabled:cursor-wait"
+                            >
+                                {isUploadingPic ? (
+                                    <span className="text-xs text-gray-500">Uploading...</span>
+                                ) : (
+                                    <Image
+                                        src={profilePicUrl || formData.personal_info?.profilePictureUrl || "/avater.jpg"}
+                                        alt="profile"
+                                        width={80}
+                                        height={80}
+                                        className="object-cover w-full h-full"
+                                    />
+                                )}
+                            </button>
                             <div className="flex flex-col gap-1">
                                 <h2 className="text-joblin-primary font-bold text-xl">{formData.personal_info?.fullname || "Name"}</h2>
+                                <p className="text-joblin-dark-gray text-sm">{formData.personal_info?.email || "No email linked"}</p>
                                 <p className="text-joblin-dark-gray text-sm">{formData.personal_info?.phone || "No phone linked"}</p>
                             </div>
                         </div>
@@ -335,12 +386,20 @@ const onGlobalSave = async (data: ProfileFormData) => {
                                         <p className='text-joblin-black text-[16px] font-medium'>{formData.personal_info?.fullname || "N/A"}</p>
                                     </div>
                                     <div>
+                                        <p className='mb-1 text-joblin-light-gray text-[14px]'>Email</p>
+                                        <p className='text-joblin-black text-[16px] font-medium'>{formData.personal_info?.email || "N/A"}</p>
+                                    </div>
+                                    <div>
                                         <p className='mb-1 text-joblin-light-gray text-[14px]'>Country</p>
                                         <p className='text-joblin-black text-[16px] font-medium'>{formData.personal_info?.location?.country || "N/A"}</p>
                                     </div>
                                     <div>
                                         <p className='mb-1 text-joblin-light-gray text-[14px]'>City</p>
                                         <p className='text-joblin-black text-[16px] font-medium'>{formData.personal_info?.location?.city || "N/A"}</p>
+                                    </div>
+                                    <div>
+                                        <p className='mb-1 text-joblin-light-gray text-[14px]'>Phone</p>
+                                        <p className='text-joblin-black text-[16px] font-medium'>{formData.personal_info?.phone || "N/A"}</p>
                                     </div>
                                 </div>
                             }

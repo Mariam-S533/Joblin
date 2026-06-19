@@ -6,6 +6,13 @@ import { CertificatSec, EducationSec, PersonalInfoSec, SkillSec, WorkExpSec, Lan
 
 const baseUrl  = process.env.NEXT_PUBLIC_BASE_URL
 
+// Safe JSON parse — backend may return 200 with an empty body
+async function safeJson(res: Response, fallback?: unknown) {
+    const text = await res.text()
+    if (!text) return fallback
+    return JSON.parse(text)
+}
+
 
 //PersonalInfo actions
 export async function getSeekerInfo() {
@@ -20,10 +27,11 @@ export async function getSeekerInfo() {
     })
 
      if (!res.ok) {
-            throw new Error(`Failed to get personalInfo: ${res.statusText}`)
+            const detail = await res.text().catch(() => "")
+            throw new Error(`Failed to get personalInfo: ${res.status} ${res.statusText} - ${detail}`)
         }
 
-    const payload = await res.json()
+    const payload = await safeJson(res)
     return payload
 }
 
@@ -41,10 +49,11 @@ export async function editSeekerInfo(SeekerInfo: PersonalInfoSec){
     })
 
      if (!res.ok) {
-            throw new Error(`Failed to edit profileInfo: ${res.statusText}`)
+            const detail = await res.text().catch(() => "")
+            throw new Error(`Failed to edit profileInfo: ${res.status} ${res.statusText} - ${detail}`)
         }
 
-    const payload = await res.json()
+    const payload = await safeJson(res, SeekerInfo)
     return payload
 }
 
@@ -62,10 +71,11 @@ export async function getWorkExp(profileId: string){
     })
 
         if (!res.ok) {
-            throw new Error(`Failed to get workexperiance: ${res.statusText}`)
+            const detail = await res.text().catch(() => "")
+            throw new Error(`Failed to get workexperiance: ${res.status} ${res.statusText} - ${detail}`)
         }
 
-    const payload = await res.json()
+    const payload = await safeJson(res)
     return payload
 }
 
@@ -83,10 +93,11 @@ export async function postWorkExp(profileId: string, workExpData: WorkExpSec){
     })
 
      if (!res.ok) {
-            throw new Error(`Failed to save profile: ${res.statusText}`)
+            const detail = await res.text().catch(() => "")
+            throw new Error(`Failed to save profile: ${res.status} ${res.statusText} - ${detail}`)
         }
 
-    const payload = await res.json()
+    const payload = await safeJson(res)
     return payload
 }
 
@@ -104,10 +115,11 @@ export async function editWorkExp(profileId: string, id: number ,workExpData: Wo
     })
 
      if (!res.ok) {
-            throw new Error(`Failed to save profile: ${res.statusText}`)
+            const detail = await res.text().catch(() => "")
+            throw new Error(`Failed to save profile: ${res.status} ${res.statusText} - ${detail}`)
         }
 
-    const payload = await res.json()
+    const payload = await safeJson(res)
     return payload
 }
 
@@ -124,10 +136,11 @@ export async function deletWorkExp(profileId: string, id: number){
     })
 
         if (!res.ok) {
-            throw new Error(`Failed to save profile: ${res.statusText}`)
+            const detail = await res.text().catch(() => "")
+            throw new Error(`Failed to save profile: ${res.status} ${res.statusText} - ${detail}`)
         }
 
-    const payload = await res.json()
+    const payload = await safeJson(res)
     return payload
 }
 
@@ -144,10 +157,11 @@ export async function getUserSkills(profileId: string){
     })
 
      if (!res.ok) {
-            throw new Error(`Failed to get skills: ${res.statusText}`)
+            const detail = await res.text().catch(() => "")
+            throw new Error(`Failed to get skills: ${res.status} ${res.statusText} - ${detail}`)
         }
 
-    const payload = await res.json()
+    const payload = await safeJson(res)
     return payload
 }
 
@@ -169,10 +183,8 @@ export async function editUserSkills(profileId: string, SkillData: SkillSec){
             throw new Error(`Failed to save skills: ${res.status} ${res.statusText} - ${detail}`)
         }
 
-    // Backend may return 200 with an empty body, so handle that safely
-    const text = await res.text()
-    if (!text) return SkillData // Return the data we just sent as confirmation
-    return JSON.parse(text)
+    const payload = await safeJson(res, SkillData)
+    return payload
 }
 
 //Education
@@ -188,10 +200,11 @@ export async function getUserEdu(){
     })
 
      if (!res.ok) {
-            throw new Error(`Failed to get user education: ${res.statusText}`)
+            const detail = await res.text().catch(() => "")
+            throw new Error(`Failed to get user education: ${res.status} ${res.statusText} - ${detail}`)
         }
 
-    const payload = await res.json()
+    const payload = await safeJson(res)
     return payload
 }
 
@@ -209,10 +222,11 @@ export async function postUserEdu(eduData: EducationSec){
     })
 
      if (!res.ok) {
-            throw new Error(`Failed to save profile: ${res.statusText}`)
+            const detail = await res.text().catch(() => "")
+            throw new Error(`Failed to save profile: ${res.status} ${res.statusText} - ${detail}`)
         }
 
-    const payload = await res.json()
+    const payload = await safeJson(res)
     return payload
 }
 
@@ -230,10 +244,11 @@ export async function editUserEdu(id: number, eduData: EducationSec){
     })
 
      if (!res.ok) {
-            throw new Error(`Failed to save profile: ${res.statusText}`)
+            const detail = await res.text().catch(() => "")
+            throw new Error(`Failed to save profile: ${res.status} ${res.statusText} - ${detail}`)
         }
 
-    const payload = await res.json()
+    const payload = await safeJson(res)
     return payload
 }
 
@@ -250,10 +265,11 @@ export async function deletUserEdu(id: number){
     })
 
         if (!res.ok) {
-            throw new Error(`Failed to save profile: ${res.statusText}`)
+            const detail = await res.text().catch(() => "")
+            throw new Error(`Failed to save profile: ${res.status} ${res.statusText} - ${detail}`)
         }
 
-    const payload = await res.json()
+    const payload = await safeJson(res)
     return payload
 }
 
@@ -270,10 +286,11 @@ export async function getUserCer(profileId: string){
     })
 
      if (!res.ok) {
-            throw new Error(`Failed to get user education: ${res.statusText}`)
+            const detail = await res.text().catch(() => "")
+            throw new Error(`Failed to get user education: ${res.status} ${res.statusText} - ${detail}`)
         }
 
-    const payload = await res.json()
+    const payload = await safeJson(res)
     return payload
 }
 
@@ -291,10 +308,11 @@ export async function postUserCer(profileId: string ,certData: CertificatSec){
     })
 
      if (!res.ok) {
-            throw new Error(`Failed to save profile: ${res.statusText}`)
+            const detail = await res.text().catch(() => "")
+            throw new Error(`Failed to save profile: ${res.status} ${res.statusText} - ${detail}`)
         }
 
-    const payload = await res.json()
+    const payload = await safeJson(res)
     return payload
 }
 
@@ -312,10 +330,11 @@ export async function editUserCer( profileId: string ,  id: number ,certData: Ce
     })
 
      if (!res.ok) {
-            throw new Error(`Failed to save profile: ${res.statusText}`)
+            const detail = await res.text().catch(() => "")
+            throw new Error(`Failed to save profile: ${res.status} ${res.statusText} - ${detail}`)
         }
 
-    const payload = await res.json()
+    const payload = await safeJson(res)
     return payload
 }
 
@@ -332,10 +351,11 @@ export async function deletUserCer(profileId: string, id: number){
     })
 
         if (!res.ok) {
-            throw new Error(`Failed to save profile: ${res.statusText}`)
+            const detail = await res.text().catch(() => "")
+            throw new Error(`Failed to save profile: ${res.status} ${res.statusText} - ${detail}`)
         }
 
-    const payload = await res.json()
+    const payload = await safeJson(res)
     return payload
 }
 
@@ -352,10 +372,11 @@ export async function getUserLang(){
     })
 
      if (!res.ok) {
-            throw new Error(`Failed to get user lang: ${res.statusText}`)
+            const detail = await res.text().catch(() => "")
+            throw new Error(`Failed to get user lang: ${res.status} ${res.statusText} - ${detail}`)
         }
 
-    const payload = await res.json()
+    const payload = await safeJson(res)
     return payload
 }
 
@@ -373,10 +394,11 @@ export async function postUserLang(langData: LanguageSec){
     })
 
      if (!res.ok) {
-            throw new Error(`Failed to save profile: ${res.statusText}`)
+            const detail = await res.text().catch(() => "")
+            throw new Error(`Failed to save profile: ${res.status} ${res.statusText} - ${detail}`)
         }
 
-    const payload = await res.json()
+    const payload = await safeJson(res)
     return payload
 }
 
@@ -394,10 +416,11 @@ export async function editUserLang(id: number, langData: LanguageSec){
     })
 
      if (!res.ok) {
-            throw new Error(`Failed to save profile: ${res.statusText}`)
+            const detail = await res.text().catch(() => "")
+            throw new Error(`Failed to save profile: ${res.status} ${res.statusText} - ${detail}`)
         }
 
-    const payload = await res.json()
+    const payload = await safeJson(res)
     return payload
 }
 
@@ -414,10 +437,11 @@ export async function deletUserLang(id: number){
     })
 
         if (!res.ok) {
-            throw new Error(`Failed to save profile: ${res.statusText}`)
+            const detail = await res.text().catch(() => "")
+            throw new Error(`Failed to save profile: ${res.status} ${res.statusText} - ${detail}`)
         }
 
-    const payload = await res.json()
+    const payload = await safeJson(res)
     return payload
 }
 
@@ -441,10 +465,11 @@ export async function postUserPicture(file: File){
     })
 
      if (!res.ok) {
-            throw new Error(`Failed to save profile: ${res.statusText}`)
+            const detail = await res.text().catch(() => "")
+            throw new Error(`Failed to save profile: ${res.status} ${res.statusText} - ${detail}`)
         }
 
-    const payload = await res.json()
+    const payload = await safeJson(res)
     return payload
 }
 

@@ -53,7 +53,12 @@ function JobPostDetails({jobPostDetails} : {jobPostDetails : JobPost}) {
                 await postApplyJob(currentProfileId, jobPostDetails.id)
                 toast.success("Application submitted successfully!")
             } catch (error) {
-                toast.error(error instanceof Error ? error.message : "Apply failed")
+                const raw = error instanceof Error ? error.message : ""
+                if (raw.includes("400") || raw.includes("Bad Request")) {
+                    toast.error("Couldn't apply — please make sure your profile is complete and you haven't already applied for this job.")
+                } else {
+                    toast.error("Something went wrong while applying. Please try again.")
+                }
             }
         }
 

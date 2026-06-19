@@ -14,7 +14,7 @@ async function page() {
 
   const enrollments = myEnrollments.status === "fulfilled" ? myEnrollments.value : []
   const applications = applicationSatus.status === "fulfilled" ? applicationSatus.value : []
-  const savedJobs = allSavedJobs.status === "fulfilled" ? allSavedJobs.value : []
+  // const savedJobs = allSavedJobs.status === "fulfilled" ? allSavedJobs.value : []
 
   return <>
 

@@ -79,7 +79,8 @@ export interface Profile{
   id: string,
   profileName: string,
   technicalDomain: string,
-  skillsCount: string
+  skillsCount: string,
+  profilePictureUrl?: string | null
 }
 
 
