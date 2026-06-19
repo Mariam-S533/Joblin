@@ -6,10 +6,10 @@ const baseUrl  = process.env.NEXT_PUBLIC_BASE_URL
 
 
 
-export async function getJobPosts(page: number = 1){
+export async function getJobPosts(page: number=1 , pageSize: number =  10){
     const token  = await userToken()
 
-    const res = await fetch(`${baseUrl}/api/job-posts?page=${page}&pageSize=12`,{
+    const res = await fetch(`${baseUrl}/api/job-posts?Page=${page}&PageSize=${pageSize}`,{
         method:'GET',
         headers:{
             "Authorization": `Bearer ${token}`,
@@ -18,7 +18,10 @@ export async function getJobPosts(page: number = 1){
     })
 
         if (!res.ok) {
-            throw new Error(`Failed to get posts: ${res.statusText}`)
+            // throw new Error(`Failed to get posts: ${res.statusText}`)
+                   const detail = await res.text();
+  console.error("job possssst failed", res.status, detail);
+  throw new Error(`get joppppp failed (${res.status}): ${detail}`);
         }
         
 

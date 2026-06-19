@@ -9,6 +9,7 @@ import { useProfileContext } from '@/app/context/ProfilesProvider';
 import { postApplyJob } from "@/app/actions/application.action"
 import { toast } from "sonner"
 import { useState } from "react"
+import EnhanceCVDialog from "./EnhanceCVDialog"
 
 
 function getRelativeTimeString(dateString: string): string {
@@ -34,25 +35,36 @@ function getRelativeTimeString(dateString: string): string {
 
 function JobPostDetails({jobPostDetails} : {jobPostDetails : JobPost}) {
 
-        const { currentProfileId } = useProfileContext()
+        const { currentProfileId, currentProfileName } = useProfileContext()
         const [isApplying, setIsApplying] = useState(false)
+        const [showEnhanceDialog, setShowEnhanceDialog] = useState(false)
 
 
-        async function handleApplyJob(jobpostId: string){
-            if(!currentProfileId){
-                toast.error("Please select or log in to a profile before applying", {position: "top-center", duration: 3000})
+        async function handleApplyClick() {
+            if (!currentProfileId) {
+                toast.error("Please select or log in to a profile before applying", { position: "top-center", duration: 3000 })
+                return
             }
+            setShowEnhanceDialog(true)
+        }
+
+        async function handleApplyWithoutEnhance() {
             try {
-                setIsApplying(true)
-                const res = await postApplyJob(currentProfileId, jobpostId)
+                await postApplyJob(currentProfileId, jobPostDetails.id)
                 toast.success("Application submitted successfully!")
-                console.log("Response:", res)
             } catch (error) {
-                toast.error(error instanceof Error ? error.message : "An unexpected failure occurred.")
-            }finally {
-            setIsApplying(false)
+                const raw = error instanceof Error ? error.message : ""
+                if (raw.includes("400") || raw.includes("Bad Request")) {
+                    toast.error("Couldn't apply — please make sure your profile is complete and you haven't already applied for this job.")
+                } else {
+                    toast.error("Something went wrong while applying. Please try again.")
+                }
             }
         }
+
+
+
+        
 
 
 
@@ -69,7 +81,7 @@ function JobPostDetails({jobPostDetails} : {jobPostDetails : JobPost}) {
                                                     <Image src={ jobPostDetails.companyLogoUrl ||"/icons/comany.png"} alt="company logo" width={80} height={80}/>
                                                 </div>
                                                 <div className="flex flex-col gap-2.5 w-full">
-                                                    <span className="text-[12px] text-[#A5A5A5]">{jobPostDetails.companyName || "fre"}</span>
+                                                    <span className="text-[12px] text-[#A5A5A5]">{jobPostDetails.companyName }</span>
                                                     <div className="flex items-center gap-1.5">
                                                         <h1 className="text-joblin-black text-[14px] lg:text-[18px]">{jobPostDetails.title}</h1>
                                                         <Badge 
@@ -101,10 +113,10 @@ function JobPostDetails({jobPostDetails} : {jobPostDetails : JobPost}) {
                                                     </div>
                                                     <div className="flex items-center gap-2 text-[12px] text-[#353535]">
                                                         <Button type="button" 
-                                                                onClick={() => handleApplyJob(jobPostDetails.id)}
-                                                                disabled={isApplying || jobPostDetails.jobStatus !== 'Active'}
+                                                                onClick={handleApplyClick}
+                                                                disabled={jobPostDetails.jobStatus !== 'Active'}
                                                                 className="bg-joblin-primary text-white hover:bg-joblin-primary/70 px-5">
-                                                        {isApplying ? "Applying..." : "Apply Now"}
+                                                        Apply Now
                                                         </Button>
                                                         <Button type='button' className='bg-white text-joblin-primary border border-joblin-primary hover:bg-joblin-primary hover:text-white px-5'>Message</Button>
                                                     </div>
@@ -241,7 +253,15 @@ function JobPostDetails({jobPostDetails} : {jobPostDetails : JobPost}) {
             </div>
         </div>
     </div>
-  
+   
+  {showEnhanceDialog && (
+      <EnhanceCVDialog
+          jobPostId={jobPostDetails.id}
+          jobTitle={jobPostDetails.title}
+          onApplyWithoutEnhance={handleApplyWithoutEnhance}
+          onCancel={() => setShowEnhanceDialog(false)}
+      />
+  )}
   </>
 }
 

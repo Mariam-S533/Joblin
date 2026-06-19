@@ -7,6 +7,8 @@ import { Tabs ,TabsContent, TabsList, TabsTrigger, } from '@/components/ui/tabs'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Briefcase, Equal } from 'lucide-react'
 import { useState } from 'react'
+import { CourseEnrollment } from '@/app/Types/courses'
+import { ApplyAjob } from '@/app/Types/seekerActivity'
 
 const Tabs_Items = [
   { value: "apply", label: "Apply status" },
@@ -16,7 +18,14 @@ const Tabs_Items = [
   { value: "offer", label: "Offered Job" },
 ]
 
-function ActivityComponent() {
+interface ActivityProps{
+
+    myEnrollments:CourseEnrollment[],
+    applicationSatus: ApplyAjob[],
+
+}
+
+function ActivityComponent({myEnrollments, applicationSatus}: ActivityProps) {
 
   const [activeTab, setActiveTab] = useState("apply")
   const activeLabel = Tabs_Items.find(tab => tab.value === activeTab)?.label || "Activity"
@@ -67,13 +76,13 @@ function ActivityComponent() {
     </TabsList>
 
       <TabsContent value="apply">
-        <ApplyStatusTab />
+        <ApplyStatusTab applicationSatus={applicationSatus} />
       </TabsContent>
       <TabsContent value="saved">
-        <SavedJobTab/>
+        <SavedJobTab  />
       </TabsContent>
       <TabsContent value="courses">
-        <CoursesStatusTab/>
+        <CoursesStatusTab myEnrollments={myEnrollments}/>
       </TabsContent>
 
     </Tabs>
