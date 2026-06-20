@@ -3,11 +3,11 @@ import AllCoursesComp from '@/components/jobSeeker/courses/AllCoursesComp'
 
 async function page() {
 
-    // const courses = await getAllCourses()
+    const courses = await getAllCourses(1,10)
 
   return <>
   
-    {/* <AllCoursesComp courses= {courses} /> */}
+    <AllCoursesComp initialCourses= {courses} />
   
   </>
 }

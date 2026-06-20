@@ -1,13 +1,14 @@
+"use server"
 import { userToken } from "@/lib/userToken"
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL
 
 
 
-export async function getAllCourses(){
+export async function getAllCourses(page: number=1 , pageSize: number =  10){
     const token  = await userToken()
 
-    const res = await fetch(`${baseUrl}/api/offering-posts`,{
+    const res = await fetch(`${baseUrl}/api/offering-posts?Page=${page}&PageSize=${pageSize}`,{
         method:'GET',
         headers:{
             "Authorization": `Bearer ${token}`,
@@ -108,5 +109,9 @@ export async function getAllenrollments(){
     const payload = await res.json()
     return payload
 }
+
+
+
+
 
 
