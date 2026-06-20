@@ -1,0 +1,1140 @@
+
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import ParagraphStyle
+from reportlab.lib.units import cm
+from reportlab.lib import colors
+from reportlab.platypus import (SimpleDocTemplate, Paragraph, Spacer,
+                                 Table, TableStyle, PageBreak, HRFlowable)
+from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY, TA_LEFT
+
+PAGE_W, PAGE_H = A4
+MARGIN = 2 * cm
+CONTENT_W = PAGE_W - 2 * MARGIN
+
+# ── colours ────────────────────────────────────────────────────
+NAVY    = colors.HexColor('#1B2A4A')
+BLUE    = colors.HexColor('#1D4ED8')
+SKY     = colors.HexColor('#DBEAFE')
+DKGREEN = colors.HexColor('#14532D')
+LTGREEN = colors.HexColor('#D1FAE5')
+AMBER   = colors.HexColor('#78350F')
+LTAMBER = colors.HexColor('#FEF3C7')
+CRIMSON = colors.HexColor('#7F1D1D')
+LTRED   = colors.HexColor('#FEE2E2')
+SLATE   = colors.HexColor('#334155')
+LTGRAY  = colors.HexColor('#F8FAFC')
+WHITE   = colors.white
+
+# ── styles ─────────────────────────────────────────────────────
+def styles():
+    def P(name, **kw):
+        return ParagraphStyle(name, **kw)
+    return {
+        'cover_h': P('cover_h', fontName='Helvetica-Bold', fontSize=28,
+                     textColor=WHITE, alignment=TA_CENTER, leading=36),
+        'cover_s': P('cover_s', fontName='Helvetica', fontSize=13,
+                     textColor=colors.HexColor('#BAE6FD'),
+                     alignment=TA_CENTER, leading=20),
+        'cover_i': P('cover_i', fontName='Helvetica', fontSize=11,
+                     textColor=WHITE, alignment=TA_CENTER, leading=17),
+        'part':    P('part', fontName='Helvetica-Bold', fontSize=15,
+                     textColor=WHITE, alignment=TA_CENTER, leading=22),
+        'q':       P('q', fontName='Helvetica-Bold', fontSize=11.5,
+                     textColor=NAVY, leading=17, leftIndent=5),
+        'mq':      P('mq', fontName='Helvetica-Bold', fontSize=11.5,
+                     textColor=CRIMSON, leading=17, leftIndent=5),
+        'ah':      P('ah', fontName='Helvetica-Bold', fontSize=10,
+                     textColor=DKGREEN, leading=14, spaceAfter=3),
+        'body':    P('body', fontName='Helvetica', fontSize=10.5,
+                     textColor=SLATE, leading=16, leftIndent=8,
+                     spaceAfter=3, alignment=TA_JUSTIFY),
+        'bullet':  P('bullet', fontName='Helvetica', fontSize=10.5,
+                     textColor=SLATE, leading=16, leftIndent=20, spaceAfter=2),
+        'step':    P('step', fontName='Helvetica', fontSize=10.5,
+                     textColor=SLATE, leading=16, leftIndent=20, spaceAfter=2),
+        'final':   P('final', fontName='Helvetica-Bold', fontSize=10.5,
+                     textColor=CRIMSON, leading=15, leftIndent=8, spaceAfter=4),
+        'tip':     P('tip', fontName='Helvetica-Oblique', fontSize=9,
+                     textColor=AMBER, leading=13, leftIndent=8, spaceAfter=8),
+        'toc':     P('toc', fontName='Helvetica', fontSize=11,
+                     textColor=NAVY, leading=19, leftIndent=14),
+        'toch':    P('toch', fontName='Helvetica-Bold', fontSize=13,
+                     textColor=NAVY, leading=20, spaceAfter=6),
+    }
+
+ST = styles()
+
+# ── layout helpers ─────────────────────────────────────────────
+def cell(items, bg, vpad=7, lpad=10):
+    rows = [[i] for i in items]
+    t = Table(rows, colWidths=[CONTENT_W])
+    t.setStyle(TableStyle([
+        ('BACKGROUND',    (0,0),(-1,-1), bg),
+        ('TOPPADDING',    (0,0),(-1,-1), vpad),
+        ('BOTTOMPADDING', (0,0),(-1,-1), vpad),
+        ('LEFTPADDING',   (0,0),(-1,-1), lpad),
+        ('RIGHTPADDING',  (0,0),(-1,-1), 8),
+        ('VALIGN',        (0,0),(-1,-1), 'TOP'),
+    ]))
+    return t
+
+def banner(text, bg=NAVY):
+    t = Table([[Paragraph(text, ST['part'])]], colWidths=[CONTENT_W])
+    t.setStyle(TableStyle([
+        ('BACKGROUND',    (0,0),(-1,-1), bg),
+        ('TOPPADDING',    (0,0),(-1,-1), 10),
+        ('BOTTOMPADDING', (0,0),(-1,-1), 10),
+        ('LEFTPADDING',   (0,0),(-1,-1), 12),
+        ('RIGHTPADDING',  (0,0),(-1,-1), 12),
+    ]))
+    return t
+
+def Q(num, question, answer_lines, tip='', math=False):
+    """
+    answer_lines: list of str.
+      '-' prefix → bullet point
+      'FINAL:' prefix → bold red final-answer line
+      '' → small spacer
+    """
+    out = []
+    label = f"Problem {num}" if math else f"Q{num}"
+    qsty  = ST['mq'] if math else ST['q']
+    qbg   = LTAMBER if math else SKY
+
+    out.append(cell([Paragraph(f"<b>{label}.</b>  {question}", qsty)], qbg, vpad=9))
+    out.append(Spacer(1, 4))
+
+    ans_nodes = [Paragraph("<b>Model Answer:</b>", ST['ah'])]
+    for line in answer_lines:
+        if line == '':
+            ans_nodes.append(Spacer(1, 5))
+        elif line.startswith('FINAL:'):
+            ans_nodes.append(Paragraph(line[6:].strip(), ST['final']))
+        elif line.startswith('-'):
+            ans_nodes.append(Paragraph(f"&#8226;  {line[1:].strip()}", ST['bullet']))
+        else:
+            ans_nodes.append(Paragraph(line, ST['body']))
+    out.append(cell(ans_nodes, LTGREEN, vpad=7))
+
+    if tip:
+        out.append(Paragraph(f"&#9654;  <i>Exam tip: {tip}</i>", ST['tip']))
+
+    out.append(Spacer(1, 9))
+    return out
+
+
+# ══════════════════════════════════════════════════════════════
+#  STORY
+# ══════════════════════════════════════════════════════════════
+def build_story():
+    S = []
+
+    # ── Cover ──────────────────────────────────────────────────
+    ct = Table([[Paragraph(
+        "SOCIAL NETWORKING &amp;<br/>DIGITAL MARKETING",
+        ST['cover_h'])]], colWidths=[CONTENT_W])
+    ct.setStyle(TableStyle([
+        ('BACKGROUND', (0,0),(-1,-1), NAVY),
+        ('TOPPADDING', (0,0),(-1,-1), 40),
+        ('BOTTOMPADDING', (0,0),(-1,-1), 24),
+        ('LEFTPADDING', (0,0),(-1,-1), 16),
+        ('RIGHTPADDING', (0,0),(-1,-1), 16),
+    ]))
+    S.append(ct)
+    S.append(Spacer(1, 10))
+    for line in [
+        "Comprehensive Essay Q&amp;A — Exam Preparation",
+        "Fayoum University | Faculty of Computers &amp; Artificial Intelligence",
+        "Academic Year 2023 / 2024",
+        "All 6 course parts covered | Full model answers included",
+        "Graph Theory &amp; SNA mathematical problems with step-by-step solutions",
+    ]:
+        S.append(Paragraph(line, ST['cover_s']))
+        S.append(Spacer(1, 3))
+    S.append(Spacer(1, 16))
+    S.append(HRFlowable(width='100%', thickness=2, color=BLUE))
+    S.append(Spacer(1, 8))
+    S.append(Paragraph("Contents", ST['toch']))
+    for t in [
+        "Part 1 — Introduction to Social Networks &amp; Social Media",
+        "Part 2 — Social Media Types, Tools &amp; Platforms",
+        "Part 3 — Social Media Strategy &amp; Return on Investment (ROI)",
+        "Part 4 — Digital Marketing &amp; Online Advertising",
+        "Part 5 — Search Engine Marketing (SEM, SEO, SEA)",
+        "Part 6 — Social Network Analysis (SNA) &amp; Graph Mining",
+        "Part 7 — Mathematical Problems: Graph Theory &amp; SNA Calculations",
+    ]:
+        S.append(Paragraph(f"&#9642;  {t}", ST['toc']))
+    S.append(PageBreak())
+
+    # ══════════════════════════════════════════════════════════
+    # PART 1 — INTRODUCTION TO SOCIAL NETWORKS & SOCIAL MEDIA
+    # ══════════════════════════════════════════════════════════
+    S.append(banner("PART 1 — INTRODUCTION TO SOCIAL NETWORKS &amp; SOCIAL MEDIA"))
+    S.append(Spacer(1, 10))
+
+    S += Q(1,
+        "Define 'Social Media'. What are its three essential characteristics?",
+        [
+            "Social media is a category of media that focuses on participation and peer-to-peer communication between individuals. It provides sites with the capability to develop User-Generated Content (UGC) and to exchange messages and comments between different users.",
+            "",
+            "Its three essential characteristics are:",
+            "- Participation: Users actively create and share content rather than passively consuming it.",
+            "- Peer-to-Peer Communication: Interaction flows directly between users, not only from a single central publisher to an audience.",
+            "- User-Generated Content (UGC): Content is created, uploaded, and owned by ordinary users — not professional media organisations.",
+        ],
+        "UGC is a key term. The definition distinguishes social media from traditional 'broadcast' media (TV, radio, print).")
+
+    S += Q(2,
+        "What is the difference between Social Media and Social Networking? Provide a concrete example of each.",
+        [
+            "Social Media is the broad umbrella term encompassing any digital platform that allows users to create, share, and interact with content. It includes all types of platforms from video sharing to blogging to photo publishing.",
+            "",
+            "Social Networking is a specific sub-type of social media where the emphasis is placed on listening to customers, building relationships, and sharing engaging content. It focuses on connecting people to one another.",
+            "",
+            "Example of Social Media (not strictly networking): YouTube is primarily a video publishing and consumption platform — the focus is content, not direct relationship-building between users.",
+            "",
+            "Example of Social Networking: Facebook is built around personal connections and relationship maintenance between users. LinkedIn is built around professional relationship-building. Both emphasise the network of connections, not just the content.",
+            "",
+            "Key principle: all social networking is a form of social media, but not all social media is social networking.",
+        ],
+        "Exams often ask this distinction. Remember: social networking = relationship-focused; social media = broader content-focused category.")
+
+    S += Q(3,
+        "Explain the evolution of the Web from Web 1.0 to Web 4.0. Compare all four generations across: communication type, user role, core mechanism, and examples.",
+        [
+            "Web 1.0 — Static Web (Read-Only): Communication was entirely one-way (unidirectional). The user was a passive viewer who could only read content. Content was published by a single source to many passive readers. Core mechanism: static unidirectional publishing. Examples: personal web pages, online encyclopedias, online newspapers.",
+            "",
+            "Web 2.0 — Social Web (Read-Write): Enabled multi-way communication in all directions simultaneously. Users became active participants who create, share, like, and comment. The core mechanism is user-generated content (UGC). Social media platforms are primarily associated with Web 2.0. Examples: blogs, wikis, Facebook, YouTube.",
+            "",
+            "Web 3.0 — Semantic Web (Read-Write-Execute): Provides contextual and personalised interaction. Search engines understand the meaning of content, not just keywords. Users become data sources whose behaviour shapes their personalised experience. Core mechanism: meaning-aware, context-sensitive search and recommendation. Examples: intelligent search engines, personalised recommendation feeds.",
+            "",
+            "Web 4.0 — Intelligent/Symbiotic Web (Read-Write-Execute-Concurrency): Features proactive and predictive interaction. The web anticipates user needs and acts before the user explicitly requests. Core mechanism: proactive recommendation engines linked to social context. Examples: AI-powered systems that suggest content, products, and connections before users search for them.",
+        ],
+        "The exam table has 5 comparison rows: name, communication type, user role, core mechanism, and examples. Memorise all 4 generations across all 5 rows.")
+
+    S += Q(4,
+        "What does UGC stand for? Explain its significance in the context of social media and Web 2.0.",
+        [
+            "UGC stands for User-Generated Content. It refers to any form of content — text, images, videos, reviews, blog posts, comments — that is created and published by ordinary users of a platform rather than by professional content producers or the platform itself.",
+            "",
+            "Significance in social media and Web 2.0:",
+            "- It transformed the internet from a publishing medium (read-only Web 1.0) into a participatory medium (read-write Web 2.0).",
+            "- It dramatically increased the volume and diversity of content online, since millions of users produce content simultaneously.",
+            "- It enables authenticity: peer reviews, personal stories, and user tutorials are often more trusted by audiences than corporate content.",
+            "- It powers social proof: when users see others recommending a product or service, it influences their purchasing decisions.",
+            "- For organisations, UGC provides a low-cost source of brand content and genuine customer insights.",
+            "- The limited definition of social media by Kaplan and Haenlein specifically defines it as 'internet-based applications that build on Web 2.0 foundations and allow the creation and exchange of UGC'.",
+        ],
+        "UGC is central to the 'limited definition' of social media. Always link UGC to Web 2.0 and participation.")
+
+    S += Q(5,
+        "Explain the main ADVANTAGES of social media for organisations. Discuss at least FIVE with clear examples.",
+        [
+            "1. Speed: Social media enables organisations to react to events or share content far faster than any traditional media. A product launch, a crisis response, or a promotional post can go live in seconds. Traditional media (newspapers, TV ads) require days or weeks of production.",
+            "",
+            "2. Scalability: Organisations can reach millions of people worldwide with a very small budget compared to traditional advertising. Social media removes geographical barriers — a business in Egypt can reach audiences in Europe, Asia, or America without a physical presence there.",
+            "",
+            "3. Analysing and Monitoring Customer Data (Customer Profiling / Segmentation): Collecting customer data via social media is far cheaper and faster than traditional methods such as face-to-face interviews at railway stations or supermarkets. Social media analytics enables customer profiling (understanding who customers are) and customer segmentation (grouping them by behaviour or interest) at large scale.",
+            "",
+            "4. Interactivity: Unlike traditional two-way communication (a phone call between two people), social media enables communication between multiple parties simultaneously. Comments sections, group chats, and community forums allow many-to-many interaction — opening opportunities for community discussion and collective problem-solving.",
+            "",
+            "5. Reach Audience (Amplification): Social media sharing gives 'amplification' to a message. When one person shares a post, it reaches all their followers, who can share further — creating an exponential multiplier effect on reach.",
+            "",
+            "6. Convert to Sale: Social proof — seeing other users' positive recommendations, reviews, and testimonials — influences purchasing decisions. Conversion can happen directly online or drive traffic to physical stores.",
+            "",
+            "7. Engage: Long-term social media engagement builds brand loyalty and encourages repeat purchases. Regular interaction with audiences nurtures relationships that sustain revenue over time.",
+        ],
+        "Acronym: S-S-A-I-R-C-E. The exam may ask for 4 or 5 — always explain each with a real-world example.")
+
+    S += Q(6,
+        "Discuss the main DISADVANTAGES (Drawbacks) of social media for organisations. Explain at least THREE.",
+        [
+            "1. Relatively New — Organisations Still Learning: Social media is a relatively recent phenomenon, and many organisations have not yet mastered how to use it effectively to create business value. There is no single proven formula — strategies that work for one organisation may fail for another. Organisations must invest time and money in experimentation and learning.",
+            "",
+            "2. Traceable — Privacy and Accountability Risks: Social media content is transparent. Every post, comment, and interaction can be tracked — who said what, when, and from where. While this is useful for analytics, it creates significant privacy risks for users and accountability risks for organisations. A single poorly worded post can go viral and damage a brand's reputation permanently.",
+            "",
+            "3. Undeletable Content: Social media content is, to a significant degree, impossible to fully remove. Even after an organisation deletes a post, others may have already taken screenshots or electronic backups. Content can resurface years later, making past mistakes difficult to erase.",
+            "",
+            "4. Privacy Concerns: One of the greatest concerns in social media is the handling of personal data. Users frequently share sensitive personal information without fully understanding how it is collected, stored, and potentially monetised or misused by platforms and third parties.",
+        ],
+        "Note the irony: each drawback is a 'dark side' of the advantages. Speed → traceable. Scalability → privacy risks. UGC → undeletable.")
+
+    S += Q(7,
+        "What is the Social Media Radar? Describe its structure and explain what it reveals about social media strategy.",
+        [
+            "The Social Media Radar is a strategic visual diagram that maps social media platforms and tools across two dimensions:",
+            "- Radial distance from centre: The closer a tool category is to the centre (where the 'Company Site' is located), the more directly important it is to the organisation's core business.",
+            "- Segment/sector: Each sector of the radar represents a different category of social media type.",
+            "",
+            "The radar includes the following sectors (categories):",
+            "- Social Networks (inner ring — highest importance): Facebook for consumers; LinkedIn for businesses.",
+            "- Social Bookmarking: Reddit, Digg — useful for understanding what content audiences find most engaging.",
+            "- Social Publishing: Blogs, wikis, article sites.",
+            "- Social Streaming: Photo and video sharing platforms.",
+            "- Social Search: Google, Yahoo search-related tools.",
+            "- Social Customer Service: Review sites and customer service platforms.",
+            "- Social Knowledge: Yahoo Answers, Wikipedia — Q&A and knowledge-sharing sites.",
+            "- Social Blogging: Company blogs, forums, Q&A sites.",
+            "",
+            "What the Radar reveals: It helps organisations identify which social media platforms are most strategically valuable to invest in, and how different platform types relate to one another. Platforms in the inner ring deliver the highest direct business impact.",
+        ],
+        "The key insight: platforms closer to the centre = more important to the company. Facebook and LinkedIn are in the inner ring (most important for social networking).")
+
+    S += Q(8,
+        "Explain 'Social Media as a Multidisciplinary Approach'. Give examples from TWO different academic or professional domains.",
+        [
+            "Social media is described as multidisciplinary because it is not confined to any single academic field or professional domain. Instead, it intersects with and transforms virtually every discipline — from accountancy to IT, from marketing to education.",
+            "",
+            "This means that understanding and using social media effectively requires knowledge from multiple fields simultaneously, and each domain uses social media in a distinct way driven by its specific goals.",
+            "",
+            "Example 1 — Accountancy and Taxation: Social media is used for knowledge sharing within the accounting profession. Tax authorities and accounting organisations use platforms like Twitter, YouTube, and community forums to communicate new tax rules and regulations to accountants and the public. This replaces or supplements traditional methods like printed circulars or conferences.",
+            "",
+            "Example 2 — IT Management: The IT management domain uses social media primarily to support previous domains (marketing, HR, customer service) and to calculate the ROI (Return on Investment) of social media investments. This involves using analytical techniques of Social Network Analysis to connect social actions (likes, shares, comments) to business actions (leads, sales, efficiency). IT management provides the infrastructure that makes all other social media uses possible.",
+        ],
+        "The course shows a table: Domain | Social Media Use | Examples. Be able to fill in at least 3-4 rows from memory.")
+
+    S.append(PageBreak())
+
+    # ══════════════════════════════════════════════════════════
+    # PART 2 — SOCIAL MEDIA TYPES, TOOLS & PLATFORMS
+    # ══════════════════════════════════════════════════════════
+    S.append(banner("PART 2 — SOCIAL MEDIA TYPES, TOOLS &amp; PLATFORMS"))
+    S.append(Spacer(1, 10))
+
+    S += Q(9,
+        "List and explain the 13 types of social media tools. For each, provide an example platform.",
+        [
+            "The following classification is adapted from Safko and Brake (2009):",
+            "",
+            "1. Social Communities: Platforms where users reach, listen to, and engage many people. Can be external (customers) or internal (employees). Examples: Facebook, LinkedIn, Google+, Yammer.",
+            "",
+            "2. Social Text Publishing Tools (Blogs): Long-form written content platforms. Examples: WordPress blogs, Wikipedia, Slideshare, Quora.",
+            "",
+            "3. Microblogging Tools: Text publishing limited to a small number of characters per post. Examples: Twitter (originally 140 characters), Tumblr.",
+            "",
+            "4. Social Photo Publishing Tools: Platforms primarily for sharing images and photos. Examples: Pinterest, Instagram, Flickr, Picasa.",
+            "",
+            "5. Social Audio Publishing Tools: Platforms for sharing music, podcasts, and audio recordings. Examples: Spotify, iTunes, Podcast.com.",
+            "",
+            "6. Social Video Publishing Tools: Platforms for sharing video content. Video conveys body language — richer than text or audio. Examples: YouTube, Vimeo, Vine.",
+            "",
+            "7. Social Gaming Tools: Platforms using gamification and online games for brand engagement. Examples: World of Warcraft (branded gaming).",
+            "",
+            "8. RSS (Really Simple Syndication): Allows users to subscribe to website updates automatically. Examples: RSS 2.0, Google FeedBurner.",
+            "",
+            "9. Live Casting Tools: Real-time video broadcasting platforms, typically free. Examples: Live365, Justin.tv.",
+            "",
+            "10. Virtual World Tools: Immersive 3D environments for meetings, press conferences, and brand experiences. Examples: Second Life, Kaneva.",
+            "",
+            "11. Mobile Tools: Location-based and mobile-specific social platforms. Examples: Foursquare, Swarm.",
+            "",
+            "12. Productivity Tools: Tools enhancing social event management, surveys, alerts, cloud documents. Examples: SurveyMonkey, Doodle, Google Docs.",
+            "",
+            "13. Aggregators: Gather content from multiple sources into one personalised overview. Examples: MyYahoo, iGoogle.",
+        ],
+        "All 13 types are examinable. Group them mentally: content types (text/photo/audio/video), community tools, utility tools (RSS/aggregators/productivity), and immersive tools (gaming/virtual worlds).")
+
+    S += Q(10,
+        "What is Microblogging? Describe Twitter as a microblogging platform and explain all key Twitter vocabulary terms.",
+        [
+            "Microblogging is a category of social text publishing that differs from standard blogging by strictly limiting the number of characters per post. This brevity forces users to be concise and promotes real-time, frequent updates.",
+            "",
+            "Twitter (now known as X) is the most prominent microblogging platform. Its posts, called 'tweets', were originally limited to 140 characters — matching the length of SMS text messages — making Twitter compatible with mobile communication.",
+            "",
+            "Key Twitter vocabulary:",
+            "- Tweet: A Twitter post. The core unit of content on the platform.",
+            "- @Username (the 'at' sign): Tags a specific Twitter user, sending them a notification. Example: @McDonalds refers directly to McDonald's account.",
+            "- Tweep: A person who follows someone else's tweets (a Twitter follower).",
+            "- RT / Retweet: Reposting another user's tweet, giving it credit and extending its reach to your own followers.",
+            "- #topic / Hashtag: Indicates the topic or keyword of a tweet and groups all tweets using that hashtag into a searchable feed. Example: #jobvacancy groups all job-related posts. Hashtags make content discoverable to users not already following the poster.",
+            "",
+            "Importance: Twitter is classified as a 'Social News' platform in the Social Media Radar — it is the best-known platform for real-time news sharing and trending topic discussion.",
+        ],
+        "Memorise all 5 vocabulary terms: tweet, @username, tweep, RT/retweet, #hashtag. The 140-character limit is a specific detail examiners test.")
+
+    S += Q(11,
+        "What are Social Communities? Distinguish between communities created for EXTERNAL use and communities created for INTERNAL use, with examples of each.",
+        [
+            "Social Communities are social media platforms and spaces where community members can reach many people, listen to them, and get them actively involved. The core goals of social communities are:",
+            "- To engage customers, suppliers, and external partners.",
+            "- To collect feedback, ideas, and opinions.",
+            "- To build relationships and brand loyalty.",
+            "",
+            "Communities Created for External Use: These are public-facing communities where organisations interact with customers, prospects, and partners. They are designed to build brand presence, handle customer service, gather market feedback, and drive sales.",
+            "Example: A company's Facebook Page where customers post product reviews, ask questions, and share experiences. The page is visible to the public and serves marketing and customer service functions simultaneously.",
+            "",
+            "Communities Created for Internal Use: These are private communities within an organisation, designed to stimulate collaboration between employees, share knowledge, communicate company rules and processes, and improve collective productivity.",
+            "Example: A company using Yammer (Microsoft's enterprise social network) to allow employees across different offices and departments to share project updates, best practices, and company announcements without using email.",
+            "",
+            "Both types leverage the power of many-to-many communication — replacing one-to-one or one-to-many communication models of older tools.",
+        ],
+        "External = customer/market-facing. Internal = employee collaboration (sometimes called 'intranet' or 'enterprise social network'). Both are 'social communities'.")
+
+    S += Q(12,
+        "What is Gamification? How do organisations use Social Gaming and Gamification in marketing strategy?",
+        [
+            "Gamification is the application of game-design thinking and game mechanics to real-life, non-game contexts. It applies elements such as points, badges, leaderboards, challenges, and progress bars to ordinary activities to stimulate competition, engagement, and motivation.",
+            "",
+            "Crucially, gamification does NOT mean creating video games. It means turning real situations into competitive or achievement-based experiences. Customers or users are stimulated to do more of something or to do it better than others.",
+            "",
+            "How organisations use Social Gaming and Gamification:",
+            "- Brand Recognition through Game Sponsorship: Organisations participate in or sponsor existing popular online games to embed their brand in the gaming experience.",
+            "- Customer Loyalty Programmes: Rewarding customers with points, digital badges, or tier-based status for purchases, reviews, or shares — making loyalty feel like a game with progression.",
+            "- Branded Mobile Games: Developing mobile apps that entertain users while promoting products. Example: a food brand creating a cooking mini-game.",
+            "- Product Promotion: Organisations create in-game events, branded characters, or sponsored challenges. Example: World of Warcraft is cited in the course as an example of social gaming for brand promotion.",
+            "- Employee Engagement: Internally, gamification can motivate employees through sales leaderboards, training completion badges, and peer recognition systems.",
+        ],
+        "Gamification ≠ games. Gamification = game MECHANICS applied to real situations. The keyword is 'stimulate competition and engagement'.")
+
+    S += Q(13,
+        "What are Aggregators? What is their purpose, and why are they useful for both users and organisations?",
+        [
+            "Aggregators are websites or applications that gather, collect, and combine content and information from multiple different online sources into a single, personalised interface for the user. Instead of visiting each website, social media platform, email inbox, or news site separately, the user sees a unified personalised feed of relevant new content from all their chosen sources in one place.",
+            "",
+            "An aggregated overview may include:",
+            "- Incoming emails and notifications",
+            "- Personal agenda and calendar events",
+            "- News items and weather forecasts",
+            "- Latest posts from favourite blogs",
+            "- Updates from social media accounts",
+            "",
+            "Usefulness for users: Aggregators save time by eliminating the need to check dozens of websites individually. They give a personalised, relevant, and current view of everything the user cares about.",
+            "",
+            "Usefulness for organisations: Aggregators help organisations monitor what is being said about their brand across multiple platforms simultaneously. Social media monitoring via aggregation tools enables real-time brand listening and faster response to customer feedback or crisis events.",
+            "",
+            "Examples: MyYahoo, iGoogle (until 2013), Feedly, Bloglovin' (fashion/lifestyle blogs).",
+        ],
+        "Aggregators are both a productivity tool (for users) and a monitoring/listening tool (for organisations). They are classified as one of the 13 social media tool types.")
+
+    S += Q(14,
+        "Explain the purpose of Podcasts and Audio Publishing tools. How can organisations use them strategically?",
+        [
+            "The term 'podcast' is derived from combining 'iPod' and 'broadcast'. A podcast is a series of audio (or sometimes video) episodes that users can download or stream from a website — similar to a serialised radio show or digital magazine.",
+            "",
+            "Podcasts differ from single audio recordings in that they consist of multiple episodes published regularly over time. They can cover audio, radio content, video, MP3, or other media formats.",
+            "",
+            "Audio publishing tools are the broader category of social media platforms for sharing any audio content — from music to spoken word to podcasts. Key platforms include Spotify, iTunes, and Podcast.com.",
+            "",
+            "Strategic uses for organisations:",
+            "- Thought Leadership: Publishing expert interview podcasts positions the organisation as an authority in its field.",
+            "- Content Marketing: Educational podcast series attract and retain a loyal audience who associate the brand with expertise.",
+            "- Brand Storytelling: Audio storytelling creates an intimate, personal connection with listeners — especially effective during commutes or exercise when video/text cannot be consumed.",
+            "- Customer Education: Tutorials and how-to audio content support customers after purchase.",
+            "- Employee Training: Internal podcasts deliver training content to employees at their own pace and convenience.",
+        ],
+        "Remember: podcast = iPod + broadcast. It is a SERIES of episodes, not a single recording. Audio publishing includes music platforms (Spotify) AND podcast platforms.")
+
+    S.append(PageBreak())
+
+    # ══════════════════════════════════════════════════════════
+    # PART 3 — SOCIAL MEDIA STRATEGY & ROI
+    # ══════════════════════════════════════════════════════════
+    S.append(banner("PART 3 — SOCIAL MEDIA STRATEGY &amp; RETURN ON INVESTMENT (ROI)"))
+    S.append(Spacer(1, 10))
+
+    S += Q(15,
+        "What are the TWO main purposes of social media use for organisations? Explain each with examples.",
+        [
+            "1. Social Media for Communication — To Convince and To Sell:",
+            "Organisations use social media to communicate their brand message, promote products and services, manage their public image, and persuade audiences to take desired actions (purchase, sign up, visit a store). This purpose is primarily external-facing and tied to marketing and sales goals.",
+            "Key questions for this purpose: What are we communicating? How do we measure its effectiveness? How does our audience perceive our message?",
+            "Example: A retail company posting product videos, discount promotions, and customer testimonials on Instagram to drive online purchases.",
+            "",
+            "2. Social Media for Collaboration — To Work Together and To Share:",
+            "Organisations use social media to facilitate teamwork, knowledge exchange, and collective problem-solving — both internally among employees and externally with customers, suppliers, and partners.",
+            "Key questions for this purpose: How do we enable better collaboration? How do we capture and share collective knowledge?",
+            "Example (internal): Using Yammer or Microsoft Teams to allow employees in different offices to collaborate on documents and share expertise.",
+            "Example (external): A software company running a public community forum where customers help each other troubleshoot issues, share workflows, and suggest features.",
+        ],
+        "The two purposes: COMMUNICATION (external — convince & sell) and COLLABORATION (internal/external — share & work together). These drive all social media strategy decisions.")
+
+    S += Q(16,
+        "Define ROI in the context of social media marketing. Explain how organisations calculate and interpret it.",
+        [
+            "ROI stands for Return on Investment. In social media marketing, it measures the financial return generated by a social media investment relative to its cost. It answers the fundamental question: 'Is our social media spend worth it?'",
+            "",
+            "The ROI Formula:",
+            "ROI = [ (Revenue generated - Cost of investment) / Cost of investment ] x 100%",
+            "",
+            "Steps to calculate social media ROI:",
+            "- Step 1 — Identify the Cost: Include all direct and indirect costs (advertising spend, content creation, staff time, tools and software).",
+            "- Step 2 — Measure Revenue Attributable to Social Media: Track which sales, leads, or conversions can be directly linked to social media activity (using tracking links, UTM codes, or coupon codes).",
+            "- Step 3 — Apply the formula.",
+            "",
+            "Interpretation:",
+            "- Positive ROI (e.g. +120%): The campaign generated more revenue than it cost — profitable.",
+            "- ROI = 0%: Revenue exactly covered the cost — break-even.",
+            "- Negative ROI (e.g. -30%): The campaign cost more than it returned — unprofitable.",
+            "",
+            "IT Management plays a central role in ROI calculation by using analytical techniques — including Social Network Analysis — to connect social actions (likes, shares, reach, comments) to business actions (website visits, purchases, customer retention).",
+        ],
+        "The ROI formula is always examined. Memorise: ROI = [(Revenue - Cost) / Cost] x 100%. Also know that IT Management uses SNA analytically to calculate this.")
+
+    S += Q(17,
+        "Explain the concepts of 'Time Shifting' and 'Space Shifting' as social media benefits. How do they relate to the Scalability advantage?",
+        [
+            "Time Shifting refers to the ability of social media content to be accessed at any time, day or night — 24 hours a day, 7 days a week (24/7). Unlike a television advertisement broadcast at a fixed time slot, or a shop that closes at 6pm, social media content is permanently available for audiences to view whenever it is convenient for them.",
+            "",
+            "Impact on organisations: They can publish content once and have it working for them continuously, reaching audiences across different time zones without additional effort. A post published in Cairo at 9am is accessible to a customer in Tokyo at any hour they choose to view it.",
+            "",
+            "Space Shifting refers to the ability of social media to transcend geographical boundaries, enabling a global marketplace. A small business in Fayoum can reach customers in London, New York, or Tokyo without having a physical office, distribution network, or advertising budget in those markets.",
+            "",
+            "Impact on organisations: Social media levels the playing field between large multinationals and small local businesses in terms of geographic reach.",
+            "",
+            "Relationship to Scalability: Both Time Shifting and Space Shifting are direct expressions of the Scalability advantage. Scalability means social media allows organisations to reach more people with lower budgets, unconstrained by time or geography — and Time Shifting + Space Shifting are the mechanisms through which this scalability is achieved.",
+        ],
+        "Time Shifting = 24/7 availability. Space Shifting = global reach. Both are why social media is 'scalable' beyond traditional media's limitations.")
+
+    S += Q(18,
+        "Describe how social media is used in the domain of IT Management. What role does Social Network Analysis (SNA) play?",
+        [
+            "In the IT Management domain, social media is used primarily in two interconnected ways:",
+            "",
+            "1. Supporting All Previous Domains: IT Management provides the technical infrastructure, platforms, tools, and integrations that enable every other business domain (marketing, HR, customer service, sales, accountancy) to operate effectively on social media. This includes selecting social media management platforms, CRM integrations, analytics dashboards, and security controls.",
+            "",
+            "2. Calculating and Justifying ROI: IT Management uses analytical techniques to monitor social media activity and calculate the Return on Investment of social media investments. This is done by correlating:",
+            "- Social Actions: likes, shares, comments, reach, impressions, follower growth, mentions",
+            "- Business Actions: website visits, form completions, product purchases, customer support ticket reduction, employee collaboration improvements",
+            "",
+            "The role of SNA (Social Network Analysis): SNA provides the mathematical and computational framework for mapping the relationships and information flows within social media networks. IT Management uses SNA to:",
+            "- Identify the most influential users (high centrality nodes) whose engagement has the greatest amplification effect.",
+            "- Understand how information spreads through the network — which connections act as bridges or bottlenecks.",
+            "- Measure network growth, density, and community formation over time.",
+            "- Connect social network metrics to financial business outcomes to demonstrate the ROI of social media.",
+        ],
+        "IT Management = infrastructure + ROI calculation using SNA. The link between social actions (likes) and business actions (sales) is what SNA enables.")
+
+    S.append(PageBreak())
+
+    # ══════════════════════════════════════════════════════════
+    # PART 4 — DIGITAL MARKETING & ONLINE ADVERTISING
+    # ══════════════════════════════════════════════════════════
+    S.append(banner("PART 4 — DIGITAL MARKETING &amp; ONLINE ADVERTISING"))
+    S.append(Spacer(1, 10))
+
+    S += Q(19,
+        "Explain the relationship between SEM, SEA, and SEO. Define each term and describe their differences.",
+        [
+            "SEM — Search Engine Marketing: The umbrella term encompassing all marketing activities conducted through or related to search engines. It has two main branches: SEA and SEO.",
+            "",
+            "SEA — Search Engine Advertising (the Paid Branch): Organisations pay to have their advertisements displayed prominently (typically at the top or bottom) of search engine results pages. The most common payment model is Pay-Per-Click (PPC) — the advertiser pays each time a user clicks on the ad. Results appear immediately once the campaign is active, but stop the moment the budget runs out.",
+            "",
+            "SEO — Search Engine Optimisation (the Organic/Free Branch): The process of improving a website's content, technical structure, and external authority (backlinks) so that it naturally ranks higher in search results without paying per click. SEO takes longer to achieve results but provides sustainable, ongoing traffic at no direct cost per visitor.",
+            "",
+            "Hierarchy: SEM is the parent category. SEA is the paid child. SEO is the organic child.",
+            "",
+            "Key differences:",
+            "- Cost: SEA = paid per click. SEO = no direct cost per click.",
+            "- Speed: SEA = immediate results. SEO = gradual, long-term results.",
+            "- Sustainability: SEA stops when budget ends. SEO continues after effort is invested.",
+            "- Trust: Organic SEO results are generally perceived as more trustworthy by users than paid ads.",
+            "",
+            "Best practice: Most organisations use both together — SEA for immediate visibility on high-priority terms, and SEO for long-term organic dominance.",
+        ],
+        "The hierarchy: SEM = SEA + SEO. SEA = Advertising (paid). SEO = Optimisation (organic/free). Draw the tree diagram in the exam.")
+
+    S += Q(20,
+        "What is the purpose of Virtual World tools in social media? How can organisations use them, and what are their limitations?",
+        [
+            "Virtual World tools are immersive, three-dimensional digital environments where users create avatars (digital representations of themselves) and interact with others in a simulated physical space. These platforms allow users to meet, talk, exchange ideas, watch presentations, and participate in shared experiences in a virtual setting.",
+            "",
+            "Examples: Second Life, Kaneva.",
+            "",
+            "How organisations can use Virtual Worlds:",
+            "- Virtual Conferences and Press Events: Organisations can host press conferences, product launches, or shareholder meetings in a virtual building without the travel and logistics costs of physical events.",
+            "- Virtual Showrooms and Stores: Brands can create interactive virtual product experiences where users can 'walk through' and explore products.",
+            "- Virtual Training: Employees in different countries can participate in immersive training sessions simultaneously.",
+            "- Brand Building: Creating a branded virtual space establishes a persistent presence accessible to users at any time.",
+            "",
+            "Limitations:",
+            "- Adoption Barrier: Virtual worlds require users to download software and invest time in learning the platform — a high barrier compared to simply clicking a link.",
+            "- Niche Audience: The mainstream audience has largely moved away from platforms like Second Life toward simpler social media tools.",
+            "- Technical Requirements: High-quality virtual world experiences require good hardware and internet connections.",
+        ],
+        "Virtual worlds are niche but innovative. Examples: Second Life. Key uses: press conferences, virtual stores, training, brand experiences.")
+
+    S += Q(21,
+        "Describe Live Casting tools and Productivity tools in social media. Give examples and explain the value for organisations.",
+        [
+            "Live Casting Tools: Platforms that broadcast video in real time, usually available for free. Unlike pre-recorded video, live casting shows events as they happen — similar to live television but on the internet.",
+            "",
+            "Examples: Live365, Justin.tv.",
+            "",
+            "Value for organisations:",
+            "- Enables authentic, real-time brand communication (e.g., live product launches, behind-the-scenes access).",
+            "- Students can create and broadcast their own shows to fellow students — educational applications.",
+            "- Creates a sense of immediacy and exclusivity — audiences must tune in live to see the content.",
+            "",
+            "Productivity Tools: Social media tools designed to enhance an organisation's productivity by supporting social event management, scheduling, data collection, and cloud-based workflows.",
+            "",
+            "Examples: Doodle (scheduling polls), SurveyMonkey (online surveys), Google Alerts (monitoring mentions), Google Docs (cloud documents and spreadsheets).",
+            "",
+            "Value for organisations:",
+            "- Streamline coordination and meeting scheduling across teams and time zones.",
+            "- Enable large-scale audience research through online surveys.",
+            "- Monitor brand mentions across the web automatically.",
+            "- Support remote collaboration through cloud-based document tools.",
+        ],
+        "Live Casting = real-time video (vs. pre-recorded video publishing). Productivity tools = organisational efficiency tools. Both are in the 13-type classification.")
+
+    S.append(PageBreak())
+
+    # ══════════════════════════════════════════════════════════
+    # PART 5 — SOCIAL NETWORK ANALYSIS & GRAPH MINING
+    # ══════════════════════════════════════════════════════════
+    S.append(banner("PART 5 — SOCIAL NETWORK ANALYSIS (SNA) &amp; GRAPH MINING"))
+    S.append(Spacer(1, 10))
+
+    S += Q(22,
+        "What is Social Network Analysis (SNA)? Define its core components — nodes and edges — and explain what each represents in a social media context.",
+        [
+            "Social Network Analysis (SNA) is a mathematical and computational methodology for studying social structures by representing them as networks (mathematical graphs). It maps and measures the relationships, flows of information, and patterns of interaction between entities in a system.",
+            "",
+            "SNA originated in sociology and has been adopted across computer science, marketing, epidemiology, and intelligence analysis due to its power in revealing hidden structural patterns in complex systems.",
+            "",
+            "Core Components:",
+            "",
+            "Nodes (also called Vertices or Actors): Represent the individual entities in the network. In a social media context:",
+            "- In a friendship network: each node = one person (user account).",
+            "- In a web link network: each node = one webpage.",
+            "- In a collaboration network: each node = one researcher or organisation.",
+            "- In a company's customer network: each node = one customer.",
+            "",
+            "Edges (also called Links, Ties, or Connections): Represent the relationships or interactions between nodes. In a social media context:",
+            "- Facebook friendship edge: bidirectional (mutual) — if A is friends with B, B is also friends with A.",
+            "- Twitter follow edge: directional — A can follow B without B following A.",
+            "- Email edge: A sent a message to B.",
+            "- Co-authorship edge: two researchers published a paper together.",
+            "",
+            "Together, nodes and edges form a graph that can be mathematically analysed to reveal: who is most influential, how information flows, which groups cluster together, and where the network's critical points of connection lie.",
+        ],
+        "SNA = Graph Theory + Social Data. Nodes = people/entities. Edges = relationships. Directed edges (Twitter) vs undirected edges (Facebook) is a key distinction.")
+
+    S += Q(23,
+        "Explain the difference between Directed and Undirected graphs. Give a social media example of each. What are in-degree and out-degree?",
+        [
+            "Undirected Graph: A graph where edges have no direction. If node A is connected to node B, then B is equally connected to A. The relationship is symmetrical and mutual. Every edge represents a bidirectional tie.",
+            "Social media example: Facebook friendships. When User A sends a friend request and User B accepts, both users are friends with each other simultaneously. The friendship is mutual — the edge goes both ways.",
+            "",
+            "Directed Graph (Digraph): A graph where edges have a specific direction. An edge from A to B (written A → B) does NOT necessarily imply an edge from B to A. The relationship can be asymmetrical.",
+            "Social media example: Twitter's follow system. User A can follow Celebrity B (A → B), but Celebrity B may not follow User A back. The follower relationship is one-directional.",
+            "",
+            "In-Degree and Out-Degree (concepts specific to directed graphs):",
+            "- In-Degree of node v: The number of directed edges arriving AT node v (edges pointing INTO v). In Twitter terms: the number of followers a user has.",
+            "- Out-Degree of node v: The number of directed edges leaving FROM node v (edges pointing AWAY from v). In Twitter terms: the number of accounts a user is following.",
+            "",
+            "A celebrity with 5,000,000 followers and who follows only 200 accounts has: in-degree = 5,000,000 and out-degree = 200. These are radically different — impossible in an undirected friendship network where they would be equal.",
+        ],
+        "Undirected = symmetric/mutual (Facebook). Directed = asymmetric (Twitter). In-degree = received connections (followers). Out-degree = sent connections (following).")
+
+    S += Q(24,
+        "Define Graph Density. Provide the formula and explain what high and low density mean about a social network.",
+        [
+            "Graph Density is a measure of how densely connected a network is — it compares the number of actual connections (edges) that exist to the maximum number that could possibly exist between all nodes.",
+            "",
+            "Formula for Undirected Graph:",
+            "Density = E / [ N * (N-1) / 2 ]",
+            "Where E = actual number of edges, N = number of nodes.",
+            "",
+            "Formula for Directed Graph:",
+            "Density = E / [ N * (N-1) ]",
+            "(Because in directed graphs, A→B and B→A are two separate edges.)",
+            "",
+            "Value range: Density is always between 0 and 1.",
+            "- Density = 1: A complete graph — every node is directly connected to every other node (maximum possible connections).",
+            "- Density = 0: An empty graph — no connections at all.",
+            "",
+            "What density tells us about social networks:",
+            "- High Density (close to 1): A tightly-knit, cohesive network where most members know each other. Example: a small, close friend group or a tight professional team.",
+            "- Low Density / Sparse (close to 0): A large network where most members have few connections relative to the total possible. This is typical of real-world social networks — even a popular person cannot realistically be personally connected to millions of others.",
+            "",
+            "Important: Most real-world social networks are sparse. Even massive networks like Facebook have very low overall density because the number of possible connections grows as N*(N-1)/2 but actual connections grow much more slowly.",
+        ],
+        "Density formula (undirected): D = E / [N(N-1)/2]. Real social networks are sparse (low density). Complete graph density = 1.")
+
+    S += Q(25,
+        "Define and explain THREE centrality measures used in Social Network Analysis: Degree Centrality, Betweenness Centrality, and Closeness Centrality. Why is centrality important for organisations?",
+        [
+            "Centrality measures quantify how important, influential, or strategically positioned a node is within a network. Different centrality measures capture different types of influence.",
+            "",
+            "1. Degree Centrality: Measures the fraction of nodes that a given node is directly connected to.",
+            "Formula: DC(v) = degree(v) / (N-1), where N = total nodes.",
+            "Interpretation: A high degree centrality node is a 'hub' — it has direct connections to many others. In a Twitter network, a celebrity with millions of followers has high in-degree centrality.",
+            "Organisational use: Identifying hubs helps target the most connected users for marketing messages — their direct reach is maximised.",
+            "",
+            "2. Betweenness Centrality: Measures how often a node lies on the shortest path between all other pairs of nodes in the network.",
+            "Interpretation: A high betweenness node is a 'broker' or 'bridge' — information travelling between different parts of the network must pass through it. Removing a high-betweenness node can disconnect communities that had no other path to each other.",
+            "Organisational use: Identifying brokers reveals critical intermediaries (e.g., journalists connecting politicians to the public, or community managers connecting brand to customers).",
+            "",
+            "3. Closeness Centrality: Measures how quickly a node can reach all other nodes via the shortest paths.",
+            "Formula: CC(v) = (N-1) / [sum of all shortest path distances from v to all others].",
+            "Interpretation: A high closeness node can spread information to the entire network in fewer steps than others — making it an ideal starting point for viral campaigns.",
+            "Organisational use: Targeting high-closeness users with sponsored content maximises how quickly the content spreads through the network.",
+            "",
+            "Why centrality matters for organisations: By identifying which users are hubs (degree), brokers (betweenness), or fast spreaders (closeness), organisations can design more targeted and cost-efficient influencer marketing, viral campaign seeding, and community management strategies.",
+        ],
+        "Three centrality types: DEGREE (hub = most connections), BETWEENNESS (broker = bridges gaps), CLOSENESS (spreader = reaches all fastest). Know all three formulas.")
+
+    S += Q(26,
+        "What is the Clustering Coefficient? Provide the formula, explain what it measures, and give an example.",
+        [
+            "The Clustering Coefficient of a node measures the degree to which the neighbours of that node are connected to each other. In other words, it asks: 'What fraction of my neighbours also know each other?' This quantifies the local 'cliquishness' or cohesion of a node's neighbourhood.",
+            "",
+            "Formula:",
+            "CC(v) = actual edges among neighbours / maximum possible edges among neighbours",
+            "Where maximum possible edges = k*(k-1)/2, and k = number of neighbours of node v.",
+            "",
+            "Value range: 0 to 1.",
+            "- CC = 1: All neighbours are interconnected — they form a perfect clique (everyone in the group knows everyone else).",
+            "- CC = 0: None of the node's neighbours are connected to each other — the node acts as the only bridge between them.",
+            "",
+            "Example:",
+            "User A has 4 friends: B, C, D, E. The maximum possible edges among these 4 friends = 4*3/2 = 6. Suppose B-C are friends and D-E are friends — 2 actual edges. CC(A) = 2/6 ≈ 0.33. This means 33% of A's friends know each other.",
+            "",
+            "What the clustering coefficient tells us about the network:",
+            "- High overall CC → highly clustered network with tight communities (typical of friendship networks where 'friends of friends become friends').",
+            "- Low CC for a specific node → that node is a bridge between otherwise disconnected groups — structurally important as a broker.",
+            "- The average clustering coefficient of the entire network indicates how 'small-world' the network is.",
+        ],
+        "Formula: CC(v) = actual_edges / [k(k-1)/2]. High CC = tight community. Low CC = bridge node. The average CC across the whole network measures overall cliquishness.")
+
+    S += Q(27,
+        "What is Community Detection in graph mining? Why is it important for organisations studying social media?",
+        [
+            "Community Detection is the computational process of identifying groups of nodes within a network that are more densely connected internally (to each other) than externally (to the rest of the network). These groups are called communities, clusters, or modules.",
+            "",
+            "Technically, a community is a subset of nodes where the density of edges within the subset significantly exceeds the density of edges between that subset and the rest of the network.",
+            "",
+            "Why community detection is important for organisations:",
+            "- Market Segmentation: Communities represent natural audience segments with shared interests, demographics, or behaviours. Identifying communities allows organisations to create targeted marketing campaigns tailored to each group's specific characteristics.",
+            "- Influencer Marketing: Each community has its own internal influencers — high-centrality nodes within the community's subgraph. Targeting these local influencers is more efficient than targeting generic global hubs.",
+            "- Content Personalisation: Understanding which community a user belongs to helps organisations recommend relevant content, products, or connections — the basis of recommendation systems.",
+            "- Brand Community Building: Organisations can identify and nurture existing communities of brand advocates, turning organic groups into structured loyal communities.",
+            "- Anomaly Detection: Rapidly forming or unusually dense communities may indicate coordinated inauthentic behaviour (bot networks, viral campaigns, or disinformation clusters).",
+            "- Network Growth Strategy: Understanding community structure helps organisations identify which communities to enter and how to seed their presence most effectively.",
+        ],
+        "Community = dense internal connections, sparse external connections. It is the foundation of audience segmentation, influencer identification, and recommendation systems.")
+
+    S += Q(28,
+        "Explain what Link Prediction means in Social Network Analysis. Give a real-world example of where it is applied.",
+        [
+            "Link Prediction is a graph mining task that uses the current structure of a network to predict which new connections (edges) are likely to form in the future — or which missing edges exist but have not yet been observed.",
+            "",
+            "The core idea: the probability that two currently unconnected nodes will become connected depends on structural features of the network — for example, how many common neighbours they share, how close they are in the network, and how similar their connection patterns are.",
+            "",
+            "Common Link Prediction metrics:",
+            "- Common Neighbours: Nodes that share many mutual connections are more likely to connect. Example: two people who have 15 mutual friends on Facebook are likely to know each other.",
+            "- Jaccard Coefficient: Measures the proportion of common neighbours relative to total neighbours.",
+            "- Preferential Attachment: Nodes with high degree (hubs) are more likely to attract new connections.",
+            "",
+            "Real-world applications:",
+            "- LinkedIn 'People You May Know': LinkedIn analyses your professional network's structure to predict which professionals you are likely to know or want to connect with.",
+            "- Facebook Friend Suggestions: Based on mutual friends and interaction patterns.",
+            "- Twitter 'Who to Follow': Recommends accounts based on your current follows and the follows of people similar to you.",
+            "- E-commerce Recommendations: 'Customers who bought X also bought Y' — treating customers and products as nodes and purchases as edges, then predicting missing purchase links.",
+            "- Research Collaboration: Predicting which researchers are likely to co-author future papers.",
+        ],
+        "Link prediction = predicting future connections based on current network structure. Real-world example: LinkedIn 'People You May Know' and Facebook friend suggestions.")
+
+    S.append(PageBreak())
+
+    # ══════════════════════════════════════════════════════════
+    # PART 6 — MATHEMATICAL PROBLEMS
+    # ══════════════════════════════════════════════════════════
+    S.append(banner("PART 6 — MATHEMATICAL PROBLEMS: GRAPH THEORY &amp; SNA CALCULATIONS"))
+    S.append(Spacer(1, 8))
+    S.append(Paragraph(
+        "Show all working. State the formula before applying it. "
+        "All answers are verified step-by-step.",
+        ParagraphStyle('note_p', fontName='Helvetica-Oblique', fontSize=10,
+                       textColor=SLATE, leading=14, spaceAfter=12)))
+
+    # ── P1 ─────────────────────────────────────────────────────
+    S += Q("1",
+        "A social network has 6 nodes: A, B, C, D, E, F. "
+        "Edges: A-B, A-C, A-D, B-C, B-E, C-F, D-E, E-F. "
+        "Find: (a) degree of each node, (b) total edges, (c) graph density, (d) average degree.",
+        [
+            "Step 1 — Count connections per node:",
+            "  A: B, C, D          → degree(A) = 3",
+            "  B: A, C, E          → degree(B) = 3",
+            "  C: A, B, F          → degree(C) = 3",
+            "  D: A, E             → degree(D) = 2",
+            "  E: B, D, F          → degree(E) = 3",
+            "  F: C, E             → degree(F) = 2",
+            "",
+            "Step 2 — Total edges (Handshaking Lemma: sum of degrees / 2):",
+            "  Sum = 3+3+3+2+3+2 = 16   →   Edges = 16/2 = 8",
+            "",
+            "Step 3 — Maximum possible edges (N=6, undirected):",
+            "  Max = N*(N-1)/2 = 6*5/2 = 15",
+            "  Density = 8/15 ≈ 0.533",
+            "",
+            "Step 4 — Average degree = Sum of degrees / N = 16/6 ≈ 2.67",
+            "FINAL: degrees: A=3, B=3, C=3, D=2, E=3, F=2 | Edges=8 | Density≈0.533 | Avg degree≈2.67",
+        ],
+        "Handshaking Lemma: ALWAYS divide sum of all degrees by 2 to get the number of edges.",
+        math=True)
+
+    # ── P2 ─────────────────────────────────────────────────────
+    S += Q("2",
+        "Using the network from Problem 1, calculate the Degree Centrality of nodes A, D, and E. "
+        "Rank them from highest to lowest centrality.",
+        [
+            "Formula: DC(v) = degree(v) / (N - 1)",
+            "N = 6 nodes, so N-1 = 5",
+            "",
+            "DC(A) = 3/5 = 0.600",
+            "DC(D) = 2/5 = 0.400",
+            "DC(E) = 3/5 = 0.600",
+            "",
+            "FINAL: DC(A) = 0.60 = DC(E) = 0.60 > DC(D) = 0.40",
+            "Nodes A and E are equally the most central by degree. D is least central of the three.",
+        ],
+        "DC formula: degree(v) / (N-1). The denominator is N-1 because a node cannot connect to itself.",
+        math=True)
+
+    # ── P3 ─────────────────────────────────────────────────────
+    S += Q("3",
+        "A directed social network has 5 users: 1, 2, 3, 4, 5. "
+        "Directed edges: 1→2, 1→3, 2→4, 3→4, 3→5, 4→5, 5→1. "
+        "Calculate: (a) in-degree and out-degree of each user, "
+        "(b) the most 'popular' user (highest in-degree), "
+        "(c) the most 'active' user (highest out-degree).",
+        [
+            "Step 1 — In-degree (count arrows ARRIVING at each node):",
+            "  User 1: arrow from 5      → in-degree = 1",
+            "  User 2: arrow from 1      → in-degree = 1",
+            "  User 3: arrow from 1      → in-degree = 1",
+            "  User 4: arrows from 2, 3  → in-degree = 2",
+            "  User 5: arrows from 3, 4  → in-degree = 2",
+            "",
+            "Step 2 — Out-degree (count arrows LEAVING each node):",
+            "  User 1: 1→2, 1→3          → out-degree = 2",
+            "  User 2: 2→4               → out-degree = 1",
+            "  User 3: 3→4, 3→5          → out-degree = 2",
+            "  User 4: 4→5               → out-degree = 1",
+            "  User 5: 5→1               → out-degree = 1",
+            "",
+            "FINAL: Most popular (highest in-degree): Users 4 and 5 (in-degree = 2, tied). Most active (highest out-degree): Users 1 and 3 (out-degree = 2, tied).",
+        ],
+        "In-degree = how many point TO you (popularity). Out-degree = how many you point TO (activity). These differ in directed graphs.",
+        math=True)
+
+    # ── P4 ─────────────────────────────────────────────────────
+    S += Q("4",
+        "Calculate the Clustering Coefficient of node M in the following network. "
+        "M has 5 neighbours: P, Q, R, S, T. "
+        "Edges among M's neighbours: P-Q, P-R, Q-S, R-T.",
+        [
+            "Step 1 — k = 5 neighbours (P, Q, R, S, T)",
+            "Step 2 — Maximum possible edges among 5 neighbours: k*(k-1)/2 = 5*4/2 = 10",
+            "Step 3 — List the 10 possible edges: P-Q, P-R, P-S, P-T, Q-R, Q-S, Q-T, R-S, R-T, S-T",
+            "Step 4 — Actual edges present: P-Q ✓, P-R ✓, Q-S ✓, R-T ✓  →  4 actual edges",
+            "Step 5 — CC(M) = 4/10 = 0.40",
+            "FINAL: Clustering Coefficient of node M = 0.40 (40%)",
+        ],
+        "CC = actual_edges_among_neighbours / [k*(k-1)/2]. Count carefully — only edges BETWEEN neighbours, not edges connecting to M.",
+        math=True)
+
+    # ── P5 ─────────────────────────────────────────────────────
+    S += Q("5",
+        "An undirected network has 10 nodes and 22 edges. "
+        "(a) What is the maximum possible number of edges? "
+        "(b) What is the graph density? "
+        "(c) For a directed version of the same network (with 22 directed edges), what is the directed density?",
+        [
+            "Part (a) — Max edges (undirected, N=10):",
+            "  Max = N*(N-1)/2 = 10*9/2 = 45",
+            "",
+            "Part (b) — Undirected density:",
+            "  Density = 22/45 ≈ 0.489  (approximately 48.9% — sparse)",
+            "",
+            "Part (c) — Max directed edges (no self-loops): N*(N-1) = 10*9 = 90",
+            "  Directed density = 22/90 ≈ 0.244  (approximately 24.4%)",
+            "",
+            "FINAL: Max undirected edges=45 | Undirected density≈0.489 | Max directed edges=90 | Directed density≈0.244",
+        ],
+        "Key difference: undirected max = N(N-1)/2. Directed max = N(N-1). The directed max is exactly double the undirected max.",
+        math=True)
+
+    # ── P6 ─────────────────────────────────────────────────────
+    S += Q("6",
+        "Find the shortest path from node A to node G and state its length. "
+        "Network edges: A-B, A-C, B-D, C-D, C-E, D-F, E-G, F-G.",
+        [
+            "Apply BFS (Breadth-First Search) starting from A:",
+            "  Level 0: {A}",
+            "  Level 1: neighbours of A = {B, C}",
+            "  Level 2: unvisited neighbours of B → {D}; unvisited neighbours of C → {D, E}",
+            "    New nodes at level 2: {D, E}",
+            "  Level 3: unvisited neighbours of D → {F}; unvisited neighbours of E → {G}",
+            "    G is found at Level 3 from E!",
+            "",
+            "Trace back the path to G: A → C → E → G",
+            "  Length = 3 hops",
+            "",
+            "Verify alternative paths:",
+            "  A→B→D→F→G = 4 hops  (longer)",
+            "  A→C→D→F→G = 4 hops  (longer)",
+            "",
+            "FINAL: Shortest path = A → C → E → G | Length = 3 edges",
+        ],
+        "BFS finds shortest paths in unweighted graphs by exploring level by level. Always verify by checking alternative routes.",
+        math=True)
+
+    # ── P7 ─────────────────────────────────────────────────────
+    S += Q("7",
+        "The adjacency matrix below represents an undirected network with nodes 1, 2, 3, 4, 5. "
+        "Row 1:[0,1,1,0,0], Row 2:[1,0,1,1,0], Row 3:[1,1,0,0,1], Row 4:[0,1,0,0,1], Row 5:[0,0,1,1,0]. "
+        "Find: (a) list all edges, (b) degree of each node, (c) Degree Centrality of node 2, (d) density.",
+        [
+            "Part (a) — Edges from upper triangle:",
+            "  Row 1: 1-2, 1-3",
+            "  Row 2: 2-3, 2-4",
+            "  Row 3: 3-5",
+            "  Row 4: 4-5",
+            "  Edges: {1-2, 1-3, 2-3, 2-4, 3-5, 4-5}  →  6 edges",
+            "",
+            "Part (b) — Degree (sum of row):",
+            "  Node 1: 0+1+1+0+0 = 2",
+            "  Node 2: 1+0+1+1+0 = 3",
+            "  Node 3: 1+1+0+0+1 = 3",
+            "  Node 4: 0+1+0+0+1 = 2",
+            "  Node 5: 0+0+1+1+0 = 2",
+            "",
+            "Part (c) — DC(2) = degree(2)/(N-1) = 3/(5-1) = 3/4 = 0.75",
+            "",
+            "Part (d) — Max edges: 5*4/2 = 10  |  Density = 6/10 = 0.60",
+            "FINAL: 6 edges | degrees: 2,3,3,2,2 | DC(2)=0.75 | Density=0.60",
+        ],
+        "Adjacency matrix: each row sum = node degree. Only read the upper triangle to avoid double-counting edges.",
+        math=True)
+
+    # ── P8 ─────────────────────────────────────────────────────
+    S += Q("8",
+        "Calculate the Closeness Centrality of node X in a network of 7 nodes. "
+        "Shortest path distances from X: d(X,A)=1, d(X,B)=2, d(X,C)=1, d(X,D)=3, d(X,E)=2, d(X,F)=2.",
+        [
+            "Formula: CC(X) = (N-1) / sum_of_shortest_distances_from_X",
+            "",
+            "Step 1 — N = 7  →  N-1 = 6",
+            "Step 2 — Sum of distances = 1+2+1+3+2+2 = 11",
+            "Step 3 — CC(X) = 6/11 ≈ 0.545",
+            "",
+            "Interpretation: X can reach the rest of the network in an average of 11/6 ≈ 1.83 hops. A closeness of 1.0 would mean direct connection to all others.",
+            "FINAL: Closeness Centrality of X ≈ 0.545",
+        ],
+        "CC formula: (N-1) / sum_of_distances. Higher CC = spreads information faster. Maximum CC = 1.0 (connected to every other node directly).",
+        math=True)
+
+    # ── P9 ─────────────────────────────────────────────────────
+    S += Q("9",
+        "A company's social post starts with 80 initial viewers. Each viewer shares it with exactly 3 new unique people. "
+        "Calculate: (a) viewers added in rounds 1, 2, and 3, "
+        "(b) total unique viewers after 3 rounds of sharing, "
+        "(c) total after 4 rounds.",
+        [
+            "This is geometric growth: each round multiplies new viewers by sharing factor r=3.",
+            "",
+            "Round 0 (initial):  80 viewers",
+            "Round 1:  80 x 3 = 240 new viewers",
+            "Round 2:  240 x 3 = 720 new viewers",
+            "Round 3:  720 x 3 = 2,160 new viewers",
+            "Round 4:  2,160 x 3 = 6,480 new viewers",
+            "",
+            "Cumulative total using geometric series formula: Total = Initial x (r^0 + r^1 + ... + r^n)",
+            "After 3 rounds: 80 x (1+3+9+27) = 80 x 40 = 3,200",
+            "After 4 rounds: 80 x (1+3+9+27+81) = 80 x 121 = 9,680",
+            "",
+            "FINAL: Round 1=240, Round 2=720, Round 3=2,160 new viewers | Total after 3 rounds = 3,200 | Total after 4 rounds = 9,680",
+        ],
+        "Formula: Total = Initial * SUM(r^k, k=0 to n). This models viral amplification — the core of social media's 'Reach Audience' advantage.",
+        math=True)
+
+    # ── P10 ────────────────────────────────────────────────────
+    S += Q("10",
+        "A company invests 15,000 EGP in a social media campaign. "
+        "The campaign receives 3,000 clicks. Of those, 150 make purchases, each worth 250 EGP. "
+        "Calculate: (a) Total Revenue, (b) ROI, (c) CPC, (d) Conversion Rate, (e) CPA.",
+        [
+            "(a) Total Revenue = conversions x value = 150 x 250 = 37,500 EGP",
+            "",
+            "(b) ROI = [(Revenue - Cost) / Cost] x 100%",
+            "   = [(37,500 - 15,000) / 15,000] x 100%",
+            "   = [22,500 / 15,000] x 100% = 150%",
+            "",
+            "(c) CPC (Cost Per Click) = Total Cost / Clicks = 15,000 / 3,000 = 5 EGP per click",
+            "",
+            "(d) Conversion Rate = Conversions / Clicks x 100% = 150/3,000 x 100% = 5%",
+            "",
+            "(e) CPA (Cost Per Acquisition) = Total Cost / Conversions = 15,000 / 150 = 100 EGP per customer",
+            "",
+            "FINAL: Revenue=37,500 EGP | ROI=150% | CPC=5 EGP | Conversion Rate=5% | CPA=100 EGP",
+        ],
+        "Five essential digital marketing KPIs: ROI, CPC, CPA, Conversion Rate, Revenue. Know all five formulas.",
+        math=True)
+
+    # ── P11 ────────────────────────────────────────────────────
+    S += Q("11",
+        "A network has nodes {A,B,C,D,E,F,G,H}. Edges: A-B, B-C, C-A, D-E, D-F, E-F, G-H. "
+        "Is the network connected or disconnected? "
+        "List all connected components and state how many there are.",
+        [
+            "Start BFS/DFS from node A:",
+            "  A → B → C → back to A  (triangle — all visited)",
+            "  Component 1: {A, B, C}",
+            "",
+            "Start from D (not yet visited):",
+            "  D → E → F → back to D  (triangle — all visited)",
+            "  Component 2: {D, E, F}",
+            "",
+            "Start from G (not yet visited):",
+            "  G → H",
+            "  Component 3: {G, H}",
+            "",
+            "All 8 nodes accounted for across 3 components.",
+            "Since there are 3 separate components, the graph is DISCONNECTED.",
+            "",
+            "FINAL: DISCONNECTED | 3 connected components: {A,B,C}, {D,E,F}, {G,H}",
+        ],
+        "Connected = one component (every node can reach every other). Disconnected = multiple components. Use BFS to find all components.",
+        math=True)
+
+    # ── P12 ────────────────────────────────────────────────────
+    S += Q("12",
+        "A complete undirected graph has 8 nodes (K_8). "
+        "(a) How many edges does it have? "
+        "(b) What is its density? "
+        "(c) If we remove 10 edges from K_8, what is the new density?",
+        [
+            "Part (a) — Edges in K_8:",
+            "  Edges = N*(N-1)/2 = 8*7/2 = 28",
+            "",
+            "Part (b) — Density of K_8:",
+            "  Density = 28/28 = 1.00 (complete graph always has density = 1)",
+            "",
+            "Part (c) — After removing 10 edges:",
+            "  Remaining edges = 28 - 10 = 18",
+            "  Maximum possible edges still = 28 (N and N-1 did not change)",
+            "  New density = 18/28 ≈ 0.643",
+            "",
+            "FINAL: K_8 has 28 edges, density=1.0 | After removing 10: 18 edges, density≈0.643",
+        ],
+        "Complete graph K_N: edges = N(N-1)/2, density = 1.0 always. Removing edges reduces density but max_edges in denominator stays the same.",
+        math=True)
+
+    # ── P13 ────────────────────────────────────────────────────
+    S += Q("13",
+        "A bipartite graph connects 5 users {U1,U2,U3,U4,U5} to 4 topics {T1,T2,T3,T4}. "
+        "Connections: U1:T1,T2 | U2:T2,T3,T4 | U3:T1,T3 | U4:T2,T4 | U5:T1,T2,T3,T4. "
+        "(a) Total edges? (b) Bipartite density? (c) Most popular topic?",
+        [
+            "Part (a) — Count edges per user:",
+            "  U1: T1,T2        → 2",
+            "  U2: T2,T3,T4     → 3",
+            "  U3: T1,T3        → 2",
+            "  U4: T2,T4        → 2",
+            "  U5: T1,T2,T3,T4  → 4",
+            "  Total edges = 2+3+2+2+4 = 13",
+            "",
+            "Part (b) — Max bipartite edges: |Users| x |Topics| = 5 x 4 = 20",
+            "  Bipartite density = 13/20 = 0.65",
+            "",
+            "Part (c) — Count users per topic (in-degree of each topic node):",
+            "  T1: U1, U3, U5  → 3 users",
+            "  T2: U1, U2, U4, U5 → 4 users",
+            "  T3: U2, U3, U5  → 3 users",
+            "  T4: U2, U4, U5  → 3 users",
+            "",
+            "FINAL: 13 edges | Density=13/20=0.65 | Most popular topic: T2 (4 users)",
+        ],
+        "Bipartite max edges = |Set A| x |Set B|. Density = edges / (|A| x |B|). Used in recommendation systems.",
+        math=True)
+
+    # ── P14 ────────────────────────────────────────────────────
+    S += Q("14",
+        "A network of 5 nodes has the following degree sequence: 4, 3, 3, 2, 2. "
+        "(a) Is this degree sequence valid (does such a graph exist)? "
+        "(b) How many edges would this graph have? "
+        "(c) What would its density be?",
+        [
+            "Part (a) — Validate using the Handshaking Lemma:",
+            "  Sum of degrees = 4+3+3+2+2 = 14",
+            "  For a valid undirected graph, sum of degrees MUST be even.",
+            "  14 is even ✓  →  The degree sequence is valid.",
+            "",
+            "Part (b) — Number of edges:",
+            "  Edges = Sum of degrees / 2 = 14/2 = 7",
+            "",
+            "Part (c) — Maximum possible edges (N=5):",
+            "  Max = 5*4/2 = 10",
+            "  Density = 7/10 = 0.70",
+            "",
+            "FINAL: Valid sequence ✓ | 7 edges | Density = 0.70 (70% — a dense graph)",
+        ],
+        "Handshaking Lemma check: sum of degrees must be EVEN for a valid undirected graph. If odd → no such graph exists.",
+        math=True)
+
+    # ── P15 ────────────────────────────────────────────────────
+    S += Q("15",
+        "A company social media page has 25,000 followers. "
+        "A post receives 1,500 Likes, 400 Comments, and 600 Shares. "
+        "(a) Calculate the Engagement Rate. "
+        "(b) If the industry average ER is 2%, how does this company compare?",
+        [
+            "Part (a):",
+            "  Total Interactions = Likes + Comments + Shares = 1,500 + 400 + 600 = 2,500",
+            "  Engagement Rate = (Total Interactions / Total Followers) x 100%",
+            "  ER = (2,500 / 25,000) x 100% = 10%",
+            "",
+            "Part (b) — Comparison:",
+            "  Company ER = 10%  |  Industry average = 2%",
+            "  The company's ER is 5 times the industry average — exceptionally strong engagement.",
+            "  This indicates the content is highly relevant, well-targeted, and compelling to the audience.",
+            "",
+            "FINAL: Engagement Rate = 10% | 5x the industry average of 2% — outstanding performance.",
+        ],
+        "ER = (Likes + Comments + Shares) / Followers x 100%. Typical ER: Facebook 0.5-1%, Instagram 1-3%. Above 5% is excellent.",
+        math=True)
+
+    # ── End page ───────────────────────────────────────────────
+    S.append(PageBreak())
+    end_t = Table([[Paragraph(
+        "<b>End of Document</b><br/>"
+        "Social Networking &amp; Digital Marketing — Comprehensive Essay Q&amp;A<br/>"
+        "Fayoum University | Faculty of Computers &amp; AI | Academic Year 2023/2024<br/>"
+        "<i>Best of luck in your exam!</i>",
+        ST['cover_s'])]], colWidths=[CONTENT_W])
+    end_t.setStyle(TableStyle([
+        ('BACKGROUND',    (0,0),(-1,-1), NAVY),
+        ('TOPPADDING',    (0,0),(-1,-1), 32),
+        ('BOTTOMPADDING', (0,0),(-1,-1), 32),
+        ('LEFTPADDING',   (0,0),(-1,-1), 20),
+        ('RIGHTPADDING',  (0,0),(-1,-1), 20),
+    ]))
+    S.append(end_t)
+    return S
+
+
+# ── Build ──────────────────────────────────────────────────────
+def footer(canvas, doc):
+    canvas.saveState()
+    canvas.setFont('Helvetica', 8)
+    canvas.setFillColor(SLATE)
+    canvas.drawString(MARGIN, 1.0*cm,
+        "Social Networking & Digital Marketing — Essay Q&A | Fayoum University 2023/2024")
+    canvas.drawRightString(PAGE_W - MARGIN, 1.0*cm, f"Page {doc.page}")
+    canvas.restoreState()
+
+OUT = "/mnt/user-data/outputs/Social_Networking_Essay_QA_v2.pdf"
+doc = SimpleDocTemplate(OUT, pagesize=A4,
+    leftMargin=MARGIN, rightMargin=MARGIN,
+    topMargin=MARGIN, bottomMargin=2.2*cm,
+    title="Social Networking & Digital Marketing — Essay Q&A",
+    author="Fayoum University — Faculty of Computers & AI")
+
+doc.build(build_story(), onFirstPage=footer, onLaterPages=footer)
+print(f"Done: {OUT}")
+

@@ -78,7 +78,7 @@ function JobPostDetails({jobPostDetails} : {jobPostDetails : JobPost}) {
                                 <div className="p-6 border-b-1 shadow-sm mb-8">
                                         <div className="flex items-start justify-between gap-4">
                                                 <div className="w-18 h-18 rounded-md overflow-hidden flex items-center justify-center">
-                                                    <Image src={ jobPostDetails.companyLogoUrl ||"/icons/comany.png"} alt="company logo" width={80} height={80}/>
+                                                    <Image src={ jobPostDetails.companyLogoUrl ||"/icons/comany.png"} alt="company logo" width={80} height={80} unoptimized />
                                                 </div>
                                                 <div className="flex flex-col gap-2.5 w-full">
                                                     <span className="text-[12px] text-[#A5A5A5]">{jobPostDetails.companyName }</span>

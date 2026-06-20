@@ -4,6 +4,7 @@ import { userToken } from "@/lib/userToken"
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL
 
 
+
 export async function getAllCourses(page: number=1 , pageSize: number =  10){
     const token  = await userToken()
 

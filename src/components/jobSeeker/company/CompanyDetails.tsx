@@ -61,12 +61,13 @@ function CompanyDetails({ compDetails, jobsData }: CompanyDetailsProps) {
               {/* logo image */}
               <div className="flex justify-center md:justify-start ">
                             <div className="w-20 h-20 rounded-xl border border-gray-100 p-2 bg-white flex items-center justify-center shrink-0 shadow-sm">
-                              <Image 
-                                src={ compDetails.logoUrl ||"/icons/comany.png"} 
-                                alt= {compDetails.companyName || "company"} 
-                                width={80} 
-                                height={80} 
+                              <Image
+                                src={ compDetails.logoUrl ||"/icons/comany.png"}
+                                alt= {compDetails.companyName || "company"}
+                                width={80}
+                                height={80}
                                 className="object-contain"
+                                unoptimized
                               />
                             </div>
                </div>
