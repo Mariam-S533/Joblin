@@ -187,6 +187,7 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
 
       .fixed {
         padding-right: var(--removed-body-scroll-bar-size, 0px);
@@ -206,5 +207,4 @@
           pointer-events: none !important;
         }
 
-  }
 }
