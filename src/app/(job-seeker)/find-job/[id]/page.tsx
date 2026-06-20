@@ -5,8 +5,8 @@ import { getPostDetails } from "@/app/actions/searchjobs.action"
 
 async function page({params} : {params : {id : string}}) {
 
-    const solvedId  = await  params
-    const id = solvedId.id
+    // const solvedId  = await  params
+    const id = params.id
     const jobPostDetails = await getPostDetails(id)
 
   return <>
