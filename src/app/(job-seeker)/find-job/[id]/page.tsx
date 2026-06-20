@@ -1,12 +1,14 @@
 import JobPostDetails from "@/components/jobSeeker/FindJob/JobPostDetails"
 import { getPostDetails } from "@/app/actions/searchjobs.action"
 
+type PageProps = {
+  params: Promise<{ id: string }>
+}
 
+async function page({params} : PageProps) {
 
-async function page({params} : {params : {id : string}}) {
-
-    // const solvedId  = await  params
-    const id = params.id
+    const solvedId  = await  params
+    const id = solvedId.id
     const jobPostDetails = await getPostDetails(id)
 
   return <>
