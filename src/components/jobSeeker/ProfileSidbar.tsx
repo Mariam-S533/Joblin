@@ -317,7 +317,7 @@ export default function CompanySidebar() {
                 label="Add New Profile"
                 isActive={currentProfileId === null}
                 onClick={() => {
-                  setCurrentProfileId(null);
+                  setCurrentProfileId("");
                   setCurrentProfileName("My Profile");
                 }}
               />
