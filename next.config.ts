@@ -31,7 +31,7 @@ const nextConfig: NextConfig = {
         hostname: "res.cloudinary.com",
         pathname: "/**",
       },
-      {
+            {
         protocol: "https",
         hostname: "logos.hunter.io",
         pathname: "/**",
@@ -41,7 +41,7 @@ const nextConfig: NextConfig = {
         hostname: "api.companyenrich.com",
         pathname: "/**",
       },
-
+      
     ],
   },
 };
