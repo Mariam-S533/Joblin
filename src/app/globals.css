@@ -192,6 +192,7 @@
       .fixed {
         padding-right: var(--removed-body-scroll-bar-size, 0px);
       }
+    }
 
       /* Removes the default reveal eye icon in Microsoft Edge */
         input::-ms-reveal,
@@ -207,4 +208,4 @@
           pointer-events: none !important;
         }
 
-}
+
