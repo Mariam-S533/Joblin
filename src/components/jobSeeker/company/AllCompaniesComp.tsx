@@ -132,7 +132,7 @@ function CompanyPostsComp({companies}: {companies: CompanyData[]}) {
                       <div className="p-6  rounded-md border border-[#EDEDED]">
                           <div className="flex items-start justify-between gap-4">
                                 <div className="w-12 h-12 rounded-md overflow-hidden flex items-center justify-center">
-                                    <Image src={company.logoUrl ||"/icons/comany.png"} alt="company logo" width={40} height={40}/>
+                                    <Image src={company.logoUrl ||"/icons/comany.png"} alt="company logo" width={40} height={40} unoptimized />
                                 </div>
                                 <div className="flex flex-col gap-2.5 w-full leading-none">
                                     <h3 className="text-[18px] lg:text-[20px] text-joblin-black ">{company.companyName}</h3>

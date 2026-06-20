@@ -27,7 +27,7 @@ function SavedJobTab() {
             <div key={jobPost.jobPostId} className="flex gap-4 p-4">
 
                                 <div className="w-16 h-16 rounded-md overflow-hidden flex items-center justify-center">
-                                    <Image src={ jobPost.companyLogoUrl ||"/icons/comany.png"} alt="company logo" width={50} height={50}/>
+                                    <Image src={ jobPost.companyLogoUrl ||"/icons/comany.png"} alt="company logo" width={50} height={50} unoptimized />
                                 </div>
 
                             <div className="flex-1">
