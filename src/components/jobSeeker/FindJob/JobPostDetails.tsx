@@ -3,13 +3,14 @@
 import {  JobPost } from "@/app/Types/seekerActivity"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Bookmark, CalendarClock, Clock, MapPin, Building2 } from "lucide-react"
+import { Bookmark, CalendarClock, Clock, MapPin, Building2, Zap } from "lucide-react"
 import Image from "next/image"
 import { useProfileContext } from '@/app/context/ProfilesProvider';
 import { postApplyJob } from "@/app/actions/application.action"
 import { toast } from "sonner"
 import { useState } from "react"
 import EnhanceCVDialog from "./EnhanceCVDialog"
+import SkillGapDialog from "./SkillGapDialog"
 
 
 function getRelativeTimeString(dateString: string): string {
@@ -35,9 +36,9 @@ function getRelativeTimeString(dateString: string): string {
 
 function JobPostDetails({jobPostDetails} : {jobPostDetails : JobPost}) {
 
-        const { currentProfileId, currentProfileName } = useProfileContext()
-        const [isApplying, setIsApplying] = useState(false)
+        const { currentProfileId } = useProfileContext()
         const [showEnhanceDialog, setShowEnhanceDialog] = useState(false)
+        const [showSkillGapDialog, setShowSkillGapDialog] = useState(false)
 
 
         async function handleApplyClick() {
@@ -96,7 +97,7 @@ function JobPostDetails({jobPostDetails} : {jobPostDetails : JobPost}) {
                                                         </Badge>
                                                         <button type="button">
                                                             {/* onclick call savedjobs endpoint */}
-                                                            <Bookmark size={20}  className="text-joblin-primary"/>``
+                                                            <Bookmark size={20}  className="text-joblin-primary"/>
                                                         </button>
                                                     </div>
                                                     <div className="flex items-center gap-1 ">
@@ -119,6 +120,14 @@ function JobPostDetails({jobPostDetails} : {jobPostDetails : JobPost}) {
                                                         Apply Now
                                                         </Button>
                                                         <Button type='button' className='bg-white text-joblin-primary border border-joblin-primary hover:bg-joblin-primary hover:text-white px-5'>Message</Button>
+                                                            <Button
+                                                            type="button"
+                                                            onClick={() => setShowSkillGapDialog(true)}
+                                                            className="bg-white text-joblin-primary border border-joblin-primary hover:bg-joblin-primary hover:text-white px-5 gap-1.5"
+                                                        >
+                                                            <Zap size={14} />
+                                                            Skill Gap
+                                                        </Button>
                                                     </div>
                                                 </div>
                                         </div>
@@ -262,7 +271,27 @@ function JobPostDetails({jobPostDetails} : {jobPostDetails : JobPost}) {
           onCancel={() => setShowEnhanceDialog(false)}
       />
   )}
+    {showSkillGapDialog && (
+      <SkillGapDialog
+          jobPostId={jobPostDetails.id}
+          seekerProfileId={currentProfileId ?? undefined}
+          onClose={() => setShowSkillGapDialog(false)}
+      />
+  )}
   </>
 }
 
 export default JobPostDetails
+
+
+
+
+
+
+
+
+
+
+
+
+
