@@ -33,7 +33,6 @@ export const options: AuthOptions = {
         headers: { "Content-Type": "application/json" }
       })
       const user  = await res.json()
-      console.log('finallres auth',user);
 
       if (res.ok && user) {
 
