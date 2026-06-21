@@ -23,7 +23,7 @@ function JobseekerRegister() {
       const [loading, setLoading] = useState(false)
       // const [errorMsg, setErrorMsg] = useState("")
       const router = useRouter()
-      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL
+      const baseUrl = process.env.NEXTAUTH_URL 
 
       const [showPassword, setShowPassword] = useState(false);
       const [showConfirm, setShowConfirm] = useState(false);

@@ -6,7 +6,7 @@ import { userToken } from "@/lib/userToken"
 export async function getMissedSkills( jobPostId: string  ,seekerProfileId?: string ) {
     
     const token = await userToken()
-    const baseUrl  = process.env.NEXT_PUBLIC_BASE_URL
+    const baseUrl  = process.env.NEXTAUTH_URL 
     const params = new URLSearchParams()
     if(seekerProfileId){
         params.append("seekerProfileId", seekerProfileId)
@@ -37,7 +37,7 @@ export async function getMissedSkills( jobPostId: string  ,seekerProfileId?: str
 
 export async function getAiRecommendedCourses(skills: string[], topN?: number) {
     const token = await userToken()
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL
+    const baseUrl = process.env.NEXTAUTH_URL 
     
     const params = new URLSearchParams()
     if (topN !== undefined) {

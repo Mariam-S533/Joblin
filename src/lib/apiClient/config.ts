@@ -11,8 +11,8 @@
 const rawApiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
 const serverBackendApiBaseUrl =
   process.env.BACKEND_API_URL ??
-  (process.env.NEXT_PUBLIC_BASE_URL
-    ? `${process.env.NEXT_PUBLIC_BASE_URL.replace(/\/$/, "")}/api`
+  (process.env.NEXTAUTH_URL 
+    ? `${process.env.NEXTAUTH_URL .replace(/\/$/, "")}/api`
     : "");
 
 export const API_BASE_URL =
