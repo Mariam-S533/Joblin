@@ -23,7 +23,7 @@ export const options: AuthOptions = {
     },
 
     async authorize(credentials) {
-      const baseUrl = process.env.NEXTAUTH_URL 
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL 
       const res = await fetch(`${baseUrl}/api/Authentication/login`, {
         method: 'POST',
         body: JSON.stringify({
@@ -75,7 +75,7 @@ export const options: AuthOptions = {
             if(user && account?.provider === "google"){
               const cookieStore = await cookies()
               const authAction = cookieStore.get("auth_action")?.value
-              const baseUrl = process.env.NEXTAUTH_URL 
+              const baseUrl = process.env.NEXT_PUBLIC_BASE_URL 
 
               let backendEndpoint = `${baseUrl}/api/Authentication/google-login`
 

@@ -9,7 +9,7 @@ import { ProfileFormData } from "../Types/profileShared"
 // export async function parseCV(file: File) {
     
 //     const token = await userToken()
-//     const baseUrl  = process.env.NEXTAUTH_URL 
+//     const baseUrl  = process.env.NEXT_PUBLIC_BASE_URL 
 
 //     const formData = new FormData()
 //     formData.append("file", file)
@@ -34,7 +34,7 @@ import { ProfileFormData } from "../Types/profileShared"
 
 export async function parseCV(formData: FormData) {
     const token = await userToken()
-    const baseUrl  = process.env.NEXTAUTH_URL 
+    const baseUrl  = process.env.NEXT_PUBLIC_BASE_URL 
 
     const res = await fetch(`${baseUrl}/api/SeekerProfile/parse-cv`,{
         method: 'POST',
@@ -60,7 +60,7 @@ export async function parseCV(formData: FormData) {
 export async function saveParsedData(parsedData:ProfileFormData, seekerProfileName: string  ,seekerProfileId?: string ) {
     
     const token = await userToken()
-    const baseUrl  = process.env.NEXTAUTH_URL 
+    const baseUrl  = process.env.NEXT_PUBLIC_BASE_URL 
     const params = new URLSearchParams()
     if(seekerProfileId){
         params.append("seekerProfileId", seekerProfileId)
@@ -91,7 +91,7 @@ export async function saveParsedData(parsedData:ProfileFormData, seekerProfileNa
 export async function getProfiles() {
     
     const token = await userToken()
-    const baseUrl  = process.env.NEXTAUTH_URL 
+    const baseUrl  = process.env.NEXT_PUBLIC_BASE_URL 
 
     const res = await fetch(`${baseUrl}/api/Profile/my-profiles`,{
         method:'GET',
@@ -114,7 +114,7 @@ export async function getProfiles() {
 export async function getSpecificProfile(profileId: string) {
     
     const token = await userToken()
-    const baseUrl  = process.env.NEXTAUTH_URL 
+    const baseUrl  = process.env.NEXT_PUBLIC_BASE_URL 
 
     const res = await fetch(`${baseUrl}/api/Profile/my-profiles/${profileId}`,{
         method:'GET',

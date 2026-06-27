@@ -1,7 +1,7 @@
 "use server"
 import { userToken } from "@/lib/userToken"
 
-const baseUrl = process.env.NEXTAUTH_URL 
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL 
 
 
 

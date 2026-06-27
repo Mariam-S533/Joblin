@@ -5,7 +5,7 @@ import { parseCV } from "./profile.action"
 import { mapParsedCVToFormData } from "@/lib/cvMapper"
 import { saveParsedData } from "./profile.action"
 
-const baseUrl = process.env.NEXTAUTH_URL 
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL 
 
 export interface EnhanceCVResponse {
     jobPostId: string

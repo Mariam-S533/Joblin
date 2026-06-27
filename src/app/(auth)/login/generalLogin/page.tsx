@@ -43,7 +43,7 @@ function LoginPage() {
         async function onSubmit(data: Inputs){
           try{
             setLoading(true)
-            const baseUrl = process.env.NEXTAUTH_URL 
+            const baseUrl = process.env.NEXT_PUBLIC_BASE_URL 
             const loginRes = await fetch(`${baseUrl}/api/Authentication/login`, {
               method: 'POST',
               headers: { "Content-Type": "application/json" },

@@ -5,7 +5,7 @@ import { userToken } from "@/lib/userToken"
 export async function getSearchResult(userInput: string, limit: number = 10) {
     
     const token = await userToken()
-    const baseUrl  = process.env.NEXTAUTH_URL 
+    const baseUrl  = process.env.NEXT_PUBLIC_BASE_URL 
     const params = new URLSearchParams()
 
     if (userInput) {

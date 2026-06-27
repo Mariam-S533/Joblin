@@ -4,7 +4,7 @@ import { userToken } from "@/lib/userToken"
 import { CertificatSec, EducationSec, PersonalInfoSec, SkillSec, WorkExpSec, LanguageSec } from "../Types/profileShared"
 
 
-const baseUrl  = process.env.NEXTAUTH_URL 
+const baseUrl  = process.env.NEXT_PUBLIC_BASE_URL 
 
 // Safe JSON parse — backend may return 200 with an empty body
 async function safeJson(res: Response, fallback?: unknown) {

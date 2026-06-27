@@ -11,15 +11,15 @@
 const rawApiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
 const serverBackendApiBaseUrl =
   process.env.BACKEND_API_URL ??
-  (process.env.NEXTAUTH_URL 
-    ? `${process.env.NEXTAUTH_URL .replace(/\/$/, "")}/api`
+  (process.env.NEXT_PUBLIC_BASE_URL 
+    ? `${process.env.NEXT_PUBLIC_BASE_URL .replace(/\/$/, "")}/api`
     : "");
 
 export const API_BASE_URL =
   typeof window === "undefined" && serverBackendApiBaseUrl
     ? serverBackendApiBaseUrl
     : typeof window === "undefined" && rawApiBaseUrl.startsWith("/")
-      ? `${process.env.NEXTAUTH_URL ?? ""}${rawApiBaseUrl}`
+      ? `${process.env.NEXT_PUBLIC_BASE_URL ?? ""}${rawApiBaseUrl}`
       : rawApiBaseUrl;
 
 /**
